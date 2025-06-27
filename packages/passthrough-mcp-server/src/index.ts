@@ -49,3 +49,10 @@ export { createHookClient, createHookClients } from "./hooks/utils.js";
 export { createTargetClient } from "./client/client.js";
 export { loadConfig } from "./utils/config.js";
 export { getDiscoveredTools } from "./server/server.js";
+
+// Hook context
+export {
+  PassthroughServerHookContext,
+  isPassthroughServerContext,
+  getPassthroughServerContext,
+} from "./context/PassthroughServerHookContext.js";
