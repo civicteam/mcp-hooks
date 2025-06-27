@@ -3,14 +3,15 @@
  */
 
 import type { HookContext } from "@civic/hook-common";
+import type { PassthroughClient } from "../types/client.js";
 
 /**
  * Data structure for PassthroughServer context
  */
 export interface PassthroughServerContextData {
   sessionId: string;
-  targetClient: unknown;
-  recreateTargetClient: () => Promise<unknown>;
+  targetClient: PassthroughClient;
+  recreateTargetClient: () => Promise<PassthroughClient>;
 }
 
 /**
@@ -33,15 +34,15 @@ export class PassthroughServerHookContext
   /**
    * Get the target client for making requests
    */
-  getTargetClient<T = unknown>(): T {
-    return this.data.targetClient as T;
+  getTargetClient(): PassthroughClient {
+    return this.data.targetClient;
   }
 
   /**
    * Recreate the target client (useful for error recovery)
    */
-  async recreateClient<T = unknown>(): Promise<T> {
-    return (await this.data.recreateTargetClient()) as T;
+  async recreateClient(): Promise<PassthroughClient> {
+    return await this.data.recreateTargetClient();
   }
 }
 

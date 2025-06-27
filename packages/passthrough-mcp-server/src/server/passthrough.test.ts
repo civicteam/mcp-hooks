@@ -515,7 +515,7 @@ describe("createPassthroughHandler", () => {
 
             // Type-safe access to session ID and target client
             const sessionId = passthroughContext.sessionId;
-            const targetClient = passthroughContext.getTargetClient<any>();
+            const targetClient = passthroughContext.getTargetClient();
 
             // Enrich the tool call with session and client information
             const enrichedToolCall = {

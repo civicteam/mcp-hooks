@@ -14,13 +14,17 @@ import {
 describe("PassthroughServerHookContext", () => {
   it("should provide typed access to passthrough-specific functionality", () => {
     const mockTargetClient = {
-      callTool: async () => ({ result: "success" }),
+      callTool: async () => ({ content: [{ type: "text", text: "success" }] }),
       listTools: async () => ({ tools: [] }),
+      close: async () => {},
     };
 
     const mockRecreateFunction = async () => ({
-      callTool: async () => ({ result: "recreated" }),
+      callTool: async () => ({
+        content: [{ type: "text", text: "recreated" }],
+      }),
       listTools: async () => ({ tools: [] }),
+      close: async () => {},
     });
 
     const contextData: PassthroughServerContextData = {
@@ -42,17 +46,26 @@ describe("PassthroughServerHookContext", () => {
     const targetClient = context.getTargetClient();
     expect(targetClient).toBe(mockTargetClient);
 
-    // Verify typed client access with generic
-    const typedClient = context.getTargetClient<typeof mockTargetClient>();
+    // Verify typed client access
+    const typedClient = context.getTargetClient();
     expect(typedClient.callTool).toBeDefined();
     expect(typedClient.listTools).toBeDefined();
+    expect(typedClient.close).toBeDefined();
   });
 
   it("should support type guards for safe context access", () => {
     const contextData: PassthroughServerContextData = {
       sessionId: "test-session",
-      targetClient: {},
-      recreateTargetClient: async () => ({}),
+      targetClient: {
+        callTool: async () => ({ content: [] }),
+        listTools: async () => ({ tools: [] }),
+        close: async () => {},
+      },
+      recreateTargetClient: async () => ({
+        callTool: async () => ({ content: [] }),
+        listTools: async () => ({ tools: [] }),
+        close: async () => {},
+      }),
     };
 
     const passthroughContext = new PassthroughServerHookContext(contextData);
@@ -124,11 +137,17 @@ describe("PassthroughServerHookContext", () => {
     }
 
     const mockTargetClient = {
-      callTool: async () => ({ result: "success" }),
+      callTool: async () => ({ content: [{ type: "text", text: "success" }] }),
+      listTools: async () => ({ tools: [] }),
+      close: async () => {},
     };
 
     const mockRecreateFunction = async () => ({
-      callTool: async () => ({ result: "recreated" }),
+      callTool: async () => ({
+        content: [{ type: "text", text: "recreated" }],
+      }),
+      listTools: async () => ({ tools: [] }),
+      close: async () => {},
     });
 
     const context = new PassthroughServerHookContext({
@@ -175,7 +194,7 @@ describe("PassthroughServerHookContext", () => {
 
         // Type-safe access to session ID and target client
         const sessionId = passthroughContext.sessionId;
-        const targetClient = passthroughContext.getTargetClient<any>();
+        const targetClient = passthroughContext.getTargetClient();
 
         // Enrich the tool call with session and client information
         const enrichedToolCall = {
@@ -197,7 +216,11 @@ describe("PassthroughServerHookContext", () => {
       }
     }
 
-    const mockTargetClient = { callTool: async () => ({}) };
+    const mockTargetClient = {
+      callTool: async () => ({ content: [{ type: "text", text: "success" }] }),
+      listTools: async () => ({ tools: [] }),
+      close: async () => {},
+    };
     const context = new PassthroughServerHookContext({
       sessionId: "enrichment-session",
       targetClient: mockTargetClient,
