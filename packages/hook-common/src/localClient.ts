@@ -8,6 +8,7 @@ import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import type { HookClient } from "./client.js";
 import type {
   Hook,
+  HookContext,
   HookResponse,
   ToolCall,
   ToolsListRequest,
@@ -23,9 +24,12 @@ export class LocalHookClient implements HookClient {
   /**
    * Process a tool call through the hook
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: ToolCall,
+    context?: HookContext,
+  ): Promise<HookResponse> {
     try {
-      return await this.hook.processRequest(toolCall);
+      return await this.hook.processRequest(toolCall, context);
     } catch (error) {
       console.error(`Hook ${this.name} request processing failed:`, error);
       // On error, continue with unmodified request
@@ -42,9 +46,14 @@ export class LocalHookClient implements HookClient {
   async processResponse(
     response: unknown,
     originalToolCall: ToolCall,
+    context?: HookContext,
   ): Promise<HookResponse> {
     try {
-      return await this.hook.processResponse(response, originalToolCall);
+      return await this.hook.processResponse(
+        response,
+        originalToolCall,
+        context,
+      );
     } catch (error) {
       console.error(`Hook ${this.name} response processing failed:`, error);
       // On error, continue with unmodified response
@@ -58,7 +67,10 @@ export class LocalHookClient implements HookClient {
   /**
    * Process a tools/list request through the hook
    */
-  async processToolsList(request: ToolsListRequest): Promise<HookResponse> {
+  async processToolsList(
+    request: ToolsListRequest,
+    context?: HookContext,
+  ): Promise<HookResponse> {
     try {
       // Check if hook supports tools/list processing
       if (!this.hook.processToolsList) {
@@ -67,7 +79,7 @@ export class LocalHookClient implements HookClient {
           body: request,
         };
       }
-      return await this.hook.processToolsList(request);
+      return await this.hook.processToolsList(request, context);
     } catch (error) {
       console.error(
         `Hook ${this.name} tools/list request processing failed:`,
@@ -87,6 +99,7 @@ export class LocalHookClient implements HookClient {
   async processToolsListResponse(
     response: ListToolsResult,
     originalRequest: ToolsListRequest,
+    context?: HookContext,
   ): Promise<HookResponse> {
     try {
       // Check if hook supports tools/list response processing
@@ -99,6 +112,7 @@ export class LocalHookClient implements HookClient {
       return await this.hook.processToolsListResponse(
         response,
         originalRequest,
+        context,
       );
     } catch (error) {
       console.error(
@@ -119,6 +133,7 @@ export class LocalHookClient implements HookClient {
   async processToolException(
     error: unknown,
     originalToolCall: ToolCall,
+    context?: HookContext,
   ): Promise<HookResponse> {
     try {
       // Check if hook supports exception processing
@@ -128,7 +143,11 @@ export class LocalHookClient implements HookClient {
           body: null,
         };
       }
-      return await this.hook.processToolException(error, originalToolCall);
+      return await this.hook.processToolException(
+        error,
+        originalToolCall,
+        context,
+      );
     } catch (processingError) {
       console.error(
         `Hook ${this.name} exception processing failed:`,
