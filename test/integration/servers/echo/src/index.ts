@@ -1,0 +1,229 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import express from 'express';
+import cors from 'cors';
+import crypto from 'crypto';
+import type { Server } from 'http';
+import z from "zod";
+
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 33100;
+
+// Store server instances by session ID
+export const sessions = new Map<string, { 
+  server: McpServer;
+  transport: StreamableHTTPServerTransport;
+  toolCallCount: number;
+}>();
+
+// Session ID generator
+const generateSessionId = (): string => crypto.randomUUID();
+
+// Create a new MCP server for a session
+async function createMcpServerForSession(sessionId: string) {
+  console.log(`Creating new server for session: ${sessionId}`);
+  
+  const server = new McpServer({
+    name: 'echo-test-server',
+    version: '1.0.0',
+  });
+
+  // Register the echo tool - simple echo without automatic ping
+  server.tool('echo', 'Echoes back the input message',
+  {
+    message: z.string().describe('Message to echo back')
+  }, async (args) => {
+        console.log(`Echoing message: ${args.message}`)
+    const session = sessions.get(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    // Increment tool call count
+    session.toolCallCount++;
+    console.log(`Tool call #${session.toolCallCount} for session ${sessionId}`);
+
+    return {
+      content: [{
+        type: 'text',
+        text: `Echo: ${args.message}`,
+      }],
+    };
+  });
+
+  // Register a tool to trigger pings for testing
+  server.tool('trigger-ping', 'Triggers a ping from the server', {}, async () => {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    // Trigger a ping asynchronously
+    setTimeout(async () => {
+      try {
+        console.log(`Sending ping for session ${sessionId}`)
+        await server.server.ping();
+        console.log(`Ping sent for session ${sessionId}`);
+      } catch (error) {
+        console.error(`Failed to send ping for session ${sessionId}:`, error);
+      }
+    }, 100); // Small delay to ensure response is sent first
+
+    return {
+      content: [{
+        type: 'text',
+        text: 'Ping triggered',
+      }],
+    };
+  });
+
+  // Create transport with the session ID generator
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => sessionId,
+  });
+
+  await server.connect(transport);
+
+  // Store the session
+  sessions.set(sessionId, {
+    server,
+    transport,
+    toolCallCount: 0,
+  });
+
+  return { server, transport };
+}
+
+// Create Express app
+function createExpressApp() {
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
+
+  // MCP endpoint
+  app.post('/mcp', async (req, res) => {
+    try {
+      const sessionId = req.headers['mcp-session-id'] as string || generateSessionId();
+      
+      let session = sessions.get(sessionId);
+
+      console.log(`Session ID: ${sessionId}: ${session ? 'existing' : 'new'}`);
+      
+      // Create new session if needed
+      if (!session) {
+        console.log(`Creating new session for request`)
+        const { server, transport } = await createMcpServerForSession(sessionId);
+        session = sessions.get(sessionId)!;
+      }
+
+      // Set session ID header for response
+      res.setHeader('mcp-session-id', sessionId);
+      
+      // Handle the request
+      console.log(`Handling request for session ${sessionId}`)
+      await session.transport.handleRequest(req, res, req.body);
+      
+      // Clean up on response close
+      res.on('close', () => {
+        console.log(`Response closed for session ${sessionId}`);
+      });
+    } catch (error) {
+      console.error('Error handling request:', error);
+      res.status(500).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32603,
+          message: 'Internal error',
+          data: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+    }
+  });
+
+  // Reusable handler for GET and DELETE requests
+  const handleSessionRequest = async (req: express.Request, res: express.Response) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    if (!sessionId || !sessions.get(sessionId)) {
+      res.status(400).send('Invalid or missing session ID');
+      return;
+    }
+
+    const transport = sessions.get(sessionId)!.transport;
+    await transport.handleRequest(req, res);
+  };
+
+// Handle GET requests for server-to-client notifications via SSE
+  app.get('/mcp', handleSessionRequest);
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      sessions: sessions.size,
+      port: PORT,
+    });
+  });
+
+  // Cleanup endpoint for testing
+  app.delete('/sessions/:sessionId', (req, res) => {
+    const sessionId = req.params.sessionId;
+    const session = sessions.get(sessionId);
+    
+    if (session) {
+      session.transport.close();
+      session.server.close();
+      sessions.delete(sessionId);
+      res.json({ message: 'Session closed' });
+    } else {
+      res.status(404).json({ error: 'Session not found' });
+    }
+  });
+
+  return app;
+}
+
+// Export function to create and start echo server programmatically
+export async function createEchoServer(port: number = PORT): Promise<{
+  httpServer: Server;
+  sessions: Map<string, { 
+    server: McpServer;
+    transport: StreamableHTTPServerTransport;
+    toolCallCount: number;
+  }>;
+  port: number;
+  close: () => Promise<void>;
+}> {
+  const app = createExpressApp();
+  
+  return new Promise((resolve) => {
+    const httpServer = app.listen(port, () => {
+      console.log(`Echo test server running on port ${port}`);
+      console.log(`MCP endpoint: http://localhost:${port}/mcp`);
+      
+      resolve({
+        httpServer,
+        sessions,
+        port,
+        close: async () => {
+          // Close all sessions
+          for (const [sessionId, session] of sessions) {
+            session.transport.close();
+            session.server.close();
+            sessions.delete(sessionId);
+          }
+          // Close HTTP server
+          return new Promise((resolveClose) => {
+            httpServer.close(() => resolveClose());
+          });
+        }
+      });
+    });
+  });
+}
+
+// Start server if run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  createEchoServer(PORT).catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}

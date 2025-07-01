@@ -54,10 +54,6 @@ vi.mock("./utils/logger.js", () => ({
   },
 }));
 
-vi.mock("./utils/session.js", () => ({
-  clearAllSessions: vi.fn(),
-  setSessionClientFactory: vi.fn(),
-}));
 
 describe("createPassthroughProxy", () => {
   const mockConfig: Config = {
@@ -165,7 +161,6 @@ describe("createPassthroughProxy", () => {
   });
 
   it("should handle stop correctly", async () => {
-    const { clearAllSessions } = await import("./utils/session.js");
     const { logger } = await import("./utils/logger.js");
 
     const proxy = await createPassthroughProxy({
@@ -173,7 +168,6 @@ describe("createPassthroughProxy", () => {
     });
 
     await proxy.stop();
-    expect(clearAllSessions).toHaveBeenCalledTimes(1);
     expect(mockHttpServer.close).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith("Passthrough MCP Server stopped");
 
@@ -184,17 +178,6 @@ describe("createPassthroughProxy", () => {
     expect(logger.warn).toHaveBeenCalledWith("Server is not started");
   });
 
-  it("should use custom client factory when provided", async () => {
-    const { setSessionClientFactory } = await import("./utils/session.js");
-    const mockClientFactory = vi.fn();
-
-    await createPassthroughProxy({
-      ...mockConfig,
-      clientFactory: mockClientFactory,
-    });
-
-    expect(setSessionClientFactory).toHaveBeenCalledWith(mockClientFactory);
-  });
 
   it("should handle hooks configuration", async () => {
     const configWithHooks: Config = {

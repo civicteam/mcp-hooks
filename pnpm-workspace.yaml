@@ -1,2 +1,4 @@
 packages:
   - 'packages/*'
+  - 'test/integration'
+  - 'test/integration/servers/*'

@@ -5,6 +5,9 @@
  * Handles JSON-RPC message forwarding to HTTP targets with hook processing.
  */
 
+import * as http from "node:http";
+import * as https from "node:https";
+import { URL } from "node:url";
 import type {
   HookClient,
   ToolCall,
@@ -27,14 +30,17 @@ import {
 import type { Config } from "../utils/config.js";
 import { messageFromError } from "../utils/error.js";
 import { logger } from "../utils/logger.js";
+import { SSEParser, formatSSEEvent, type SSEEvent } from "../utils/sse.js";
 
 export class MessageHandler {
   private hooks: HookClient[];
   private targetUrl: string;
+  private targetMcpPath: string;
 
   constructor(private config: Config) {
     this.hooks = getHookClients(config);
     this.targetUrl = config.target.url;
+    this.targetMcpPath = config.target.mcpPath || "/mcp";
   }
 
   /**
@@ -43,7 +49,7 @@ export class MessageHandler {
   async handle(
     message: JSONRPCMessage,
     headers: Record<string, string> = {},
-  ): Promise<JSONRPCMessage> {
+  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
     logger.info(
       `[MessageHandler] Processing message: ${JSON.stringify(message)}`,
     );
@@ -55,7 +61,7 @@ export class MessageHandler {
         logger.warn(
           `[MessageHandler] Received non-request message: ${JSON.stringify(message)}`,
         );
-        return message;
+        return { message, headers: {} };
       }
 
       const request = message as JSONRPCRequest;
@@ -69,7 +75,8 @@ export class MessageHandler {
       }
 
       // Forward all other requests directly
-      return await this.forwardRequest(request, headers);
+      const result = await this.forwardRequest(request, headers);
+      return { message: result.response, headers: result.headers };
     } catch (error) {
       const errorMessage = messageFromError(error);
       logger.error(
@@ -77,14 +84,17 @@ export class MessageHandler {
       );
 
       return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: "Internal error",
-          data: errorMessage,
-        },
-        id: "id" in message ? message.id : null,
-      } as JSONRPCError;
+        message: {
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: "Internal error",
+            data: errorMessage,
+          },
+          id: "id" in message ? message.id : null,
+        } as JSONRPCError,
+        headers: {},
+      };
     }
   }
 
@@ -94,7 +104,7 @@ export class MessageHandler {
   private async handleToolCall(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<JSONRPCMessage> {
+  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
     try {
       // Extract tool call information
       const params = request.params as { name: string; arguments?: unknown };
@@ -116,19 +126,24 @@ export class MessageHandler {
 
       if (requestResult.wasRejected) {
         return {
-          jsonrpc: "2.0",
-          error: {
-            code: -32001,
-            message:
-              requestResult.rejectionReason || "Request rejected by hook",
-            data: requestResult.rejectionResponse,
-          },
-          id: request.id,
-        } as JSONRPCError;
+          message: {
+            jsonrpc: "2.0",
+            error: {
+              code: -32001,
+              message:
+                requestResult.rejectionReason || "Request rejected by hook",
+              data: requestResult.rejectionResponse,
+            },
+            id: request.id,
+          } as JSONRPCError,
+          headers: {},
+        };
       }
 
       // Forward to target
-      const response = await this.forwardRequest(request, headers);
+      const forwardResult = await this.forwardRequest(request, headers);
+      const response = forwardResult.response;
+      const responseHeaders = forwardResult.headers;
 
       // Process response through hooks if successful
       if ("result" in response) {
@@ -141,35 +156,44 @@ export class MessageHandler {
 
         if (responseResult.wasRejected) {
           return {
-            jsonrpc: "2.0",
-            error: {
-              code: -32002,
-              message:
-                responseResult.rejectionReason || "Response rejected by hook",
-              data: responseResult.rejectionResponse,
-            },
-            id: request.id,
-          } as JSONRPCError;
+            message: {
+              jsonrpc: "2.0",
+              error: {
+                code: -32002,
+                message:
+                  responseResult.rejectionReason || "Response rejected by hook",
+                data: responseResult.rejectionResponse,
+              },
+              id: request.id,
+            } as JSONRPCError,
+            headers: responseHeaders,
+          };
         }
 
         // Return modified response
         return {
-          ...response,
-          result: responseResult.response as Record<string, unknown>,
+          message: {
+            ...response,
+            result: responseResult.response as Record<string, unknown>,
+          },
+          headers: responseHeaders,
         };
       }
 
-      return response;
+      return { message: response, headers: responseHeaders };
     } catch (error) {
       return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: `Error processing tool call: ${messageFromError(error)}`,
-          data: messageFromError(error),
-        },
-        id: request.id,
-      } as JSONRPCError;
+        message: {
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: `Error processing tool call: ${messageFromError(error)}`,
+            data: messageFromError(error),
+          },
+          id: request.id,
+        } as JSONRPCError,
+        headers: {},
+      };
     }
   }
 
@@ -179,7 +203,7 @@ export class MessageHandler {
   private async handleToolsList(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<JSONRPCMessage> {
+  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
     try {
       // Create tools list request
       const toolsListRequest: ToolsListRequest = {
@@ -199,19 +223,24 @@ export class MessageHandler {
 
       if (requestResult.wasRejected) {
         return {
-          jsonrpc: "2.0",
-          error: {
-            code: -32001,
-            message:
-              requestResult.rejectionReason || "Request rejected by hook",
-            data: requestResult.rejectionResponse,
-          },
-          id: request.id,
-        } as JSONRPCError;
+          message: {
+            jsonrpc: "2.0",
+            error: {
+              code: -32001,
+              message:
+                requestResult.rejectionReason || "Request rejected by hook",
+              data: requestResult.rejectionResponse,
+            },
+            id: request.id,
+          } as JSONRPCError,
+          headers: {},
+        };
       }
 
       // Forward to target
-      const response = await this.forwardRequest(request, headers);
+      const forwardResult = await this.forwardRequest(request, headers);
+      const response = forwardResult.response;
+      const responseHeaders = forwardResult.headers;
 
       // Process response through hooks if successful
       if ("result" in response) {
@@ -224,107 +253,252 @@ export class MessageHandler {
 
         if (responseResult.wasRejected) {
           return {
-            jsonrpc: "2.0",
-            error: {
-              code: -32002,
-              message:
-                responseResult.rejectionReason || "Response rejected by hook",
-              data: responseResult.rejectionResponse,
-            },
-            id: request.id,
-          } as JSONRPCError;
+            message: {
+              jsonrpc: "2.0",
+              error: {
+                code: -32002,
+                message:
+                  responseResult.rejectionReason || "Response rejected by hook",
+                data: responseResult.rejectionResponse,
+              },
+              id: request.id,
+            } as JSONRPCError,
+            headers: responseHeaders,
+          };
         }
 
         // Return modified response
         return {
-          ...response,
-          result: responseResult.response,
+          message: {
+            ...response,
+            result: responseResult.response,
+          },
+          headers: responseHeaders,
         };
       }
 
-      return response;
+      return { message: response, headers: responseHeaders };
     } catch (error) {
       return {
-        jsonrpc: "2.0",
-        error: {
-          code: -32603,
-          message: `Error processing tools list: ${messageFromError(error)}`,
-          data: messageFromError(error),
-        },
-        id: request.id,
-      } as JSONRPCError;
+        message: {
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: `Error processing tools list: ${messageFromError(error)}`,
+            data: messageFromError(error),
+          },
+          id: request.id,
+        } as JSONRPCError,
+        headers: {},
+      };
     }
+  }
+
+  /**
+   * Extract response headers excluding connection-specific ones
+   */
+  private extractResponseHeaders(headers: http.IncomingHttpHeaders): Record<string, string> {
+    const responseHeaders: Record<string, string> = {};
+    const excludeHeaders = ['connection', 'transfer-encoding', 'content-encoding', 'content-length'];
+    
+    Object.entries(headers).forEach(([key, value]) => {
+      if (!excludeHeaders.includes(key.toLowerCase()) && typeof value === 'string') {
+        responseHeaders[key] = value;
+      }
+    });
+    
+    return responseHeaders;
+  }
+
+  /**
+   * Handle SSE response by parsing events and extracting JSON data
+   */
+  private async handleSSEResponse(
+    res: http.IncomingMessage,
+    responseHeaders: Record<string, string>,
+  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+    return new Promise((resolve, reject) => {
+      let responseBody = '';
+      const sseParser = new SSEParser();
+      
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+      
+      res.on('end', () => {
+        logger.info(`[MessageHandler] SSE Response body: ${responseBody}`);
+        
+        // Parse SSE events
+        const events = sseParser.processChunk(responseBody);
+        const lastEvent = sseParser.flush();
+        if (lastEvent) events.push(lastEvent);
+        
+        // Find the first event with JSON data
+        for (const event of events) {
+          if (event.data) {
+            try {
+              const jsonResponse = JSON.parse(event.data) as JSONRPCMessage;
+              resolve({
+                response: jsonResponse as JSONRPCResponse | JSONRPCError,
+                headers: responseHeaders,
+              });
+              return;
+            } catch (e) {
+              // Not JSON, continue
+            }
+          }
+        }
+        
+        reject(new Error('No valid JSON data found in SSE response'));
+      });
+      
+      res.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
+  /**
+   * Handle JSON response by parsing and validating
+   */
+  private async handleJSONResponse(
+    res: http.IncomingMessage,
+    responseHeaders: Record<string, string>,
+    requestId: string | number,
+  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+    return new Promise((resolve, reject) => {
+      let responseBody = '';
+      res.setEncoding('utf8');
+      
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+      
+      res.on('end', () => {
+        logger.info(`[MessageHandler] Response body: ${responseBody}`);
+        
+        if (!res.statusCode || res.statusCode >= 400) {
+          reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
+          return;
+        }
+        
+        // Handle empty responses (e.g., from notifications)
+        if (!responseBody || responseBody.trim() === '') {
+          resolve({
+            response: {
+              jsonrpc: '2.0',
+              result: null,
+              id: requestId,
+            } as unknown as JSONRPCResponse,
+            headers: responseHeaders,
+          });
+          return;
+        }
+        
+        try {
+          const jsonResponse = JSON.parse(responseBody) as JSONRPCMessage;
+          resolve({
+            response: jsonResponse as JSONRPCResponse | JSONRPCError,
+            headers: responseHeaders,
+          });
+        } catch (error) {
+          reject(new Error(`Failed to parse JSON response: ${error}`));
+        }
+      });
+      
+      res.on('error', (error) => {
+        reject(error);
+      });
+    });
+  }
+
+  /**
+   * Make HTTP request with appropriate module
+   */
+  private makeHttpRequest(
+    options: http.RequestOptions,
+    targetUrlObj: URL,
+  ): http.ClientRequest {
+    const httpModule = targetUrlObj.protocol === 'https:' ? https : http;
+    return httpModule.request(options);
   }
 
   /**
    * Forward a request to the target server via HTTP
    */
-    private async forwardRequest(
-      request: JSONRPCRequest,
-      headers: Record<string, string>,
-    ): Promise<JSONRPCResponse | JSONRPCError> {
-      logger.info(
-        `[MessageHandler] Forwarding to ${this.targetUrl}: ${JSON.stringify(request)}`,
-      );
-      logger.info(`[MessageHandler] Forward headers: ${JSON.stringify(headers)}`);
-  
-      try {
-        const response = await fetch(this.targetUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...headers,
-          },
-          body: JSON.stringify(request),
-        });
-  
-        const responseText = await response.text();
-        logger.info(`[MessageHandler] Response status: ${response.status}`);
-        logger.info(`[MessageHandler] Response body: ${responseText}`);
-  
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${responseText}`);
-        }
-  
-        // Handle empty responses (e.g., from notifications)
-        if (!responseText || responseText.trim() === "") {
-          // Return a null response for notifications
-          return {
-            jsonrpc: "2.0",
-            result: null,
-            id: request.id,
-          } as unknown as JSONRPCResponse;
-        }
+  private async forwardRequest(
+    request: JSONRPCRequest,
+    headers: Record<string, string>,
+  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+    const fullTargetUrl = this.targetUrl + this.targetMcpPath;
+    logger.info(
+      `[MessageHandler] Forwarding to ${fullTargetUrl}: ${JSON.stringify(request)}`,
+    );
+    logger.info(`[MessageHandler] Forward headers: ${JSON.stringify(headers)}`);
 
-        // Check if response is SSE format
-        if (responseText.startsWith("event:")) {
-          // Parse SSE response
-          const lines = responseText.split("\n");
-          let jsonData = "";
+    return new Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }>((resolve, reject) => {
+      try {
+        const targetUrlObj = new URL(fullTargetUrl);
+        const requestBody = JSON.stringify(request);
+        
+        const options: http.RequestOptions = {
+          hostname: targetUrlObj.hostname,
+          port: targetUrlObj.port,
+          path: targetUrlObj.pathname + targetUrlObj.search,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            ...headers,
+            'Content-Length': Buffer.byteLength(requestBody),
+          },
+        };
+
+        const req = this.makeHttpRequest(options, targetUrlObj);
+        
+        req.on('response', async (res) => {
+          logger.info(`[MessageHandler] Response status: ${res.statusCode}`);
           
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              jsonData = line.substring(6); // Remove "data: " prefix
-              break;
+          // Extract response headers
+          const responseHeaders = this.extractResponseHeaders(res.headers);
+          logger.info(`[MessageHandler] Response headers: ${JSON.stringify(responseHeaders)}`);
+
+          // Check if this is an SSE response
+          const contentType = res.headers['content-type'] || '';
+          const isSSE = contentType.includes('text/event-stream');
+
+          try {
+            if (isSSE) {
+              const result = await this.handleSSEResponse(res, responseHeaders);
+              resolve(result);
+            } else {
+              const result = await this.handleJSONResponse(res, responseHeaders, request.id);
+              resolve(result);
             }
+          } catch (error) {
+            reject(error);
           }
-          
-          if (!jsonData) {
-            throw new Error("No data found in SSE response");
-          }
-          
-          const jsonResponse = JSON.parse(jsonData) as JSONRPCMessage;
-          return jsonResponse as JSONRPCResponse | JSONRPCError;
-        } else {
-          // Regular JSON response
-          const jsonResponse = JSON.parse(responseText) as JSONRPCMessage;
-          return jsonResponse as JSONRPCResponse | JSONRPCError;
-        }
+        });
+        
+        req.on('error', (error) => {
+          logger.error(`[MessageHandler] Request error: ${error}`);
+          reject(error);
+        });
+        
+        // Write request body
+        req.write(requestBody);
+        req.end();
+        
       } catch (error) {
-        logger.error(
-          `[MessageHandler] Forward error: ${messageFromError(error)}`,
-        );
-        return {
+        reject(error);
+      }
+    }).catch((error) => {
+      logger.error(
+        `[MessageHandler] Forward error: ${messageFromError(error)}`,
+      );
+      return {
+        response: {
           jsonrpc: "2.0",
           error: {
             code: -32603,
@@ -332,8 +506,10 @@ export class MessageHandler {
             data: messageFromError(error),
           },
           id: request.id,
-        } as JSONRPCError;
-      }
-    }
+        } as JSONRPCError,
+        headers: {},
+      };
+    });
+  }
 
 }

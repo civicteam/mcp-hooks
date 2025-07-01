@@ -42,3 +42,4 @@ export function getHookClients(config: Config): HookClient[] {
     });
   });
 }
+
