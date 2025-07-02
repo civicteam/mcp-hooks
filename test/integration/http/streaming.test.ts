@@ -5,12 +5,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createAuthenticatedClient,
   createUnauthenticatedClient,
-} from "./test-client";
-import { TEST_CONFIG } from "./test-config";
+} from "../test-client";
+import { TEST_CONFIG } from "../test-config";
 
 // Load test JWT token
 const TEST_JWT = readFileSync(
-  join(__dirname, "fixtures/jwt.txt"),
+  join(__dirname, "../fixtures/jwt.txt"),
   "utf-8",
 ).trim();
 

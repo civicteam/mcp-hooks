@@ -21,28 +21,52 @@ export class ExplainHook extends AbstractHook {
   }
 
   /**
-   * Process an incoming tool call request to strip the reason parameter
+   * Process an incoming tool call request to validate and strip the reason parameter
    */
   async processRequest(toolCall: ToolCall): Promise<HookResponse> {
     // Clone the tool call to avoid modifying the original
     const modifiedToolCall = { ...toolCall };
 
-    // If arguments is an object and has a 'reason' property, remove it
+    // Check if arguments exist and are an object
     if (
-      typeof modifiedToolCall.arguments === "object" &&
-      modifiedToolCall.arguments !== null &&
-      "reason" in modifiedToolCall.arguments
+      typeof modifiedToolCall.arguments !== "object" ||
+      modifiedToolCall.arguments === null
     ) {
-      // Log the reason before removing it
-      const reason = (modifiedToolCall.arguments as Record<string, unknown>)
-        .reason;
-      console.log(`[${toolCall.name}] Reason: ${reason}`);
-
-      // Clone arguments and remove the reason
-      const { reason: _, ...strippedArguments } =
-        modifiedToolCall.arguments as Record<string, unknown>;
-      modifiedToolCall.arguments = strippedArguments;
+      return {
+        response: "abort",
+        body: {
+          error: "Tool call must include arguments with a 'reason' parameter",
+          code: "MISSING_REASON",
+        },
+        reason: "Tool call must include arguments with a 'reason' parameter",
+      };
     }
+
+    const args = modifiedToolCall.arguments as Record<string, unknown>;
+
+    // Check if reason exists and is not empty
+    if (
+      !("reason" in args) ||
+      !args.reason ||
+      (typeof args.reason === "string" && args.reason.trim() === "")
+    ) {
+      return {
+        response: "abort",
+        body: {
+          error:
+            "Missing or empty 'reason' parameter. Please provide a justification for using this tool.",
+          code: "MISSING_REASON",
+        },
+        reason: "Missing or empty 'reason' parameter",
+      };
+    }
+
+    // Log the reason before removing it
+    console.log(`[${toolCall.name}] Reason: ${args.reason}`);
+
+    // Clone arguments and remove the reason
+    const { reason: _, ...strippedArguments } = args;
+    modifiedToolCall.arguments = strippedArguments;
 
     return {
       response: "continue",

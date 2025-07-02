@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createAuthenticatedClient,
   createUnauthenticatedClient,
-} from "./test-client";
-import { TEST_CONFIG } from "./test-config";
+} from "../test-client";
+import { TEST_CONFIG } from "../test-config";
 
 // Type for tool call results
 interface ToolResult {
@@ -118,8 +118,9 @@ describe("Ping Handling Tests", () => {
 
       // List tools to establish session
       const tools = await client.listTools();
-      expect(tools.tools).toHaveLength(2);
+      expect(tools.tools).toHaveLength(3);
       expect(tools.tools.map((t) => t.name)).toContain("echo");
+      expect(tools.tools.map((t) => t.name)).toContain("count");
       expect(tools.tools.map((t) => t.name)).toContain("trigger-ping");
 
       // Call the echo tool

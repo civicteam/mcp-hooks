@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createAuthenticatedClient,
   createUnauthenticatedClient,
-} from "./test-client";
-import { TEST_CONFIG } from "./test-config";
+} from "../test-client";
+import { TEST_CONFIG } from "../test-config";
 
 describe("Session Management Tests", () => {
   let client: Client | undefined;

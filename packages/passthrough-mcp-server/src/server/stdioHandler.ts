@@ -30,11 +30,30 @@ export async function createStdioServer(config: Config): Promise<{
     authHeaders.authorization = `Bearer ${config.authToken}`;
   }
 
+  // Store session ID from initialize response
+  let sessionId: string | undefined;
+
   // Set up message forwarding
   transport.onmessage = async (message: JSONRPCMessage) => {
     logger.info(`[StdioHandler] Received message: ${JSON.stringify(message)}`);
 
-    const result = await messageHandler.handle(message, authHeaders);
+    // Include session ID in headers if we have one
+    const headers = { ...authHeaders };
+    if (sessionId) {
+      headers["mcp-session-id"] = sessionId;
+    }
+
+    const result = await messageHandler.handle(message, headers);
+
+    // Extract session ID from initialize response
+    if (
+      "method" in message &&
+      message.method === "initialize" &&
+      result.headers?.["mcp-session-id"]
+    ) {
+      sessionId = result.headers["mcp-session-id"];
+      logger.info(`[StdioHandler] Stored session ID: ${sessionId}`);
+    }
 
     logger.info(
       `[StdioHandler] Sending response: ${JSON.stringify(result.message)}`,

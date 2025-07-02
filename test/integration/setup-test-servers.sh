@@ -29,7 +29,7 @@ check_port() {
 }
 
 echo "Checking port availability..."
-for port in 33000 33008 33100 34000 34008 34100; do
+for port in 33000 33007 33008 33100 34000 34008 34100 34200; do
     if ! check_port $port; then
         echo "Please free up port $port before running tests"
         exit 1
@@ -99,6 +99,10 @@ start_server "Auth target server (port 33008)" \
 start_server "Echo test server (port 33100)" \
     "cd test/integration/servers/echo && PORT=33100 npx tsx src/index.ts"
 
+# Explain hook server
+start_server "Explain hook server (port 33007)" \
+    "cd packages/explain-hook && PORT=33007 npx tsx src/index.ts"
+
 # Start passthrough servers
 echo -e "\n${YELLOW}Starting passthrough servers...${NC}"
 
@@ -113,6 +117,10 @@ start_server "Passthrough to auth (port 34008)" \
 # Passthrough to echo server
 start_server "Passthrough to echo (port 34100)" \
     "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33100 PORT=34100 npx tsx src/cli.ts"
+
+# Passthrough to fetchDocs with explain hook
+start_server "Passthrough with hooks to fetchDocs (port 34200)" \
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream HOOKS=http://localhost:33007 PORT=34200 npx tsx src/cli.ts"
 
 echo -e "\n${GREEN}All servers started successfully!${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"

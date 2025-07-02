@@ -1,7 +1,7 @@
 export const TEST_CONFIG = {
   targetServers: {
     withoutAuth: {
-      url: "http://localhost:33000/stream",
+      url: "http://localhost:33000",
       description: "Target MCP server without authentication",
     },
     withAuth: {
@@ -25,6 +25,10 @@ export const TEST_CONFIG = {
     echo: {
       url: "http://localhost:34100/mcp",
       description: "Passthrough server pointing to echo test server",
+    },
+    withHooks: {
+      url: "http://localhost:34200/mcp",
+      description: "Passthrough server with explain hook pointing to fetchDocs",
     },
   },
   auth: {

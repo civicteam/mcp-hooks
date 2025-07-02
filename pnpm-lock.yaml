@@ -173,9 +173,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.0
         version: 1.13.2
-      zod:
-        specifier: ^3.24.3
-        version: 3.25.67
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -184,7 +181,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(vitest@2.1.9(@types/node@20.19.2))
       tsx:
-        specifier: ^4.19.4
+        specifier: ^4.20.3
         version: 4.20.3
       typescript:
         specifier: ^5.2.2
@@ -277,6 +274,9 @@ importers:
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.2
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
