@@ -48,7 +48,6 @@ function getLogger(): Logger {
   return currentLogger;
 }
 
-
 /**
  * Convenience export for direct logging
  */

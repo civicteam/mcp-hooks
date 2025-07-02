@@ -8,13 +8,17 @@
 
 import type http from "node:http";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import type { JSONRPCMessage, JSONRPCRequest, JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  JSONRPCError,
+  JSONRPCMessage,
+  JSONRPCRequest,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../utils/config.js";
 import { messageFromError } from "../utils/error.js";
 import { logger } from "../utils/logger.js";
+import { formatSSEEvent, isSSERequest, parseSSERequest } from "../utils/sse.js";
 import { MessageHandler } from "./messageHandler.js";
 import { StreamingMessageHandler } from "./streamingMessageHandler.js";
-import { isSSERequest, parseSSERequest, formatSSEEvent } from "../utils/sse.js";
 
 export interface MCPHandlerOptions {
   config: Config;
@@ -22,10 +26,13 @@ export interface MCPHandlerOptions {
 }
 
 /**
- * Validate HTTP method and return early if not POST or GET
+ * Validate HTTP method and return early if not POST, GET, or HEAD
  */
-function validateHttpMethod(req: http.IncomingMessage, res: http.ServerResponse): boolean {
-  if (req.method !== "POST" && req.method !== "GET") {
+function validateHttpMethod(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): boolean {
+  if (req.method !== "POST" && req.method !== "GET" && req.method !== "HEAD") {
     res.writeHead(405, { "Content-Type": "text/plain" });
     res.end("Method Not Allowed");
     return false;
@@ -49,7 +56,10 @@ async function readRequestBody(req: http.IncomingMessage): Promise<string> {
  * Parse JSON-RPC message from request body
  * Handles both JSON and SSE formats
  */
-function parseJsonRpcMessage(body: string, contentType?: string): JSONRPCMessage | null {
+function parseJsonRpcMessage(
+  body: string,
+  contentType?: string,
+): JSONRPCMessage | null {
   try {
     // Check if this is an SSE request
     if (isSSERequest(contentType)) {
@@ -59,7 +69,7 @@ function parseJsonRpcMessage(body: string, contentType?: string): JSONRPCMessage
       }
       return JSON.parse(jsonData) as JSONRPCMessage;
     }
-    
+
     // Regular JSON parsing
     return JSON.parse(body) as JSONRPCMessage;
   } catch (error) {
@@ -87,16 +97,26 @@ function sendParseError(res: http.ServerResponse): void {
 /**
  * Extract headers to forward, excluding connection-specific ones
  */
-function extractForwardHeaders(headers: http.IncomingHttpHeaders): Record<string, string> {
+function extractForwardHeaders(
+  headers: http.IncomingHttpHeaders,
+): Record<string, string> {
   const forwardHeaders: Record<string, string> = {};
-  const excludeHeaders = ['host', 'content-length', 'connection', 'transfer-encoding'];
-  
+  const excludeHeaders = [
+    "host",
+    "content-length",
+    "connection",
+    "transfer-encoding",
+  ];
+
   for (const [header, value] of Object.entries(headers)) {
-    if (!excludeHeaders.includes(header.toLowerCase()) && typeof value === 'string') {
+    if (
+      !excludeHeaders.includes(header.toLowerCase()) &&
+      typeof value === "string"
+    ) {
       forwardHeaders[header] = value;
     }
   }
-  
+
   return forwardHeaders;
 }
 
@@ -113,8 +133,8 @@ function needsHookProcessing(message: JSONRPCMessage): boolean {
  * Check if client expects SSE response
  */
 function clientExpectsSSE(headers: http.IncomingHttpHeaders): boolean {
-  const accept = headers.accept || '';
-  return accept.includes('text/event-stream');
+  const accept = headers.accept || "";
+  return accept.includes("text/event-stream");
 }
 
 /**
@@ -132,12 +152,12 @@ function sendResponse(
     const responseHeaders: Record<string, string> = {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
       ...targetHeaders,
     };
-    
+
     res.writeHead(200, responseHeaders);
-    
+
     // Format response as SSE
     const sseEvent = formatSSEEvent({
       data: JSON.stringify(message),
@@ -151,7 +171,7 @@ function sendResponse(
       "Cache-Control": "no-cache",
       ...targetHeaders,
     };
-    
+
     res.writeHead(200, responseHeaders);
     res.end(JSON.stringify(message));
   }
@@ -182,15 +202,17 @@ function handleStreamError(
   logger.error(`[MCPHandler] Stream error: ${messageFromError(error)}`);
   if (!res.headersSent) {
     res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      jsonrpc: "2.0",
-      error: {
-        code: -32603,
-        message: "Stream error",
-        data: messageFromError(error),
-      },
-      id: requestId,
-    } as JSONRPCError));
+    res.end(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Stream error",
+          data: messageFromError(error),
+        },
+        id: requestId,
+      } as JSONRPCError),
+    );
   }
 }
 
@@ -215,13 +237,13 @@ async function handleWithStreaming(
       ...streamResult.headers,
     };
 
-    res.writeHead(200, responseHeaders);
+    res.writeHead(streamResult.statusCode, responseHeaders);
 
     // Pipe the stream directly to the response
     streamResult.stream.pipe(res);
-    
+
     // Handle stream errors
-    streamResult.stream.on('error', (error) => {
+    streamResult.stream.on("error", (error) => {
       handleStreamError(error, res, request.id);
     });
   } catch (error) {
@@ -277,10 +299,24 @@ export async function createMCPHandler(options: MCPHandlerOptions) {
         return;
       }
 
-      // Read request body
+      // Extract headers to forward
+      const forwardHeaders = extractForwardHeaders(req.headers);
+
+      // Handle GET and HEAD requests - no body to parse, forward directly
+      if (req.method === "GET" || req.method === "HEAD") {
+        // For GET/HEAD requests, we don't have a JSON-RPC message, just forward the request
+        if (req.method === "GET") {
+          await streamingHandler.forwardGetRequest(req, forwardHeaders, res);
+        } else {
+          await streamingHandler.forwardHeadRequest(req, forwardHeaders, res);
+        }
+        return;
+      }
+
+      // Handle POST requests - read and parse body
       const body = await readRequestBody(req);
       logger.info(`[MCPHandler] Request body: ${body}`);
-      const contentType = req.headers['content-type'];
+      const contentType = req.headers["content-type"];
       logger.info(`[MCPHandler] Content-Type: ${contentType}`);
 
       // Parse JSON-RPC message
@@ -292,15 +328,23 @@ export async function createMCPHandler(options: MCPHandlerOptions) {
       }
       logger.info(`[MCPHandler] Parsed message: ${JSON.stringify(message)}`);
 
-      // Extract headers to forward
-      const forwardHeaders = extractForwardHeaders(req.headers);
-
       // Route request based on whether it needs hook processing
       if (needsHookProcessing(message)) {
-        await handleWithHooks(message, forwardHeaders, messageHandler, req, res);
+        await handleWithHooks(
+          message,
+          forwardHeaders,
+          messageHandler,
+          req,
+          res,
+        );
       } else {
         const request = message as JSONRPCRequest;
-        await handleWithStreaming(request, forwardHeaders, streamingHandler, res);
+        await handleWithStreaming(
+          request,
+          forwardHeaders,
+          streamingHandler,
+          res,
+        );
       }
     } catch (error) {
       sendInternalError(res, error);

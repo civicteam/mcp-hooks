@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import cors from "cors";
 import express from "express";
+import testJwk from "../test/fixture/jwk.json" with { type: "json" };
 
 const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33008;
 
@@ -11,7 +12,19 @@ const app = express();
 app.use(cors());
 
 // Add auth middleware
-app.use(await auth());
+const authOptions =
+  process.env.TEST_MODE === "true"
+    ? {
+        jwks: { keys: [testJwk] },
+        clientId: "test-client-id",
+      }
+    : {};
+
+if (process.env.TEST_MODE === "true") {
+  console.log("Running in TEST_MODE - using test JWKS keys");
+}
+
+app.use(await auth(authOptions));
 
 // Create your MCP server
 async function getServer() {

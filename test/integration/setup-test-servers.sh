@@ -93,7 +93,7 @@ start_server "Non-auth target server (port 33000)" \
 
 # Authenticated target server (using whoami-server which has auth built-in)
 start_server "Auth target server (port 33008)" \
-    "cd packages/whoami-server && PORT=33008 npx tsx src/index.ts"
+    "cd packages/whoami-server && TEST_MODE=true PORT=33008 npx tsx src/index.ts"
 
 # Echo test server for streaming and ping testing
 start_server "Echo test server (port 33100)" \

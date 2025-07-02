@@ -9,16 +9,13 @@
     "dev:stdio": "tsx watch src/index.ts -- --stdio",
     "build": "tsc",
     "lint": "biome check --write .",
-    "lint:check": "biome check .",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "lint:check": "biome check ."
   },
   "dependencies": {
-    "@civic/auth-mcp": "^0.2.0",
+    "@civic/auth-mcp": "^0.2.2-alpha.0",
     "@modelcontextprotocol/sdk": "^1.13.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "zod": "^3.24.3"
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

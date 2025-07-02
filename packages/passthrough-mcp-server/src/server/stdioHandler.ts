@@ -36,7 +36,9 @@ export async function createStdioServer(config: Config): Promise<{
 
     const result = await messageHandler.handle(message, authHeaders);
 
-    logger.info(`[StdioHandler] Sending response: ${JSON.stringify(result.message)}`);
+    logger.info(
+      `[StdioHandler] Sending response: ${JSON.stringify(result.message)}`,
+    );
     // Note: stdio transport doesn't support custom headers, only the message
     if (result.message) {
       await transport.send(result.message);

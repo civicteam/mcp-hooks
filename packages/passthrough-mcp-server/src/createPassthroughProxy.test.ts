@@ -54,7 +54,6 @@ vi.mock("./utils/logger.js", () => ({
   },
 }));
 
-
 describe("createPassthroughProxy", () => {
   const mockConfig: Config = {
     transportType: "httpStream",
@@ -177,7 +176,6 @@ describe("createPassthroughProxy", () => {
     expect(mockHttpServer.close).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith("Server is not started");
   });
-
 
   it("should handle hooks configuration", async () => {
     const configWithHooks: Config = {

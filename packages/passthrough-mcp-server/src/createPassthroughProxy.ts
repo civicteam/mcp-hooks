@@ -12,7 +12,6 @@ import { createStdioServer } from "./server/stdioHandler.js";
 import type { Config } from "./utils/config.js";
 import { logger } from "./utils/logger.js";
 
-
 export type PassthroughProxyOptions = Config & {
   /**
    * Whether to start the server immediately after creation
@@ -94,8 +93,6 @@ export async function createPassthroughProxy(
 ): Promise<PassthroughProxy> {
   const { autoStart = true, ...config } = options;
 
-
-
   // For stdio transport, use the message handler
   if (config.transportType === "stdio") {
     const { transport, messageHandler } = await createStdioServer(config);
@@ -121,7 +118,6 @@ export async function createPassthroughProxy(
         logger.warn("Server is not started");
         return;
       }
-
 
       await transport.close();
       isStarted = false;
@@ -186,7 +182,6 @@ export async function createPassthroughProxy(
       logger.warn("Server is not started");
       return;
     }
-
 
     await new Promise<void>((resolve, reject) => {
       httpServer.close((err) => {

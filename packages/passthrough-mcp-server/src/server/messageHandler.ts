@@ -5,8 +5,7 @@
  * Handles JSON-RPC message forwarding to HTTP targets with hook processing.
  */
 
-import * as http from "node:http";
-import * as https from "node:https";
+import type * as http from "node:http";
 import { URL } from "node:url";
 import type {
   HookClient,
@@ -29,8 +28,9 @@ import {
 } from "../hooks/processor.js";
 import type { Config } from "../utils/config.js";
 import { messageFromError } from "../utils/error.js";
+import { extractResponseHeaders, makeHttpRequest } from "../utils/http.js";
 import { logger } from "../utils/logger.js";
-import { SSEParser, formatSSEEvent, type SSEEvent } from "../utils/sse.js";
+import { SSEParser } from "../utils/sse.js";
 
 export class MessageHandler {
   private hooks: HookClient[];
@@ -295,45 +295,32 @@ export class MessageHandler {
   }
 
   /**
-   * Extract response headers excluding connection-specific ones
-   */
-  private extractResponseHeaders(headers: http.IncomingHttpHeaders): Record<string, string> {
-    const responseHeaders: Record<string, string> = {};
-    const excludeHeaders = ['connection', 'transfer-encoding', 'content-encoding', 'content-length'];
-    
-    Object.entries(headers).forEach(([key, value]) => {
-      if (!excludeHeaders.includes(key.toLowerCase()) && typeof value === 'string') {
-        responseHeaders[key] = value;
-      }
-    });
-    
-    return responseHeaders;
-  }
-
-  /**
    * Handle SSE response by parsing events and extracting JSON data
    */
   private async handleSSEResponse(
     res: http.IncomingMessage,
     responseHeaders: Record<string, string>,
-  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+  ): Promise<{
+    response: JSONRPCResponse | JSONRPCError;
+    headers: Record<string, string>;
+  }> {
     return new Promise((resolve, reject) => {
-      let responseBody = '';
+      let responseBody = "";
       const sseParser = new SSEParser();
-      
-      res.setEncoding('utf8');
-      res.on('data', (chunk) => {
+
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
         responseBody += chunk;
       });
-      
-      res.on('end', () => {
+
+      res.on("end", () => {
         logger.info(`[MessageHandler] SSE Response body: ${responseBody}`);
-        
+
         // Parse SSE events
         const events = sseParser.processChunk(responseBody);
         const lastEvent = sseParser.flush();
         if (lastEvent) events.push(lastEvent);
-        
+
         // Find the first event with JSON data
         for (const event of events) {
           if (event.data) {
@@ -349,11 +336,11 @@ export class MessageHandler {
             }
           }
         }
-        
-        reject(new Error('No valid JSON data found in SSE response'));
+
+        reject(new Error("No valid JSON data found in SSE response"));
       });
-      
-      res.on('error', (error) => {
+
+      res.on("error", (error) => {
         reject(error);
       });
     });
@@ -366,28 +353,31 @@ export class MessageHandler {
     res: http.IncomingMessage,
     responseHeaders: Record<string, string>,
     requestId: string | number,
-  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+  ): Promise<{
+    response: JSONRPCResponse | JSONRPCError;
+    headers: Record<string, string>;
+  }> {
     return new Promise((resolve, reject) => {
-      let responseBody = '';
-      res.setEncoding('utf8');
-      
-      res.on('data', (chunk) => {
+      let responseBody = "";
+      res.setEncoding("utf8");
+
+      res.on("data", (chunk) => {
         responseBody += chunk;
       });
-      
-      res.on('end', () => {
+
+      res.on("end", () => {
         logger.info(`[MessageHandler] Response body: ${responseBody}`);
-        
+
         if (!res.statusCode || res.statusCode >= 400) {
           reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
           return;
         }
-        
+
         // Handle empty responses (e.g., from notifications)
-        if (!responseBody || responseBody.trim() === '') {
+        if (!responseBody || responseBody.trim() === "") {
           resolve({
             response: {
-              jsonrpc: '2.0',
+              jsonrpc: "2.0",
               result: null,
               id: requestId,
             } as unknown as JSONRPCResponse,
@@ -395,7 +385,7 @@ export class MessageHandler {
           });
           return;
         }
-        
+
         try {
           const jsonResponse = JSON.parse(responseBody) as JSONRPCMessage;
           resolve({
@@ -406,22 +396,11 @@ export class MessageHandler {
           reject(new Error(`Failed to parse JSON response: ${error}`));
         }
       });
-      
-      res.on('error', (error) => {
+
+      res.on("error", (error) => {
         reject(error);
       });
     });
-  }
-
-  /**
-   * Make HTTP request with appropriate module
-   */
-  private makeHttpRequest(
-    options: http.RequestOptions,
-    targetUrlObj: URL,
-  ): http.ClientRequest {
-    const httpModule = targetUrlObj.protocol === 'https:' ? https : http;
-    return httpModule.request(options);
   }
 
   /**
@@ -430,66 +409,77 @@ export class MessageHandler {
   private async forwardRequest(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }> {
+  ): Promise<{
+    response: JSONRPCResponse | JSONRPCError;
+    headers: Record<string, string>;
+  }> {
     const fullTargetUrl = this.targetUrl + this.targetMcpPath;
     logger.info(
       `[MessageHandler] Forwarding to ${fullTargetUrl}: ${JSON.stringify(request)}`,
     );
     logger.info(`[MessageHandler] Forward headers: ${JSON.stringify(headers)}`);
 
-    return new Promise<{ response: JSONRPCResponse | JSONRPCError; headers: Record<string, string> }>((resolve, reject) => {
+    return new Promise<{
+      response: JSONRPCResponse | JSONRPCError;
+      headers: Record<string, string>;
+    }>((resolve, reject) => {
       try {
         const targetUrlObj = new URL(fullTargetUrl);
         const requestBody = JSON.stringify(request);
-        
+
         const options: http.RequestOptions = {
           hostname: targetUrlObj.hostname,
           port: targetUrlObj.port,
           path: targetUrlObj.pathname + targetUrlObj.search,
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
             ...headers,
-            'Content-Length': Buffer.byteLength(requestBody),
+            "Content-Length": Buffer.byteLength(requestBody),
           },
         };
 
-        const req = this.makeHttpRequest(options, targetUrlObj);
-        
-        req.on('response', async (res) => {
+        const req = makeHttpRequest(options, targetUrlObj);
+
+        req.on("response", async (res) => {
           logger.info(`[MessageHandler] Response status: ${res.statusCode}`);
-          
+
           // Extract response headers
-          const responseHeaders = this.extractResponseHeaders(res.headers);
-          logger.info(`[MessageHandler] Response headers: ${JSON.stringify(responseHeaders)}`);
+          const responseHeaders = extractResponseHeaders(res.headers);
+          logger.info(
+            `[MessageHandler] Response headers: ${JSON.stringify(responseHeaders)}`,
+          );
 
           // Check if this is an SSE response
-          const contentType = res.headers['content-type'] || '';
-          const isSSE = contentType.includes('text/event-stream');
+          const contentType = res.headers["content-type"] || "";
+          const isSSE = contentType.includes("text/event-stream");
 
           try {
             if (isSSE) {
               const result = await this.handleSSEResponse(res, responseHeaders);
               resolve(result);
             } else {
-              const result = await this.handleJSONResponse(res, responseHeaders, request.id);
+              const result = await this.handleJSONResponse(
+                res,
+                responseHeaders,
+                request.id,
+              );
               resolve(result);
             }
           } catch (error) {
             reject(error);
           }
         });
-        
-        req.on('error', (error) => {
+
+        req.on("error", (error) => {
           logger.error(`[MessageHandler] Request error: ${error}`);
           reject(error);
         });
-        
+
         // Write request body
         req.write(requestBody);
         req.end();
-        
       } catch (error) {
         reject(error);
       }
@@ -511,5 +501,4 @@ export class MessageHandler {
       };
     });
   }
-
 }

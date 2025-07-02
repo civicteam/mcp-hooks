@@ -92,9 +92,6 @@ importers:
 
   packages/fetch-docs:
     dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.12.0
-        version: 1.13.2
       fastmcp:
         specifier: ^1.25.0
         version: 1.27.7
@@ -237,8 +234,8 @@ importers:
   packages/whoami-server:
     dependencies:
       '@civic/auth-mcp':
-        specifier: ^0.2.0
-        version: 0.2.1(@modelcontextprotocol/sdk@1.13.2)
+        specifier: ^0.2.2-alpha.0
+        version: 0.2.2-alpha.0(@modelcontextprotocol/sdk@1.13.2)(express@4.21.2)
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.0
         version: 1.13.2
@@ -248,9 +245,6 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.21.2
-      zod:
-        specifier: ^3.24.3
-        version: 3.25.67
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -279,16 +273,10 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.0
         version: 1.13.2
-      tsx:
-        specifier: ^4.20.3
-        version: 4.20.3
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.2
-      fastmcp:
-        specifier: ^1.27.7
-        version: 1.27.7
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -408,6 +396,16 @@ packages:
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.12.0
+
+  '@civic/auth-mcp@0.2.2-alpha.0':
+    resolution: {integrity: sha512-MsqIShwBANnxZ97oKkPGrsdX6ykZUx0aQ4r07y10xhexiFGBWUIi5hcJ9mGf0PtRyCjSASdnGwoYiHLuqyvlNw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.12.0
+      express: ^4.17.0 || ^5.0.0
+    peerDependenciesMeta:
+      express:
+        optional: true
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -1368,6 +1366,9 @@ packages:
   jose@5.10.0:
     resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
+  jose@6.0.11:
+    resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
+
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
@@ -2055,6 +2056,14 @@ snapshots:
       jose: 5.10.0
     transitivePeerDependencies:
       - supports-color
+
+  '@civic/auth-mcp@0.2.2-alpha.0(@modelcontextprotocol/sdk@1.13.2)(express@4.21.2)':
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.13.2
+      escape-html: 1.0.3
+      jose: 6.0.11
+    optionalDependencies:
+      express: 4.21.2
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
@@ -3002,6 +3011,8 @@ snapshots:
       '@pkgjs/parseargs': 0.11.0
 
   jose@5.10.0: {}
+
+  jose@6.0.11: {}
 
   json-schema-traverse@0.4.1: {}
 
