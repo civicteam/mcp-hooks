@@ -123,11 +123,20 @@ start_server "Passthrough with hooks to fetchDocs (port 34200)" \
     "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream HOOKS=http://localhost:33007 PORT=34200 npx tsx src/cli.ts"
 
 echo -e "\n${GREEN}All servers started successfully!${NC}"
-echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
-echo -e "\nYou can now run the integration tests in another terminal:"
-echo -e "${GREEN}cd test/integration && pnpm test${NC}"
 
-# Wait for interrupt
-while true; do
-    sleep 1
-done
+# Check if running in CI mode
+if [ "$CI" = "true" ] || [ "$1" = "--ci" ]; then
+    echo -e "CI mode: Servers running in background, script exiting"
+    echo -e "PIDs saved to: $PIDS_FILE"
+    # Let script end naturally - trap won't fire on normal exit
+else
+    # Interactive mode - wait for interrupt
+    echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
+    echo -e "\nYou can now run the integration tests in another terminal:"
+    echo -e "${GREEN}cd test/integration && pnpm test:integration${NC}"
+    
+    # Wait for interrupt
+    while true; do
+        sleep 1
+    done
+fi

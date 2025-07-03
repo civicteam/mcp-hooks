@@ -38,9 +38,9 @@ cd test/integration
 pnpm install
 
 # Run all tests
-pnpm test
+test:integration
 ```
-
+<
 ## Debugging
 
 To debug failing tests:
@@ -50,5 +50,5 @@ To debug failing tests:
 3. Use test isolation:
    ```bash
    cd test/integration
-   pnpm test auth.test.ts -t "specific test name"
+   pnpm test:integration auth.test.ts -t "specific test name"
    ```

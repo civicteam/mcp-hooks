@@ -2,9 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   test:
@@ -12,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x, 22.x, 24.x]
+        node-version: [24.x]
     
     steps:
       - name: Checkout code
@@ -36,7 +34,7 @@ jobs:
       - name: Run lint
         run: pnpm turbo run lint
       
-      - name: Run tests with coverage
+      - name: Run unit tests with coverage
         run: pnpm turbo run test -- --coverage --run
       
       - name: Upload coverage to Codecov
@@ -97,21 +95,17 @@ jobs:
       - name: Install Claude Code CLI
         run: pnpm install -g @anthropic-ai/claude-code
       
-      - name: Start fetch-docs server
+      - name: Start all test servers
         run: |
-          cd packages/fetch-docs
-          PORT=33003 pnpm dev &
-          echo "FETCH_DOCS_PID=$!" >> $GITHUB_ENV
-          sleep 5
-      
-      - name: Start simple-log-hook
+          ./test/integration/setup-test-servers.sh --ci
+          sleep 15
+
+      - name: Run Vitest integration tests
         run: |
-          cd packages/simple-log-hook
-          PORT=33006 pnpm dev &
-          echo "SIMPLE_LOG_PID=$!" >> $GITHUB_ENV
-          sleep 5
+          cd test/integration
+          pnpm test:integration
       
-      - name: Run integration test
+      - name: Run manual integration test
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -137,5 +131,24 @@ jobs:
       - name: Cleanup background processes
         if: always()
         run: |
-          if [ ! -z "$FETCH_DOCS_PID" ]; then kill $FETCH_DOCS_PID || true; fi
-          if [ ! -z "$SIMPLE_LOG_PID" ]; then kill $SIMPLE_LOG_PID || true; fi
+          # Use the PIDs file created by setup script
+          PIDS_FILE="/tmp/mcp-test-servers.pids"
+          
+          if [ -f $PIDS_FILE ]; then
+            echo "Cleaning up processes from PIDs file..."
+            while read pid; do
+              if ps -p $pid > /dev/null 2>&1; then
+                # Kill the process and all its children
+                pkill -P $pid 2>/dev/null || true
+                kill $pid 2>/dev/null || true
+                echo "Stopped process $pid and its children"
+              fi
+            done < $PIDS_FILE
+            rm $PIDS_FILE
+          fi
+          
+          # Also try to clean up any orphaned node processes on test ports
+          echo "Cleaning up any orphaned processes on test ports..."
+          for port in 33000 33007 33008 33100 34000 34008 34100 34200; do
+            lsof -ti:$port | xargs kill -9 2>/dev/null || true
+          done
