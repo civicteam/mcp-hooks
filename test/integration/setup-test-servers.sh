@@ -99,6 +99,10 @@ start_server "Auth target server (port 33008)" \
 start_server "Echo test server (port 33100)" \
     "cd test/integration/servers/echo && PORT=33100 npx tsx src/index.ts"
 
+# Simple Log hook server
+start_server "Simple Log hook server (port 33006)" \
+    "cd packages/simple-log-hook && PORT=33006 npx tsx src/index.ts"
+
 # Explain hook server
 start_server "Explain hook server (port 33007)" \
     "cd packages/explain-hook && PORT=33007 npx tsx src/index.ts"

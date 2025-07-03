@@ -100,17 +100,16 @@ jobs:
           ./test/integration/setup-test-servers.sh --ci
           sleep 15
 
-      - name: Run Vitest integration tests
+      - name: Run Integration tests
         run: |
           cd test/integration
           pnpm test:integration
       
-      - name: Run manual integration test
+      - name: Run E2E test with Claude
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cd test
-          chmod +x test.sh
           # Run test with timeout and capture output
           timeout 60 ./test.sh simple-log-passthrough.json > test-output.txt 2>&1 || true
           
