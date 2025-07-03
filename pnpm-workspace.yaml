@@ -1,2 +1,5 @@
 packages:
   - 'packages/*'
+  - 'test/integration'
+  - 'test/integration/servers/*'
+  - 'test/integration/hooks'

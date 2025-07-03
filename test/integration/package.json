@@ -1,0 +1,19 @@
+{
+  "name": "@civic/mcp-integration-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:integration": "vitest run"
+  },
+  "dependencies": {
+    "@civic/auth-mcp": "^0.2.1",
+    "@modelcontextprotocol/sdk": "^1.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
+  }
+}

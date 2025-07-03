@@ -1,0 +1,19 @@
+{
+  "name": "@test/programmatic-passthrough-server",
+  "version": "1.0.0",
+  "description": "Test passthrough server with programmatic hooks for integration testing",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@civic/passthrough-mcp-server": "workspace:*",
+    "@test/integration-hooks": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

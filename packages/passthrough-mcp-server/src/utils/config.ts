@@ -26,6 +26,7 @@ export type BaseConfig =
 export interface TargetConfig {
   transportType: "sse" | "httpStream";
   url: string;
+  mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
 }
 
 export interface RemoteHookConfig {
@@ -46,6 +47,7 @@ export type Config = BaseConfig & {
     name: string;
     version: string;
   };
+  authToken?: string; // Optional auth token for stdio transport
 };
 
 /**
@@ -113,6 +115,7 @@ export function loadConfig(): Config {
   // Target configuration
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33000";
   const targetTransport = parseClientTransport(process.env);
+  const targetMcpPath = process.env.TARGET_SERVER_MCP_PATH; // Optional, defaults to /mcp
 
   // Hooks configuration
   const hookUrls = parseHookUrls(process.env.HOOKS);
@@ -126,6 +129,7 @@ export function loadConfig(): Config {
       target: {
         url: targetUrl,
         transportType: targetTransport,
+        ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
   } else {
@@ -136,6 +140,7 @@ export function loadConfig(): Config {
       target: {
         url: targetUrl,
         transportType: targetTransport,
+        ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
   }

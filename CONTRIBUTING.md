@@ -19,11 +19,18 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Run tests
+# Run unit tests
 pnpm test
 
 # Run linting
 pnpm lint
+
+# Run integration tests
+cd test/integration
+./setup-test-servers.sh 
+
+# In another terminal
+pnpm test:integration
 ```
 
 ## Guidelines

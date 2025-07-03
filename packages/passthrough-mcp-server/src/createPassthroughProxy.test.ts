@@ -2,30 +2,49 @@
  * Tests for createPassthroughProxy function
  */
 
-import type { FastMCP } from "fastmcp";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPassthroughProxy } from "./createPassthroughProxy.js";
-import type { PassthroughClient } from "./types/client.js";
+import { createAuthProxyServer } from "./server/authProxy.js";
+import { createMCPHandler } from "./server/mcpHandler.js";
+import { createStdioServer } from "./server/stdioHandler";
 import type { Config } from "./utils/config.js";
 
+// Create mocks that we can manipulate
+const mockHttpServer = {
+  listen: vi.fn((port: number, callback: () => void) => callback()),
+  close: vi.fn((callback?: () => void) => callback?.()),
+  on: vi.fn(),
+  off: vi.fn(),
+};
+
+const mockMcpServer = {
+  connect: vi.fn(),
+  close: vi.fn(),
+};
+
+const mockStdioTransport = {
+  start: vi.fn(),
+  close: vi.fn(),
+};
+
+const mockMCPHandler = vi.fn();
+
 // Mock the dependencies
-vi.mock("./server/server.js", () => ({
-  createServer: vi.fn(() => ({
-    start: vi.fn(),
-    stop: vi.fn(),
-    name: "test-server",
-  })),
-  discoverAndRegisterTools: vi.fn(),
+vi.mock("./server/mcpHandler.js", () => ({
+  createMCPHandler: vi.fn(() => mockMCPHandler),
 }));
 
-vi.mock("./server/transport.js", () => ({
-  getServerTransportConfig: vi.fn(() => ({
-    transportType: "httpStream",
-    httpStream: {
-      endpoint: "/stream",
-      port: 34000,
-    },
-  })),
+vi.mock("./server/authProxy.js", () => ({
+  createAuthProxyServer: vi.fn(() => mockHttpServer),
+}));
+
+vi.mock("./server/stdioHandler.js", () => ({
+  createStdioServer: vi.fn(() =>
+    Promise.resolve({
+      server: mockMcpServer,
+      transport: mockStdioTransport,
+    }),
+  ),
 }));
 
 vi.mock("./utils/logger.js", () => ({
@@ -53,132 +72,93 @@ describe("createPassthroughProxy", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Reset mock implementations
+    mockHttpServer.listen.mockClear();
+    mockHttpServer.close.mockClear();
+    mockHttpServer.on.mockClear();
+    mockHttpServer.off.mockClear();
+
+    mockMcpServer.connect.mockClear();
+    mockMcpServer.close.mockClear();
+    mockStdioTransport.start.mockClear();
+    mockStdioTransport.close.mockClear();
+
+    mockMCPHandler.mockClear();
+
+    // Reset implementations to default behavior
+    mockHttpServer.listen.mockImplementation(
+      (port: number, callback: () => void) => callback(),
+    );
+    mockHttpServer.close.mockImplementation((callback?: () => void) =>
+      callback?.(),
+    );
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
-  it("should create and auto-start the proxy by default", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
+  it("should create and auto-start the proxy by default for httpStream", async () => {
+    const proxy = await createPassthroughProxy(mockConfig);
 
-    const proxy = await createPassthroughProxy({
-      ...mockConfig,
+    expect(createMCPHandler).toHaveBeenCalledWith({
+      config: mockConfig,
+      sessionIdGenerator: expect.any(Function),
     });
-
-    expect(createServer).toHaveBeenCalledWith(mockConfig.serverInfo);
-    expect(mockServer.start).toHaveBeenCalled();
-    expect(proxy.server).toBe(mockServer);
+    expect(createAuthProxyServer).toHaveBeenCalledWith(
+      {
+        targetUrl: mockConfig.target.url,
+        mcpEndpoint: "/mcp",
+      },
+      mockMCPHandler,
+    );
+    expect(mockHttpServer.listen).toHaveBeenCalledWith(
+      34000,
+      expect.any(Function),
+    );
+    expect(proxy.server).toBe(mockHttpServer);
   });
 
   it("should not auto-start when autoStart is false", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
-    const proxy = await createPassthroughProxy({
+    await createPassthroughProxy({
       ...mockConfig,
       autoStart: false,
     });
 
-    expect(createServer).toHaveBeenCalled();
-    expect(mockServer.start).not.toHaveBeenCalled();
+    expect(mockHttpServer.listen).not.toHaveBeenCalled();
   });
 
   it("should allow manual start after creation", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
     const proxy = await createPassthroughProxy({
       ...mockConfig,
       autoStart: false,
     });
 
-    expect(mockServer.start).not.toHaveBeenCalled();
+    expect(mockHttpServer.listen).not.toHaveBeenCalled();
 
     await proxy.start();
-    expect(mockServer.start).toHaveBeenCalledTimes(1);
+    expect(mockHttpServer.listen).toHaveBeenCalledTimes(1);
 
-    // Calling start again should not start twice
+    // Calling start again should log a warning
+    vi.clearAllMocks();
     await proxy.start();
-    expect(mockServer.start).toHaveBeenCalledTimes(1);
+    expect(mockHttpServer.listen).not.toHaveBeenCalled();
   });
 
   it("should handle stop correctly", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
-    const proxy = await createPassthroughProxy({
-      ...mockConfig,
-    });
+    const proxy = await createPassthroughProxy(mockConfig);
 
     await proxy.stop();
-    expect(mockServer.stop).toHaveBeenCalledTimes(1);
+    expect(mockHttpServer.close).toHaveBeenCalledTimes(1);
 
-    // Calling stop again should not stop twice
+    // Calling stop again should log a warning
+    vi.clearAllMocks();
     await proxy.stop();
-    expect(mockServer.stop).toHaveBeenCalledTimes(1);
-  });
-
-  it("should use custom client factory when provided", async () => {
-    const { createServer, discoverAndRegisterTools } = await import(
-      "./server/server.js"
-    );
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
-    const mockClientFactory = vi.fn(
-      async (): Promise<PassthroughClient> => ({
-        listTools: vi.fn(),
-        callTool: vi.fn(),
-        close: vi.fn(),
-      }),
-    );
-
-    await createPassthroughProxy({
-      ...mockConfig,
-      clientFactory: mockClientFactory,
-    });
-
-    expect(discoverAndRegisterTools).toHaveBeenCalledWith(
-      expect.any(Object),
-      mockConfig,
-    );
+    expect(mockHttpServer.close).not.toHaveBeenCalled();
   });
 
   it("should handle hooks configuration", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
     const configWithHooks: Config = {
       ...mockConfig,
       hooks: [
@@ -187,24 +167,12 @@ describe("createPassthroughProxy", () => {
       ],
     };
 
-    const proxy = await createPassthroughProxy({
-      ...configWithHooks,
-    });
+    const proxy = await createPassthroughProxy(configWithHooks);
 
     expect(proxy.server).toBeDefined();
   });
 
-  it("should log appropriate messages for different transport types", async () => {
-    const { createServer } = await import("./server/server.js");
-    const { logger } = await import("./utils/logger.js");
-    const mockServer = {
-      start: vi.fn(),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
-
-    // Test stdio transport
+  it("should use MCP SDK for stdio transport", async () => {
     const stdioConfig: Config = {
       transportType: "stdio",
       target: {
@@ -213,28 +181,46 @@ describe("createPassthroughProxy", () => {
       },
     };
 
-    await createPassthroughProxy({
-      ...stdioConfig,
-    });
+    await createPassthroughProxy(stdioConfig);
 
-    expect(logger.info).toHaveBeenCalledWith(
-      expect.stringContaining("stdio transport"),
-    );
+    expect(createStdioServer).toHaveBeenCalledWith(stdioConfig);
+    expect(mockStdioTransport.start).toHaveBeenCalled();
   });
 
-  it("should handle errors during startup", async () => {
-    const { createServer } = await import("./server/server.js");
-    const mockServer = {
-      start: vi.fn().mockRejectedValue(new Error("Start failed")),
-      stop: vi.fn(),
-      name: "test-server",
-    };
-    (createServer as any).mockReturnValue(mockServer);
+  it("should handle errors during HTTP server startup", async () => {
+    // Mock the listen method to simulate an error
+    mockHttpServer.listen.mockImplementationOnce(
+      (port: number, callback: () => void) => {
+        // Find and call the error handler
+        const errorCall = mockHttpServer.on.mock.calls.find(
+          (call: any[]) => call[0] === "error",
+        );
+        if (errorCall) {
+          const errorHandler = errorCall[1];
+          errorHandler(new Error("EADDRINUSE"));
+        }
+      },
+    );
 
     await expect(
       createPassthroughProxy({
         ...mockConfig,
       }),
-    ).rejects.toThrow("Start failed");
+    ).rejects.toThrow("EADDRINUSE");
+  });
+
+  it("should reject SSE transport as unsupported", async () => {
+    const sseConfig: Config = {
+      ...mockConfig,
+      transportType: "sse",
+    };
+
+    await expect(
+      createPassthroughProxy({
+        ...sseConfig,
+      }),
+    ).rejects.toThrow(
+      "Transport type sse is not supported for HTTP. Only httpStream and stdio are supported.",
+    );
   });
 });

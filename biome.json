@@ -34,6 +34,9 @@
         "rules": {
           "suspicious": {
             "noExplicitAny": "off"
+          },
+          "complexity": {
+            "noForEach": "off"
           }
         }
       }
