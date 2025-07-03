@@ -61,26 +61,21 @@ async function createMcpServerForSession(sessionId: string) {
     },
   );
 
-  server.tool(
-      "count",
-      "Returns the call count",
-      {},
-      async () => {
-        const session = sessions.get(sessionId);
-        if (!session) {
-          throw new Error("Session not found");
-        }
+  server.tool("count", "Returns the call count", {}, async () => {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Call count: ${session.toolCallCount}`,
-            },
-          ],
-        };
-      },
-  );
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Call count: ${session.toolCallCount}`,
+        },
+      ],
+    };
+  });
 
   // Register a tool to trigger pings for testing
   server.tool(

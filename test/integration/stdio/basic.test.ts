@@ -22,8 +22,9 @@ describe("Stdio Passthrough Basic Tests", () => {
 
     const toolResult = await client.listTools();
 
-    expect(toolResult.tools).toHaveLength(2);
+    expect(toolResult.tools).toHaveLength(3);
     expect(toolResult.tools.map((t) => t.name)).toContain("echo");
+    expect(toolResult.tools.map((t) => t.name)).toContain("count");
     expect(toolResult.tools.map((t) => t.name)).toContain("trigger-ping");
   });
 
@@ -35,13 +36,15 @@ describe("Stdio Passthrough Basic Tests", () => {
 
     // Make multiple echo calls
     for (let i = 1; i <= 3; i++) {
-      const echoResult = await client.callTool("echo", { message: `test ${i}` }) as CallToolResult;
+      const echoResult = (await client.callTool("echo", {
+        message: `test ${i}`,
+      })) as CallToolResult;
       expect(echoResult.content[0].text).toBe(`Echo: test ${i}`);
     }
 
     // Call count tool to verify it tracked all 3 echo calls
     // This proves the same session is being used (counter would be 0 with new session)
-    const countResult = await client.callTool("count") as CallToolResult;
+    const countResult = (await client.callTool("count")) as CallToolResult;
     expect(countResult.content[0].type).toBe("text");
     expect(countResult.content[0].text).toBe("Call count: 3");
   });
@@ -54,7 +57,7 @@ describe("Stdio Passthrough Basic Tests", () => {
     });
 
     const echoToolResult = await client.listTools();
-    expect(echoToolResult.tools).toHaveLength(2);
+    expect(echoToolResult.tools).toHaveLength(3);
 
     await client.close();
 
@@ -103,21 +106,20 @@ describe("Stdio Passthrough Basic Tests", () => {
     await expect(client.listTools()).rejects.toThrow("Not connected");
   });
 
-  it("should call fetchdocs fetch tool", async () => {
-    // Connect to fetch-docs server via passthrough
+  it("should call tools through stdio transport", async () => {
+    // Connect to echo server via passthrough
     await client.connect({
-      TARGET_SERVER_URL: `${TEST_CONFIG.targetServers.withoutAuth.url}`,
-      TARGET_SERVER_MCP_PATH: "/stream",
+      TARGET_SERVER_URL: `${TEST_CONFIG.targetServers.echo.url}`,
       TARGET_SERVER_TRANSPORT: "httpStream",
     });
 
-    // Call the fetch tool with a test URL
-    const result = (await client.callTool("fetch", {
-      url: "https://example.com",
+    // Call the echo tool with test data
+    const result = (await client.callTool("echo", {
+      message: "Testing stdio tool calls",
     })) as CallToolResult;
 
     expect(result.content).toHaveLength(1);
     expect(result.content[0].type).toBe("text");
-    expect(result.content[0].text).toContain("Example Domain");
+    expect(result.content[0].text).toBe("Echo: Testing stdio tool calls");
   });
 });

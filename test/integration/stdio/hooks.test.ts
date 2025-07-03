@@ -23,7 +23,7 @@ describe("Stdio Hooks Tests", () => {
     });
 
     const tools = await client.listTools();
-    
+
     // Verify explain hook added reason parameter to all tools
     for (const tool of tools.tools) {
       expect(tool.inputSchema).toBeDefined();
@@ -44,10 +44,11 @@ describe("Stdio Hooks Tests", () => {
     });
 
     // Call echo tool with reason - hook should allow it through
-    const result = await client.callTool("echo", { 
+    const result = (await client.callTool("echo", {
       message: "test with hooks",
-      reason: "GOAL: Testing stdio hooks, JUSTIFICATION: Need to verify hooks work in stdio mode, CHOICE: Using echo as it's simple"
-    }) as CallToolResult;
+      reason:
+        "GOAL: Testing stdio hooks, JUSTIFICATION: Need to verify hooks work in stdio mode, CHOICE: Using echo as it's simple",
+    })) as CallToolResult;
 
     expect(result.content).toHaveLength(1);
     expect(result.content[0].type).toBe("text");
@@ -64,9 +65,11 @@ describe("Stdio Hooks Tests", () => {
 
     // Try to call without reason - explain hook should handle this
     const shouldFail = client.callTool("echo", {
-      message: "test without reason"
+      message: "test without reason",
     });
 
-    await expect(shouldFail).rejects.toThrow("MCP error -32001: Missing or empty 'reason' parameter");
+    await expect(shouldFail).rejects.toThrow(
+      "MCP error -32001: Missing or empty 'reason' parameter",
+    );
   });
 });
