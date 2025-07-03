@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Proper handling of authorization flows for OAuth-enabled MCP servers
 - Type safety improvements throughout the codebase
 
+## [0.2.2] - 2025-06-26
+
+### Added
+- Added `processToolException` hook for handling callTool exceptions
+- Enhanced error handling capabilities in hook processing pipeline
+
+
 ## [0.2.0] - 2025-01-09
 
 ### Added
