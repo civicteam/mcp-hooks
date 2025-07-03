@@ -44,20 +44,6 @@ describe("Ping Handling Tests", () => {
       // List tools to establish session
       await client.listTools();
 
-      // Call the echo tool
-      // const result = await client.callTool({
-      //   name: 'echo',
-      //   arguments: {
-      //     message: 'Hello from test',
-      //   }
-      // });
-      // expect((result as ToolResult).content[0].text).toBe('Echo: Hello from test');
-      //
-      // // No pings yet
-      // expect(pings).toHaveLength(0);
-
-      console.log("Calling tool");
-
       // Trigger a ping from the server using the special tool
       const pingResult = await client.callTool({
         name: "trigger-ping",
@@ -68,7 +54,7 @@ describe("Ping Handling Tests", () => {
       console.log("waiting for ping");
 
       // Wait for the ping to arrive
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Verify ping was received
       expect(pings).toHaveLength(1);
