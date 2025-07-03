@@ -30,6 +30,10 @@ export const TEST_CONFIG = {
       url: "http://localhost:34200/mcp",
       description: "Passthrough server with explain hook pointing to fetchDocs",
     },
+    programmatic: {
+      url: "http://localhost:34101/mcp",
+      description: "Passthrough server with programmatic hooks for testing",
+    },
   },
   auth: {
     clientId: process.env.OAUTH_CLIENT_ID || "test-client-id",

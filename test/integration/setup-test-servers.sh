@@ -29,7 +29,7 @@ check_port() {
 }
 
 echo "Checking port availability..."
-for port in 33000 33007 33008 33100 34000 34008 34100 34200; do
+for port in 33000 33007 33008 33100 34000 34008 34100 34101 34200; do
     if ! check_port $port; then
         echo "Please free up port $port before running tests"
         exit 1
@@ -121,6 +121,10 @@ start_server "Passthrough to auth (port 34008)" \
 # Passthrough to echo server
 start_server "Passthrough to echo (port 34100)" \
     "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33100 PORT=34100 npx tsx src/cli.ts"
+
+# Programmatic passthrough to echo server (for hook testing)
+start_server "Programmatic passthrough to echo (port 34101)" \
+    "cd test/integration/servers/programmatic-passthrough && PORT=34101 TARGET_SERVER_URL=http://localhost:33100 npx tsx src/index.ts"
 
 # Passthrough to fetchDocs with explain hook
 start_server "Passthrough with hooks to fetchDocs (port 34200)" \

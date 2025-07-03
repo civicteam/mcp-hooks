@@ -312,6 +312,22 @@ importers:
         specifier: ^4.19.4
         version: 4.20.3
 
+  test/integration/servers/programmatic-passthrough:
+    dependencies:
+      '@civic/passthrough-mcp-server':
+        specifier: workspace:*
+        version: link:../../../../packages/passthrough-mcp-server
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.15.34
+      tsx:
+        specifier: ^4.19.2
+        version: 4.20.3
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
+
 packages:
 
   '@ampproject/remapping@2.3.0':
