@@ -6,7 +6,8 @@
       "type": "httpStream",
 
       "env": {
-        "TARGET_SERVER_URL": "http://localhost:33008/stream"
+        "TARGET_SERVER_URL": "http://localhost:33008",
+        "TARGET_SERVER_MCP_PATH": "/stream"
       }
     }
   }
