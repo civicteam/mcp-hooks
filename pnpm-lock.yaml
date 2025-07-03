@@ -284,6 +284,22 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@20.19.2)
 
+  test/integration/hooks:
+    dependencies:
+      '@civic/passthrough-mcp-server':
+        specifier: workspace:*
+        version: link:../../../packages/passthrough-mcp-server
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.0.8
+        version: 1.13.2
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.15.34
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
+
   test/integration/servers/echo:
     dependencies:
       '@modelcontextprotocol/sdk':
@@ -317,6 +333,9 @@ importers:
       '@civic/passthrough-mcp-server':
         specifier: workspace:*
         version: link:../../../../packages/passthrough-mcp-server
+      '@test/integration-hooks':
+        specifier: workspace:*
+        version: link:../../hooks
     devDependencies:
       '@types/node':
         specifier: ^22.10.2

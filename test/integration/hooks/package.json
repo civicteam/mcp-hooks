@@ -1,0 +1,19 @@
+{
+  "name": "@test/integration-hooks",
+  "version": "1.0.0",
+  "description": "Shared hooks for integration testing",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    "./CallCounterHook": "./CallCounterHook.ts",
+    "./ReadSessionIdHook": "./ReadSessionIdHook.ts"
+  },
+  "dependencies": {
+    "@civic/passthrough-mcp-server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

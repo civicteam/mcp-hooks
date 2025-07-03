@@ -8,7 +8,8 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
-    "@civic/passthrough-mcp-server": "workspace:*"
+    "@civic/passthrough-mcp-server": "workspace:*",
+    "@test/integration-hooks": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
