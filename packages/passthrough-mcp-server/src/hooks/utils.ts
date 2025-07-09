@@ -4,7 +4,7 @@
  * Provides convenience functions for creating and managing hooks
  */
 
-import type { Hook, HookClient } from "@civic/hook-common";
+import type { Hook } from "@civic/hook-common";
 import { LocalHookClient, RemoteHookClient } from "@civic/hook-common";
 import type { HookDefinition, RemoteHookConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
@@ -17,12 +17,12 @@ function isHookInstance(hook: HookDefinition): hook is Hook {
 }
 
 /**
- * Create a HookClient from a HookDefinition
+ * Create a Hook from a HookDefinition
  *
  * @param definition - Hook definition (Hook instance or RemoteHookConfig)
- * @returns A HookClient instance
+ * @returns A Hook instance
  */
-export function createHookClient(definition: HookDefinition): HookClient {
+export function createHookClient(definition: HookDefinition): Hook {
   if (isHookInstance(definition)) {
     logger.debug(`Creating LocalHookClient for hook: ${definition.name}`);
     return new LocalHookClient(definition);
@@ -37,11 +37,11 @@ export function createHookClient(definition: HookDefinition): HookClient {
 }
 
 /**
- * Create multiple HookClients from an array of definitions
+ * Create multiple Hooks from an array of definitions
  *
  * @param definitions - Array of hook definitions
- * @returns Array of HookClient instances
+ * @returns Array of Hook instances
  */
-export function createHookClients(definitions: HookDefinition[]): HookClient[] {
+export function createHookClients(definitions: HookDefinition[]): Hook[] {
   return definitions.map(createHookClient);
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@civic/rate-limit-hook",
+  "name": "@civic/local-tools-hook",
   "version": "0.0.1",
   "private": true,
   "main": "./dist/index.js",
@@ -8,18 +8,24 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@civic/hook-common": "workspace:^",
     "@trpc/server": "^11.1.2",
-    "@civic/hook-common": "workspace:^"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.15.0",
     "@types/node": "^20.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
     "tsx": "^4.19.4",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^2.1.8"
   }
 }

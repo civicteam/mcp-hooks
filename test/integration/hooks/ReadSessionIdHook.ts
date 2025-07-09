@@ -1,9 +1,10 @@
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
+  type CallToolRequest,
+  type CallToolResult,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
 } from "@civic/passthrough-mcp-server";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 /**
  * Hook that reads the session ID from metadata and adds it to the response
@@ -13,37 +14,36 @@ export class ReadSessionIdHook extends AbstractHook {
     return "ReadSessionIdHook";
   }
 
-  async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    const callToolResult = response as CallToolResult;
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+    return {
+      resultType: "continue",
+      request: toolCall,
+    };
+  }
 
-    // Get session ID from metadata
-    const sessionId = originalToolCall.metadata?.sessionId;
+  async processResponse(
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    // Get session ID from _meta
+    const sessionId = (originalToolCall.params as any)._meta?.sessionId;
 
     // Add session ID to the response
-    if (response && typeof response === "object" && "content" in response) {
-      const modifiedResponse = {
-        ...callToolResult,
-        content: [
-          ...callToolResult.content,
-          {
-            type: "text",
-            text: sessionId
-              ? `[Hook: Session ID is ${sessionId}]`
-              : "[Hook: No session ID]",
-          },
-        ],
-      };
-      return {
-        response: "continue",
-        body: modifiedResponse,
-      };
-    }
+    const modifiedResponse: CallToolResult = {
+      ...response,
+      content: [
+        ...response.content,
+        {
+          type: "text" as const,
+          text: sessionId
+            ? `[Hook: Session ID is ${sessionId}]`
+            : "[Hook: No session ID]",
+        },
+      ],
+    };
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response: modifiedResponse,
     };
   }
 }

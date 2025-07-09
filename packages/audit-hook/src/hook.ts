@@ -4,7 +4,15 @@
  * Implements the Hook interface for audit logging
  */
 
-import type { Hook, HookResponse, ToolCall } from "@civic/hook-common";
+import type {
+  Hook,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+} from "@civic/hook-common";
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { AuditEntry, AuditLogger } from "./audit/types.js";
 
 export class AuditHook implements Hook {
@@ -20,22 +28,26 @@ export class AuditHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    const sessionId = toolCall.metadata?.sessionId || "unknown";
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
+    const sessionId =
+      (toolCall.params._meta as { sessionId?: string })?.sessionId || "unknown";
 
     // Create and log audit entry
     const auditEntry: AuditEntry = {
       timestamp: new Date().toISOString(),
       sessionId,
-      tool: toolCall.name,
+      tool: toolCall.params.name,
       arguments:
-        typeof toolCall.arguments === "object" && toolCall.arguments !== null
-          ? (toolCall.arguments as Record<string, unknown>)
-          : { value: toolCall.arguments },
+        typeof toolCall.params.arguments === "object" &&
+        toolCall.params.arguments !== null
+          ? (toolCall.params.arguments as Record<string, unknown>)
+          : { value: toolCall.params.arguments },
       metadata: {
         source: "request",
         transportType: "tRPC",
-        ...toolCall.metadata,
+        ...toolCall.params._meta,
       },
     };
 
@@ -44,8 +56,8 @@ export class AuditHook implements Hook {
 
     // Always allow the request to proceed without modification
     return {
-      response: "continue",
-      body: toolCall,
+      resultType: "continue",
+      request: toolCall,
     };
   }
 
@@ -53,16 +65,18 @@ export class AuditHook implements Hook {
    * Process a tool call response
    */
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    const sessionId = originalToolCall.metadata?.sessionId || "unknown";
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    const sessionId =
+      (originalToolCall.params._meta as { sessionId?: string })?.sessionId ||
+      "unknown";
 
     // Create and log audit entry
     const auditEntry: AuditEntry = {
       timestamp: new Date().toISOString(),
       sessionId,
-      tool: originalToolCall.name,
+      tool: originalToolCall.params.name,
       arguments: {}, // No arguments for response
       response, // Include the full response data in dedicated field
       metadata: {
@@ -82,8 +96,8 @@ export class AuditHook implements Hook {
 
     // Always allow the response to proceed without modification
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response: response,
     };
   }
 }

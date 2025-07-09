@@ -1,11 +1,16 @@
-import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListToolsResultSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
 import {
-  HookResponseSchema,
-  ToolCallSchema,
-  ToolsListRequestSchema,
+  ListToolsRequestHookResultSchema,
+  ListToolsResponseHookResultSchema,
+  ToolCallRequestHookResultSchema,
+  ToolCallResponseHookResultSchema,
 } from "./types.js";
 import type { Hook } from "./types.js";
 
@@ -24,8 +29,8 @@ const baseRouter = t.router({
    * Process an incoming tool call request
    */
   processRequest: t.procedure
-    .input(ToolCallSchema)
-    .output(HookResponseSchema)
+    .input(CallToolRequestSchema)
+    .output(ToolCallRequestHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processRequest not implemented");
     }),
@@ -37,10 +42,10 @@ const baseRouter = t.router({
     .input(
       z.object({
         response: z.any(),
-        originalToolCall: ToolCallSchema,
+        originalToolCall: CallToolRequestSchema,
       }),
     )
-    .output(HookResponseSchema)
+    .output(ToolCallResponseHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processResponse not implemented");
     }),
@@ -54,8 +59,8 @@ const toolsListRouter = t.router({
    * Process a tools/list request
    */
   processToolsList: t.procedure
-    .input(ToolsListRequestSchema)
-    .output(HookResponseSchema)
+    .input(ListToolsRequestSchema)
+    .output(ListToolsRequestHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processToolsList not implemented");
     }),
@@ -67,10 +72,10 @@ const toolsListRouter = t.router({
     .input(
       z.object({
         response: ListToolsResultSchema,
-        originalRequest: ToolsListRequestSchema,
+        originalRequest: ListToolsRequestSchema,
       }),
     )
-    .output(HookResponseSchema)
+    .output(ListToolsResponseHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processToolsListResponse not implemented");
     }),
@@ -82,10 +87,10 @@ const toolsListRouter = t.router({
     .input(
       z.object({
         error: z.any(),
-        originalToolCall: ToolCallSchema,
+        originalToolCall: CallToolRequestSchema,
       }),
     )
-    .output(HookResponseSchema)
+    .output(z.unknown())
     .mutation(async ({ input }) => {
       throw new Error("processToolException not implemented");
     }),
@@ -108,8 +113,8 @@ export function createHookRouter(hook: Hook) {
   // biome-ignore lint/suspicious/noExplicitAny: tRPC procedures need flexible typing
   const procedures: any = {
     processRequest: t.procedure
-      .input(ToolCallSchema)
-      .output(HookResponseSchema)
+      .input(CallToolRequestSchema)
+      .output(ToolCallRequestHookResultSchema)
       .mutation(async ({ input }) => {
         return await hook.processRequest(input);
       }),
@@ -118,10 +123,10 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: z.any(),
-          originalToolCall: ToolCallSchema,
+          originalToolCall: CallToolRequestSchema,
         }),
       )
-      .output(HookResponseSchema)
+      .output(ToolCallResponseHookResultSchema)
       .mutation(async ({ input }) => {
         return await hook.processResponse(
           input.response,
@@ -133,8 +138,8 @@ export function createHookRouter(hook: Hook) {
   // Add optional procedures if the hook supports them
   if (hook.processToolsList) {
     procedures.processToolsList = t.procedure
-      .input(ToolsListRequestSchema)
-      .output(HookResponseSchema)
+      .input(ListToolsRequestSchema)
+      .output(ListToolsRequestHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processToolsList) {
@@ -149,10 +154,10 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: ListToolsResultSchema,
-          originalRequest: ToolsListRequestSchema,
+          originalRequest: ListToolsRequestSchema,
         }),
       )
-      .output(HookResponseSchema)
+      .output(ListToolsResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processToolsListResponse) {
@@ -161,27 +166,6 @@ export function createHookRouter(hook: Hook) {
         return await hook.processToolsListResponse(
           input.response,
           input.originalRequest,
-        );
-      });
-  }
-
-  if (hook.processToolException) {
-    procedures.processToolException = t.procedure
-      .input(
-        z.object({
-          error: z.any(),
-          originalToolCall: ToolCallSchema,
-        }),
-      )
-      .output(HookResponseSchema)
-      .mutation(async ({ input }) => {
-        // This should never happen since we check for the method existence
-        if (!hook.processToolException) {
-          throw new Error("processToolException not implemented");
-        }
-        return await hook.processToolException(
-          input.error,
-          input.originalToolCall,
         );
       });
   }

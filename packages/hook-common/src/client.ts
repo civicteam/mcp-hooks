@@ -1,29 +1,19 @@
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
+import type {
+  CallToolRequest,
+  ListToolsRequest,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { HookRouter } from "./router.js";
-import type { HookResponse, ToolCall, ToolsListRequest } from "./types.js";
-
-/**
- * Hook client interface
- */
-export interface HookClient {
-  readonly name: string;
-  processRequest(toolCall: ToolCall): Promise<HookResponse>;
-  processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse>;
-  processToolsList?(request: ToolsListRequest): Promise<HookResponse>;
-  processToolsListResponse?(
-    response: ListToolsResult,
-    originalRequest: ToolsListRequest,
-  ): Promise<HookResponse>;
-  processToolException?(
-    error: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse>;
-}
+import type {
+  Hook,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+} from "./types.js";
 
 /**
  * Configuration for a remote hook client
@@ -36,12 +26,16 @@ export interface RemoteHookConfig {
 /**
  * Remote tRPC-based hook client
  */
-export class RemoteHookClient implements HookClient {
+export class RemoteHookClient implements Hook {
   private client: ReturnType<typeof createTRPCClient<HookRouter>>;
-  public readonly name: string;
+  private _name: string;
+
+  get name(): string {
+    return this._name;
+  }
 
   constructor(config: RemoteHookConfig) {
-    this.name = config.name;
+    this._name = config.name;
     this.client = createTRPCClient<HookRouter>({
       links: [
         httpBatchLink({
@@ -55,15 +49,17 @@ export class RemoteHookClient implements HookClient {
   /**
    * Process a tool call through the hook
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     try {
       return await this.client.processRequest.mutate(toolCall);
     } catch (error) {
       console.error(`Hook ${this.name} request processing failed:`, error);
       // On error, continue with unmodified request
       return {
-        response: "continue",
-        body: toolCall,
+        resultType: "continue",
+        request: toolCall,
       };
     }
   }
@@ -72,9 +68,9 @@ export class RemoteHookClient implements HookClient {
    * Process a response through the hook
    */
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
     try {
       return await this.client.processResponse.mutate({
         response,
@@ -84,8 +80,8 @@ export class RemoteHookClient implements HookClient {
       console.error(`Hook ${this.name} response processing failed:`, error);
       // On error, continue with unmodified response
       return {
-        response: "continue",
-        body: response,
+        resultType: "continue",
+        response,
       };
     }
   }
@@ -93,7 +89,9 @@ export class RemoteHookClient implements HookClient {
   /**
    * Process a tools/list request through the hook
    */
-  async processToolsList(request: ToolsListRequest): Promise<HookResponse> {
+  async processToolsList(
+    request: ListToolsRequest,
+  ): Promise<ListToolsRequestHookResult> {
     try {
       return await this.client.processToolsList.mutate(request);
     } catch (error) {
@@ -101,8 +99,8 @@ export class RemoteHookClient implements HookClient {
       if (error instanceof Error && error.message.includes("not implemented")) {
         // Hook doesn't support this method, continue with unmodified request
         return {
-          response: "continue",
-          body: request,
+          resultType: "continue",
+          request: request,
         };
       }
       console.error(
@@ -111,8 +109,8 @@ export class RemoteHookClient implements HookClient {
       );
       // On other errors, continue with unmodified request
       return {
-        response: "continue",
-        body: request,
+        resultType: "continue",
+        request: request,
       };
     }
   }
@@ -122,8 +120,8 @@ export class RemoteHookClient implements HookClient {
    */
   async processToolsListResponse(
     response: ListToolsResult,
-    originalRequest: ToolsListRequest,
-  ): Promise<HookResponse> {
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsResponseHookResult> {
     try {
       return await this.client.processToolsListResponse.mutate({
         response,
@@ -134,8 +132,8 @@ export class RemoteHookClient implements HookClient {
       if (error instanceof Error && error.message.includes("not implemented")) {
         // Hook doesn't support this method, continue with unmodified response
         return {
-          response: "continue",
-          body: response,
+          resultType: "continue",
+          response: response,
         };
       }
       console.error(
@@ -144,8 +142,8 @@ export class RemoteHookClient implements HookClient {
       );
       // On other errors, continue with unmodified response
       return {
-        response: "continue",
-        body: response,
+        resultType: "continue",
+        response: response,
       };
     }
   }
@@ -155,8 +153,8 @@ export class RemoteHookClient implements HookClient {
    */
   async processToolException(
     error: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
+    originalToolCall: CallToolRequest,
+  ): Promise<unknown> {
     try {
       return await this.client.processToolException.mutate({
         error,
@@ -170,7 +168,7 @@ export class RemoteHookClient implements HookClient {
       ) {
         // Hook doesn't support this method, continue (don't handle exception)
         return {
-          response: "continue",
+          resultType: "continue",
           body: null,
         };
       }
@@ -180,7 +178,7 @@ export class RemoteHookClient implements HookClient {
       );
       // On other errors, continue (don't handle exception)
       return {
-        response: "continue",
+        resultType: "continue",
         body: null,
       };
     }

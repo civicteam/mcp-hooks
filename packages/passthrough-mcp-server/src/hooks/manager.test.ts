@@ -108,14 +108,16 @@ describe("Hook Manager", () => {
 
     it("should create clients for different configurations", () => {
       const config1: Config = {
-        server: { port: 34000, transportType: "httpStream" },
-        client: { type: "stream", url: "http://localhost:3000" },
+        port: 34000,
+        transportType: "httpStream",
+        target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [{ url: "http://localhost:3001" }],
       };
 
       const config2: Config = {
-        server: { port: 34000, transportType: "httpStream" },
-        client: { type: "stream", url: "http://localhost:3000" },
+        port: 34000,
+        transportType: "httpStream",
+        target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [{ url: "http://localhost:3002" }],
       };
 

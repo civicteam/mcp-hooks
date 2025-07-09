@@ -7,7 +7,10 @@
  * the passthrough MCP server as a standalone application.
  */
 
-import { createPassthroughProxy } from "./createPassthroughProxy.js";
+import {
+  createHttpPassthroughProxy,
+  createStdioPassthroughProxy,
+} from "./createProxies.js";
 import { loadConfig } from "./utils/config.js";
 import { logger } from "./utils/logger.js";
 
@@ -19,11 +22,18 @@ async function main() {
     // Load configuration
     const config = loadConfig();
 
-    // Create and start the passthrough proxy
-    const proxy = await createPassthroughProxy({
-      ...config,
-      autoStart: true,
-    });
+    // Create and start the passthrough proxy based on transport type
+    const proxy =
+      config.transportType === "stdio"
+        ? await createStdioPassthroughProxy({
+            ...config,
+            autoStart: true,
+          })
+        : await createHttpPassthroughProxy({
+            ...config,
+            port: config.port || 3000,
+            autoStart: true,
+          });
 
     // Handle graceful shutdown
     const shutdown = async () => {

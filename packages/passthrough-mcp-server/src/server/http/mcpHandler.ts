@@ -13,11 +13,15 @@ import type {
   JSONRPCMessage,
   JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../utils/config.js";
-import { messageFromError } from "../utils/error.js";
-import { logger } from "../utils/logger.js";
-import { formatSSEEvent, isSSERequest, parseSSERequest } from "../utils/sse.js";
-import { MessageHandler } from "./messageHandler.js";
+import type { Config } from "../../utils/config.js";
+import { messageFromError } from "../../utils/error.js";
+import { logger } from "../../utils/logger.js";
+import {
+  formatSSEEvent,
+  isSSERequest,
+  parseSSERequest,
+} from "../../utils/sse.js";
+import { MessageHandler } from "../messageHandler.js";
 import { StreamingMessageHandler } from "./streamingMessageHandler.js";
 
 export interface MCPHandlerOptions {

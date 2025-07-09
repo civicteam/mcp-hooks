@@ -9,10 +9,12 @@ import { resolve } from "node:path";
 import process from "node:process";
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolsListRequest,
+  type ListToolsResponseHookResult,
 } from "@civic/hook-common";
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  ListToolsRequest,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 
 interface ToolDescription {
   server: string;
@@ -69,15 +71,15 @@ export class CustomDescriptionHook extends AbstractHook {
    */
   async processToolsListResponse(
     response: ListToolsResult,
-    _originalRequest: ToolsListRequest,
-  ): Promise<HookResponse> {
+    _originalRequest: ListToolsRequest,
+  ): Promise<ListToolsResponseHookResult> {
     // Load config if not already loaded
     await this.loadConfig();
 
     if (!this.config) {
       return {
-        response: "continue",
-        body: response,
+        resultType: "continue",
+        response: response,
       };
     }
 
@@ -103,8 +105,8 @@ export class CustomDescriptionHook extends AbstractHook {
     };
 
     return {
-      response: "continue",
-      body: modifiedResponse,
+      resultType: "continue",
+      response: modifiedResponse,
     };
   }
 }

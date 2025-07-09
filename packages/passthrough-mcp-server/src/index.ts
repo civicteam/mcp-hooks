@@ -7,10 +7,26 @@
  * For CLI usage, see cli.ts
  */
 
-// Export the main factory function
-export { createPassthroughProxy } from "./createPassthroughProxy.js";
+// Export transport-specific factory functions
+export {
+  createStdioPassthroughProxy,
+  createHttpPassthroughProxy,
+  createPassthroughProxy,
+} from "./createProxies.js";
 
 // Export types
+export type {
+  PassthroughProxy,
+  StdioPassthroughProxy,
+  HttpPassthroughProxy,
+} from "./types.js";
+
+export type {
+  StdioProxyConfig,
+  HttpProxyConfig,
+} from "./createProxies.js";
+
+// Export config types
 export type {
   Config,
   TargetConfig,
@@ -19,27 +35,29 @@ export type {
   RemoteHookConfig,
 } from "./utils/config.js";
 
-export type {
-  PassthroughProxy,
-  PassthroughProxyOptions,
-} from "./createPassthroughProxy.js";
-
 // Export hook-related types and interfaces
 export type {
   Hook,
-  HookClient,
-  HookResponse,
-  ToolCall,
-  ToolsListRequest,
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
   LocalHookClient,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
 } from "@civic/hook-common";
 
-// Export AbstractHook as a value (not just a type)
 export { AbstractHook } from "@civic/hook-common";
 
-// Export the simplified hook API
-export { applyHooks } from "./hooks/apply.js";
-export type { HookType, HookResult, HookContext } from "./hooks/apply.js";
+// Export hook processor functions
+export {
+  processRequestThroughHooks,
+  processResponseThroughHooks,
+  processToolsListRequestThroughHooks,
+  processToolsListResponseThroughHooks,
+} from "./hooks/processor.js";
 
 // Export hook utilities
 export { getHookClients } from "./hooks/manager.js";

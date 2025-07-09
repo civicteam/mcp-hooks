@@ -1,55 +1,99 @@
+import type { CallToolRequest } from "@modelcontextprotocol/sdk/types";
 import {
+  CallToolRequestSchema,
+  type CallToolResult,
+  CallToolResultSchema,
+  type ListToolsRequest,
+  ListToolsRequestSchema,
   type ListToolsResult,
-  ToolSchema,
+  ListToolsResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-/**
- * Schema for tool call metadata
- */
-export const ToolCallMetadataSchema = z
-  .object({
-    sessionId: z.string(),
-    timestamp: z.string(),
-    source: z.string().optional(),
-  })
-  .passthrough();
+// Re-export MCP types for convenience
+export type {
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
+};
 
-/**
- * Schema for a tool call
- */
-export const ToolCallSchema = z.object({
-  name: z.string(),
-  arguments: z.unknown(),
-  metadata: ToolCallMetadataSchema.optional(),
-  toolDefinition: ToolSchema.optional(),
+// Abort the request or response, and return to the caller with the abort reason
+const HookAbortSchema = z.object({
+  resultType: z.literal("abort"),
+  reason: z.string(),
 });
 
-/**
- * Schema for tools list request
- */
-export const ToolsListRequestSchema = z.object({
-  method: z.literal("tools/list"),
-  metadata: ToolCallMetadataSchema.optional(),
-});
+export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: CallToolRequestSchema,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: CallToolResultSchema,
+    }),
+  ],
+);
 
-/**
- * Schema for hook response
- */
-export const HookResponseSchema = z.object({
-  response: z.enum(["continue", "abort"]),
-  body: z.unknown(),
-  reason: z.string().optional(),
-});
+export const ToolCallResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: CallToolResultSchema,
+    }),
+  ],
+);
 
-/**
- * Type definitions
- */
-export type ToolCall = z.infer<typeof ToolCallSchema>;
-export type ToolsListRequest = z.infer<typeof ToolsListRequestSchema>;
-export type HookResponse = z.infer<typeof HookResponseSchema>;
-export type ToolCallMetadata = z.infer<typeof ToolCallMetadataSchema>;
+export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: ListToolsRequestSchema,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListToolsResultSchema,
+    }),
+  ],
+);
 
+export const ListToolsResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: ListToolsResultSchema,
+    }),
+  ],
+);
+
+export type ToolCallRequestHookResult = z.infer<
+  typeof ToolCallRequestHookResultSchema
+>;
+export type ToolCallResponseHookResult = z.infer<
+  typeof ToolCallResponseHookResultSchema
+>;
+export type ListToolsRequestHookResult = z.infer<
+  typeof ListToolsRequestHookResultSchema
+>;
+export type ListToolsResponseHookResult = z.infer<
+  typeof ListToolsResponseHookResultSchema
+>;
 /**
  * Hook interface that all hooks must implement
  */
@@ -62,34 +106,28 @@ export interface Hook {
   /**
    * Process an incoming tool call request
    */
-  processRequest(toolCall: ToolCall): Promise<HookResponse>;
+  processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
 
   /**
    * Process a tool call response
    */
   processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse>;
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult>;
 
   /**
    * Process a tools/list request (optional)
    */
-  processToolsList?(request: ToolsListRequest): Promise<HookResponse>;
+  processToolsList?(
+    request: ListToolsRequest,
+  ): Promise<ListToolsRequestHookResult>;
 
   /**
    * Process a tools/list response (optional)
    */
   processToolsListResponse?(
     response: ListToolsResult,
-    originalRequest: ToolsListRequest,
-  ): Promise<HookResponse>;
-
-  /**
-   * Handle exceptions thrown during tool execution (optional)
-   */
-  processToolException?(
-    error: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse>;
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsResponseHookResult>;
 }

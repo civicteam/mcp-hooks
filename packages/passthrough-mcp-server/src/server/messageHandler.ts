@@ -8,9 +8,10 @@
 import type * as http from "node:http";
 import { URL } from "node:url";
 import type {
-  HookClient,
-  ToolCall,
-  ToolsListRequest,
+  CallToolRequest,
+  CallToolResult,
+  Hook,
+  ListToolsRequest,
 } from "@civic/hook-common";
 import type {
   JSONRPCError,
@@ -33,7 +34,7 @@ import { logger } from "../utils/logger.js";
 import { SSEParser } from "../utils/sse.js";
 
 export class MessageHandler {
-  private hooks: HookClient[];
+  private hooks: Hook[];
   private targetUrl: string;
   private targetMcpPath: string;
 
@@ -108,13 +109,16 @@ export class MessageHandler {
     try {
       // Extract tool call information
       const params = request.params as { name: string; arguments?: unknown };
-      const toolCall: ToolCall = {
-        name: params.name,
-        arguments: params.arguments || {},
-        metadata: {
-          sessionId: headers["mcp-session-id"] || "unknown",
-          timestamp: new Date().toISOString(),
-          source: "passthrough-server",
+      const toolCall: CallToolRequest = {
+        method: "tools/call",
+        params: {
+          name: params.name,
+          arguments: params.arguments || {},
+          _meta: {
+            sessionId: headers["mcp-session-id"] || "unknown",
+            timestamp: new Date().toISOString(),
+            source: "passthrough-server",
+          },
         },
       };
 
@@ -124,18 +128,29 @@ export class MessageHandler {
         this.hooks,
       );
 
-      if (requestResult.wasRejected) {
+      if (requestResult.resultType === "abort") {
         return {
           message: {
             jsonrpc: "2.0",
             error: {
               code: -32001,
-              message:
-                requestResult.rejectionReason || "Request rejected by hook",
-              data: requestResult.rejectionResponse,
+              message: requestResult.reason || "Request rejected by hook",
+              data: null,
             },
             id: request.id,
           } as JSONRPCError,
+          headers: {},
+        };
+      }
+
+      // Check if a hook provided a direct response
+      if (requestResult.resultType === "respond") {
+        return {
+          message: {
+            jsonrpc: "2.0",
+            id: request.id,
+            result: requestResult.response,
+          } as JSONRPCResponse,
           headers: {},
         };
       }
@@ -148,21 +163,20 @@ export class MessageHandler {
       // Process response through hooks if successful
       if ("result" in response) {
         const responseResult = await processResponseThroughHooks(
-          response.result,
-          requestResult.toolCall,
+          response.result as CallToolResult,
+          requestResult.request,
           this.hooks,
           requestResult.lastProcessedIndex,
         );
 
-        if (responseResult.wasRejected) {
+        if (responseResult.resultType === "abort") {
           return {
             message: {
               jsonrpc: "2.0",
               error: {
                 code: -32002,
-                message:
-                  responseResult.rejectionReason || "Response rejected by hook",
-                data: responseResult.rejectionResponse,
+                message: responseResult.reason || "Response rejected by hook",
+                data: null,
               },
               id: request.id,
             } as JSONRPCError,
@@ -174,7 +188,10 @@ export class MessageHandler {
         return {
           message: {
             ...response,
-            result: responseResult.response as Record<string, unknown>,
+            result:
+              responseResult.resultType === "continue"
+                ? responseResult.response
+                : response.result,
           },
           headers: responseHeaders,
         };
@@ -206,12 +223,14 @@ export class MessageHandler {
   ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
     try {
       // Create tools list request
-      const toolsListRequest: ToolsListRequest = {
+      const toolsListRequest: ListToolsRequest = {
         method: "tools/list",
-        metadata: {
-          sessionId: headers["mcp-session-id"] || "unknown",
-          timestamp: new Date().toISOString(),
-          source: "passthrough-server",
+        params: {
+          _meta: {
+            sessionId: headers["mcp-session-id"] || "unknown",
+            timestamp: new Date().toISOString(),
+            source: "passthrough-server",
+          },
         },
       };
 
@@ -221,15 +240,14 @@ export class MessageHandler {
         this.hooks,
       );
 
-      if (requestResult.wasRejected) {
+      if (requestResult.resultType === "abort") {
         return {
           message: {
             jsonrpc: "2.0",
             error: {
               code: -32001,
-              message:
-                requestResult.rejectionReason || "Request rejected by hook",
-              data: requestResult.rejectionResponse,
+              message: requestResult.reason || "Request rejected by hook",
+              data: null,
             },
             id: request.id,
           } as JSONRPCError,
@@ -246,20 +264,21 @@ export class MessageHandler {
       if ("result" in response) {
         const responseResult = await processToolsListResponseThroughHooks(
           response.result as ListToolsResult,
-          requestResult.request,
+          requestResult.resultType === "continue"
+            ? requestResult.request
+            : toolsListRequest,
           this.hooks,
           requestResult.lastProcessedIndex,
         );
 
-        if (responseResult.wasRejected) {
+        if (responseResult.resultType === "abort") {
           return {
             message: {
               jsonrpc: "2.0",
               error: {
                 code: -32002,
-                message:
-                  responseResult.rejectionReason || "Response rejected by hook",
-                data: responseResult.rejectionResponse,
+                message: responseResult.reason || "Response rejected by hook",
+                data: null,
               },
               id: request.id,
             } as JSONRPCError,
@@ -271,7 +290,10 @@ export class MessageHandler {
         return {
           message: {
             ...response,
-            result: responseResult.response,
+            result:
+              responseResult.resultType === "continue"
+                ? responseResult.response
+                : response.result,
           },
           headers: responseHeaders,
         };
