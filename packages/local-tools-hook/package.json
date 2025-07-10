@@ -1,9 +1,26 @@
 {
   "name": "@civic/local-tools-hook",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
+  "description": "A programmatic hook for adding local tools to passthrough MCP servers",
+  "keywords": ["mcp", "hooks", "local-tools", "passthrough", "middleware"],
+  "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/local-tools-hook",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/civicteam/mcp-hooks.git",
+    "directory": "packages/local-tools-hook"
+  },
+  "license": "MIT",
+  "author": "Civic Technologies, Inc.",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "CHANGELOG.md", "package.json"],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -12,7 +29,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "pnpm run lint && pnpm run typecheck && CI=1 pnpm run test && pnpm run build"
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
@@ -26,5 +44,9 @@
     "tsx": "^4.19.4",
     "typescript": "^5.2.2",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-12
+
+### Changed
+- **BREAKING**: Updated to use @civic/hook-common v0.1.0 with new hook interface
+- **BREAKING**: Hooks now use MCP SDK types directly (CallToolRequest, CallToolResult)
+- **BREAKING**: Hook responses use discriminated unions with resultType field
+- **BREAKING**: Removed apply.ts module - processor functions are now exported directly
+- Simplified hook processing by removing unnecessary abstractions
+- Better TypeScript support with improved type exports
+
+### Added
+- Direct export of processor functions (processRequestThroughHooks, etc.)
+- Support for local programmatic hooks alongside remote HTTP hooks
+- Export of hook creation utilities for better integration
+
+### Fixed
+- Type inference issues with transport-specific proxy creation
+
+### Removed
+- apply.ts module and applyHooks function (use processor functions directly)
+- Unnecessary type wrappers around MCP SDK types
+
 ## [0.4.1] - 2025-07-04
 
 ### Fixed
