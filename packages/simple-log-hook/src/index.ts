@@ -8,10 +8,14 @@
 import * as process from "node:process";
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
   createHookRouter,
 } from "@civic/hook-common";
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 
 /**
@@ -25,18 +29,20 @@ class SimpleLogHook extends AbstractHook {
     return "SimpleLogHook";
   }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    console.log(`[REQUEST] ${toolCall.name}`, toolCall.arguments);
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
+    console.log(`[REQUEST] ${toolCall.params.name}`, toolCall.params.arguments);
 
     // Call parent implementation to continue with unmodified tool call
     return super.processRequest(toolCall);
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    console.log(`[RESPONSE] ${originalToolCall.name}`, response);
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    console.log(`[RESPONSE] ${originalToolCall.params.name}`, response);
 
     // Call parent implementation to continue with unmodified response
     return super.processResponse(response, originalToolCall);

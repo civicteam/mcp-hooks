@@ -1,9 +1,15 @@
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import type {
   Hook,
-  HookResponse,
-  ToolCall,
-  ToolsListRequest,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
 } from "./types.js";
 
 /**
@@ -20,10 +26,12 @@ export abstract class AbstractHook implements Hook {
    * Process an incoming tool call request.
    * Default implementation passes through without modification.
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     return {
-      response: "continue",
-      body: toolCall,
+      resultType: "continue",
+      request: toolCall,
     };
   }
 
@@ -32,12 +40,12 @@ export abstract class AbstractHook implements Hook {
    * Default implementation passes through without modification.
    */
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response,
     };
   }
 
@@ -45,10 +53,12 @@ export abstract class AbstractHook implements Hook {
    * Process a tools/list request.
    * Default implementation passes through without modification.
    */
-  async processToolsList?(request: ToolsListRequest): Promise<HookResponse> {
+  async processToolsList?(
+    request: ListToolsRequest,
+  ): Promise<ListToolsRequestHookResult> {
     return {
-      response: "continue",
-      body: request,
+      resultType: "continue",
+      request: request,
     };
   }
 
@@ -58,25 +68,11 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolsListResponse?(
     response: ListToolsResult,
-    originalRequest: ToolsListRequest,
-  ): Promise<HookResponse> {
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsResponseHookResult> {
     return {
-      response: "continue",
-      body: response,
-    };
-  }
-
-  /**
-   * Handle exceptions thrown during tool execution.
-   * Default implementation does not handle the exception (continues).
-   */
-  async processToolException?(
-    error: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    return {
-      response: "continue",
-      body: null,
+      resultType: "continue",
+      response: response,
     };
   }
 }

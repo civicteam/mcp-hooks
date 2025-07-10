@@ -7,9 +7,11 @@
 
 import {
   AbstractHook,
-  type HookResponse,
   type ToolCall,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
 } from "@civic/hook-common";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { createPassthroughProxy } from "../src/index.js";
 
 async function example1_basicUsage() {
@@ -43,11 +45,11 @@ async function example2_manualStart() {
 
   // Create without auto-starting
   const proxy = await createPassthroughProxy({
-    transportType: "sse",
+    transportType: "httpStream",
     port: 34001,
     target: {
       url: "http://localhost:33001",
-      transportType: "sse",
+      transportType: "httpStream",
     },
     autoStart: false,
   });
@@ -93,28 +95,30 @@ async function example4_withProgrammaticHooks() {
       return "LoggingHook";
     }
 
-    async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+    async processRequest(
+      toolCall: ToolCall,
+    ): Promise<ToolCallRequestHookResult> {
       console.log(
         `[${this.name}] Tool request: ${toolCall.name}`,
         toolCall.arguments,
       );
       return {
-        response: "continue",
-        body: toolCall,
+        resultType: "continue",
+        request: toolCall,
       };
     }
 
     async processResponse(
-      response: unknown,
+      response: CallToolResult,
       originalToolCall: ToolCall,
-    ): Promise<HookResponse> {
+    ): Promise<ToolCallResponseHookResult> {
       console.log(
         `[${this.name}] Tool response for ${originalToolCall.name}:`,
         response,
       );
       return {
-        response: "continue",
-        body: response,
+        resultType: "continue",
+        response: response,
       };
     }
   }
@@ -125,22 +129,23 @@ async function example4_withProgrammaticHooks() {
       return "ValidationHook";
     }
 
-    async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+    async processRequest(
+      toolCall: ToolCall,
+    ): Promise<ToolCallRequestHookResult> {
       // Block dangerous operations
       if (
         toolCall.name.toLowerCase().includes("delete") ||
         toolCall.name.toLowerCase().includes("remove")
       ) {
         return {
-          response: "abort",
-          body: null,
+          resultType: "abort",
           reason: "Dangerous operations are not allowed",
         };
       }
 
       return {
-        response: "continue",
-        body: toolCall,
+        resultType: "continue",
+        request: toolCall,
       };
     }
   }
@@ -167,47 +172,20 @@ async function example4_withProgrammaticHooks() {
   console.log("Proxy running with both programmatic and remote hooks");
 }
 
-async function example5_customClientFactory() {
-  console.log("\nExample 5: Custom Client Factory");
+async function example5_stdioProxy() {
+  console.log("\nExample 5: Stdio Proxy");
 
-  // Custom client factory that adds logging
-  const customClientFactory = async (clientConfig, clientId, clientInfo) => {
-    console.log(`Creating client ${clientId} for ${clientConfig.url}`);
-
-    // Import the default client creator
-    const { createTargetClient } = await import("../src/client/client.js");
-
-    const client = await createTargetClient(clientConfig, clientId, clientInfo);
-
-    // Wrap the client to add logging
-    return {
-      async listTools() {
-        console.log(`Client ${clientId}: Listing tools`);
-        const result = await client.listTools();
-        console.log(`Client ${clientId}: Found ${result.tools.length} tools`);
-        return result;
-      },
-
-      async callTool(params) {
-        console.log(`Client ${clientId}: Calling tool ${params.name}`);
-        const result = await client.callTool(params);
-        console.log(`Client ${clientId}: Tool call completed`);
-        return result;
-      },
-    };
-  };
-
+  // Example of stdio proxy (useful for direct command-line integration)
   const proxy = await createPassthroughProxy({
-    transportType: "httpStream",
-    port: 34003,
+    transportType: "stdio",
     target: {
       url: "http://localhost:33003",
       transportType: "httpStream",
     },
-    clientFactory: customClientFactory,
   });
 
-  console.log("Proxy running with custom client factory");
+  console.log("Stdio proxy is running!");
+  console.log("The proxy will forward stdio input/output to the HTTP target");
 }
 
 // Run examples based on command line argument

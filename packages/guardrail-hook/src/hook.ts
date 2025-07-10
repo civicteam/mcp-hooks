@@ -4,7 +4,15 @@
  * Implements the Hook interface for request validation and guardrails
  */
 
-import type { Hook, HookResponse, ToolCall } from "@civic/hook-common";
+import type {
+  Hook,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+} from "@civic/hook-common";
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 
 export class GuardrailHook implements Hook {
   // Example: Domain allowlist for fetch-docs MCP server
@@ -26,8 +34,10 @@ export class GuardrailHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    const { name, arguments: toolArgs } = toolCall;
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
+    const { name, arguments: toolArgs } = toolCall.params;
 
     // Check for disallowed tools or operations
     if (
@@ -35,9 +45,8 @@ export class GuardrailHook implements Hook {
       name.toLowerCase().includes("remove")
     ) {
       return {
-        response: "abort",
-        body: `Tool call to '${name}' was blocked by guardrails: destructive operations are not allowed`,
-        reason: "Destructive operation detected",
+        resultType: "abort",
+        reason: `Tool call to '${name}' was blocked by guardrails: destructive operations are not allowed`,
       };
     }
 
@@ -49,9 +58,8 @@ export class GuardrailHook implements Hook {
       argsStr.includes("token")
     ) {
       return {
-        response: "abort",
-        body: `Tool call to '${name}' was blocked by guardrails: sensitive data detected in arguments`,
-        reason: "Sensitive data detected",
+        resultType: "abort",
+        reason: `Tool call to '${name}' was blocked by guardrails: sensitive data detected in arguments`,
       };
     }
 
@@ -77,16 +85,14 @@ export class GuardrailHook implements Hook {
             !this.allowedDomains.some((domain) => url.hostname.endsWith(domain))
           ) {
             return {
-              response: "abort",
-              body: `Tool call to '${name}' was blocked by guardrails: URL domain '${url.hostname}' is not in the allowed domains list`,
-              reason: "Disallowed URL domain",
+              resultType: "abort",
+              reason: `Tool call to '${name}' was blocked by guardrails: URL domain '${url.hostname}' is not in the allowed domains list`,
             };
           }
         } catch (error) {
           return {
-            response: "abort",
-            body: `Tool call to '${name}' was blocked by guardrails: invalid URL provided`,
-            reason: "Invalid URL",
+            resultType: "abort",
+            reason: `Tool call to '${name}' was blocked by guardrails: invalid URL provided`,
           };
         }
       }
@@ -102,8 +108,8 @@ export class GuardrailHook implements Hook {
 
     // Return the tool call without modification
     return {
-      response: "continue",
-      body: toolCall,
+      resultType: "continue",
+      request: toolCall,
     };
   }
 
@@ -111,10 +117,10 @@ export class GuardrailHook implements Hook {
    * Process a tool call response
    */
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    const { name } = originalToolCall;
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    const { name } = originalToolCall.params;
 
     // Convert response to string for analysis if it's an object
     const responseStr =
@@ -135,9 +141,8 @@ export class GuardrailHook implements Hook {
     for (const pattern of sensitivePatterns) {
       if (pattern.test(responseStr)) {
         return {
-          response: "abort",
-          body: `Response from tool '${name}' was blocked by guardrails: sensitive data detected in response`,
-          reason: "Sensitive data in response",
+          resultType: "abort",
+          reason: `Response from tool '${name}' was blocked by guardrails: sensitive data detected in response`,
         };
       }
     }
@@ -146,23 +151,25 @@ export class GuardrailHook implements Hook {
     if (responseStr.length > 1048576) {
       // 1MB
       return {
-        response: "continue",
-        body: `Response from '${name}' was truncated: response size exceeded 1MB limit`,
-        reason: "Response too large",
+        resultType: "continue",
+        response: {
+          content: [
+            {
+              type: "text",
+              text: `Response from '${name}' was truncated: response size exceeded 1MB limit`,
+            },
+          ],
+        },
       };
     }
 
-    // For Image/File responses, you might want to validate content types or sizes
+    // For Image responses, you might want to validate content types or sizes
     if (typeof response === "object" && response && "content" in response) {
       const content = Array.isArray(response.content) ? response.content : [];
 
       // Check for image or file content
       for (const item of content) {
-        if (
-          typeof item === "object" &&
-          item &&
-          (item.type === "image" || item.type === "file")
-        ) {
+        if (typeof item === "object" && item && item.type === "image") {
           console.log(
             `Validated ${item.type} content in response from '${name}'`,
           );
@@ -173,8 +180,8 @@ export class GuardrailHook implements Hook {
 
     // Return response without modification
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response: response,
     };
   }
 }

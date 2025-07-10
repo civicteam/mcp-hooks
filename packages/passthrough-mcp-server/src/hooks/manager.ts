@@ -6,7 +6,6 @@
 
 import {
   type Hook,
-  type HookClient,
   LocalHookClient,
   RemoteHookClient,
 } from "@civic/hook-common";
@@ -27,7 +26,7 @@ function isHookInstance(hook: HookDefinition): hook is Hook {
 /**
  * Get or create hook clients for a configuration
  */
-export function getHookClients(config: Config): HookClient[] {
+export function getHookClients(config: Config): Hook[] {
   const hookDefinitions = config.hooks || [];
 
   return hookDefinitions.map((hookDef) => {

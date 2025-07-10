@@ -27,88 +27,109 @@ The hook-common package provides:
 
 ### Tool Calls
 
-A tool call represents a request to execute a specific tool with given arguments:
+Tool calls use the MCP SDK types directly:
 
 ```typescript
-interface ToolCall {
-  name: string;
-  arguments: unknown;
-  metadata?: {
-    sessionId: string;
-    timestamp: string;
-    source?: string;
+import type { CallToolRequest, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
+// Tool call request structure
+interface CallToolRequest {
+  method: "tools/call";
+  params: {
+    name: string;
+    arguments?: unknown;
+    _meta?: {
+      sessionId?: string;
+      // other metadata
+    };
   };
 }
 ```
 
-### Hook Responses
+### Hook Results
 
-Hooks can respond with either "continue" (allowing the tool call to proceed) or "abort" (preventing execution):
+Hooks return discriminated unions based on the result type:
 
 ```typescript
-interface HookResponse {
-  response: "continue" | "abort";
-  body: unknown;
-  reason?: string;
-}
+// For request processing
+type ToolCallRequestHookResult =
+  | { resultType: "continue"; request: CallToolRequest }
+  | { resultType: "abort"; reason: string; body?: unknown }
+  | { resultType: "respond"; response: CallToolResult };
+
+// For response processing
+type ToolCallResponseHookResult =
+  | { resultType: "continue"; response: CallToolResult }
+  | { resultType: "abort"; reason: string; body?: unknown };
 ```
 
-### Hook Client
+### Hook Interface
 
-The base class for implementing hooks:
+The interface for implementing hooks:
 
 ```typescript
-abstract class HookClient {
-  abstract name: string;
-  abstract processRequest(toolCall: ToolCall): Promise<HookResponse>;
-  abstract processResponse(
-    response: unknown,
-    originalToolCall: ToolCall
-  ): Promise<HookResponse>;
+interface Hook {
+  name: string;
+  processRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processResponse?(
+    response: CallToolResult,
+    originalToolCall: CallToolRequest
+  ): Promise<ToolCallResponseHookResult>;
+  processToolsList?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
+  processToolsListResponse?(
+    response: ListToolsResult,
+    originalRequest: ListToolsRequest
+  ): Promise<ListToolsResponseHookResult>;
 }
 ```
 
 ## Creating a Hook
 
-To create a custom hook, extend the `HookClient` class:
+To create a custom hook, extend the `AbstractHook` class:
 
 ```typescript
-import { HookClient, ToolCall, HookResponse } from '@civic/hook-common';
+import { AbstractHook } from '@civic/hook-common';
+import type { CallToolRequest, ToolCallRequestHookResult } from '@civic/hook-common';
 
-export class MyCustomHook extends HookClient {
-  name = 'my-custom-hook';
+export class MyCustomHook extends AbstractHook {
+  get name(): string {
+    return 'my-custom-hook';
+  }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Analyze the tool call
-    console.log(`Processing request for tool: ${toolCall.name}`);
+    console.log(`Processing request for tool: ${toolCall.params.name}`);
     
     // Optionally modify the tool call
     const modifiedToolCall = {
       ...toolCall,
-      arguments: {
-        ...toolCall.arguments,
-        injected: 'value'
+      params: {
+        ...toolCall.params,
+        arguments: {
+          ...toolCall.params.arguments,
+          injected: 'value'
+        }
       }
     };
 
     // Return response
     return {
-      response: 'continue',
-      body: modifiedToolCall
+      resultType: 'continue',
+      request: modifiedToolCall
     };
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall
-  ): Promise<HookResponse> {
+    response: CallToolResult,
+    originalToolCall: CallToolRequest
+  ): Promise<ToolCallResponseHookResult> {
     // Process the tool's response
-    console.log(`Processing response for tool: ${originalToolCall.name}`);
+    console.log(`Processing response for tool: ${originalToolCall.params.name}`);
     
     // Optionally modify the response
     return {
-      response: 'continue',
-      body: response
+      resultType: 'continue',
+      response: response
     };
   }
 }
@@ -149,29 +170,31 @@ const validatedResponse = HookResponseSchema.parse(hookResponse);
 ### Logging Hook
 
 ```typescript
-export class LoggingHook extends HookClient {
-  name = 'logging-hook';
+export class LoggingHook extends AbstractHook {
+  get name(): string {
+    return 'logging-hook';
+  }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    console.log(`[${new Date().toISOString()}] Tool called: ${toolCall.name}`);
-    console.log('Arguments:', JSON.stringify(toolCall.arguments, null, 2));
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+    console.log(`[${new Date().toISOString()}] Tool called: ${toolCall.params.name}`);
+    console.log('Arguments:', JSON.stringify(toolCall.params.arguments, null, 2));
     
     return {
-      response: 'continue',
-      body: toolCall
+      resultType: 'continue',
+      request: toolCall
     };
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall
-  ): Promise<HookResponse> {
-    console.log(`[${new Date().toISOString()}] Response from: ${originalToolCall.name}`);
+    response: CallToolResult,
+    originalToolCall: CallToolRequest
+  ): Promise<ToolCallResponseHookResult> {
+    console.log(`[${new Date().toISOString()}] Response from: ${originalToolCall.params.name}`);
     console.log('Response:', JSON.stringify(response, null, 2));
     
     return {
-      response: 'continue',
-      body: response
+      resultType: 'continue',
+      response: response
     };
   }
 }
@@ -180,32 +203,34 @@ export class LoggingHook extends HookClient {
 ### Validation Hook
 
 ```typescript
-export class ValidationHook extends HookClient {
-  name = 'validation-hook';
+export class ValidationHook extends AbstractHook {
+  get name(): string {
+    return 'validation-hook';
+  }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Validate tool calls
-    if (toolCall.name === 'dangerous-tool') {
+    if (toolCall.params.name === 'dangerous-tool') {
       return {
-        response: 'abort',
-        body: null,
-        reason: 'This tool is not allowed'
+        resultType: 'abort',
+        reason: 'This tool is not allowed',
+        body: null
       };
     }
     
     return {
-      response: 'continue',
-      body: toolCall
+      resultType: 'continue',
+      request: toolCall
     };
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall
-  ): Promise<HookResponse> {
+    response: CallToolResult,
+    originalToolCall: CallToolRequest
+  ): Promise<ToolCallResponseHookResult> {
     return {
-      response: 'continue',
-      body: response
+      resultType: 'continue',
+      response: response
     };
   }
 }
@@ -215,19 +240,22 @@ export class ValidationHook extends HookClient {
 
 ### Types
 
-- `ToolCall` - Represents a tool invocation
-- `HookResponse` - Response from a hook
-- `ToolCallMetadata` - Optional metadata for tool calls
+- `Hook` - Interface for implementing hooks
+- `ToolCallRequestHookResult` - Result type for request processing
+- `ToolCallResponseHookResult` - Result type for response processing
+- `ListToolsRequestHookResult` - Result type for tools list request processing
+- `ListToolsResponseHookResult` - Result type for tools list response processing
 
 ### Schemas
 
-- `ToolCallSchema` - Zod schema for ToolCall validation
-- `HookResponseSchema` - Zod schema for HookResponse validation
-- `ToolCallMetadataSchema` - Zod schema for metadata validation
+- `ToolCallRequestHookResultSchema` - Zod schema for request hook result validation
+- `ToolCallResponseHookResultSchema` - Zod schema for response hook result validation
+- `ListToolsRequestHookResultSchema` - Zod schema for tools list request result validation
+- `ListToolsResponseHookResultSchema` - Zod schema for tools list response result validation
 
 ### Classes
 
-- `HookClient` - Abstract base class for implementing hooks
+- `AbstractHook` - Abstract base class for implementing hooks with default pass-through implementations
 
 ## License
 

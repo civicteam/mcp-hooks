@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.13.0"
+    "@modelcontextprotocol/sdk": "^1.15.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

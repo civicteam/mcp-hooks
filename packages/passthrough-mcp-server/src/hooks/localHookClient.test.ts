@@ -1,9 +1,13 @@
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
+  LocalHookClient,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
 } from "@civic/hook-common";
-import { LocalHookClient } from "@civic/hook-common";
+import type {
+  CallToolRequest,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it } from "vitest";
 
 // Test hook that logs to an array
@@ -14,22 +18,24 @@ class TestLoggingHook extends AbstractHook {
     return "TestLoggingHook";
   }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    this.logs.push(`REQUEST: ${toolCall.name}`);
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
+    this.logs.push(`REQUEST: ${toolCall.params.name}`);
     return {
-      response: "continue",
-      body: toolCall,
+      resultType: "continue",
+      request: toolCall,
     };
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall,
-  ): Promise<HookResponse> {
-    this.logs.push(`RESPONSE: ${originalToolCall.name}`);
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    this.logs.push(`RESPONSE: ${originalToolCall.params.name}`);
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response,
     };
   }
 }
@@ -40,17 +46,18 @@ class TestValidationHook extends AbstractHook {
     return "TestValidationHook";
   }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    if (toolCall.name.includes("dangerous")) {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
+    if (toolCall.params.name.includes("dangerous")) {
       return {
-        response: "abort",
-        body: null,
+        resultType: "abort",
         reason: "Dangerous operation blocked",
       };
     }
     return {
-      response: "continue",
-      body: toolCall,
+      resultType: "continue",
+      request: toolCall,
     };
   }
 }
@@ -67,15 +74,18 @@ describe("LocalHookClient", () => {
     const hook = new TestLoggingHook();
     const client = new LocalHookClient(hook);
 
-    const toolCall: ToolCall = {
-      name: "fetch",
-      arguments: { url: "https://example.com" },
+    const toolCall: CallToolRequest = {
+      method: "tools/call",
+      params: {
+        name: "fetch",
+        arguments: { url: "https://example.com" },
+      },
     };
 
     const response = await client.processRequest(toolCall);
 
-    expect(response.response).toBe("continue");
-    expect(response.body).toEqual(toolCall);
+    expect(response.resultType).toBe("continue");
+    expect((response as any).request).toEqual(toolCall);
     expect(hook.logs).toContain("REQUEST: fetch");
   });
 
@@ -83,17 +93,27 @@ describe("LocalHookClient", () => {
     const hook = new TestLoggingHook();
     const client = new LocalHookClient(hook);
 
-    const toolCall: ToolCall = {
-      name: "fetch",
-      arguments: { url: "https://example.com" },
+    const toolCall: CallToolRequest = {
+      method: "tools/call",
+      params: {
+        name: "fetch",
+        arguments: { url: "https://example.com" },
+      },
     };
 
-    const toolResponse = { data: "test response" };
+    const toolResponse: CallToolResult = {
+      content: [
+        {
+          type: "text",
+          text: "test response",
+        },
+      ],
+    };
 
     const response = await client.processResponse(toolResponse, toolCall);
 
-    expect(response.response).toBe("continue");
-    expect(response.body).toEqual(toolResponse);
+    expect(response.resultType).toBe("continue");
+    expect((response as any).response).toEqual(toolResponse);
     expect(hook.logs).toContain("RESPONSE: fetch");
   });
 
@@ -101,15 +121,18 @@ describe("LocalHookClient", () => {
     const hook = new TestValidationHook();
     const client = new LocalHookClient(hook);
 
-    const toolCall: ToolCall = {
-      name: "dangerousOperation",
-      arguments: {},
+    const toolCall: CallToolRequest = {
+      method: "tools/call",
+      params: {
+        name: "dangerousOperation",
+        arguments: {},
+      },
     };
 
     const response = await client.processRequest(toolCall);
 
-    expect(response.response).toBe("abort");
-    expect(response.reason).toBe("Dangerous operation blocked");
+    expect(response.resultType).toBe("abort");
+    expect((response as any).reason).toBe("Dangerous operation blocked");
   });
 
   it("should handle hook errors gracefully", async () => {
@@ -119,7 +142,7 @@ describe("LocalHookClient", () => {
         return "ErrorHook";
       }
 
-      async processRequest(): Promise<HookResponse> {
+      async processRequest(): Promise<ToolCallRequestHookResult> {
         throw new Error("Hook error");
       }
     }
@@ -127,15 +150,18 @@ describe("LocalHookClient", () => {
     const hook = new ErrorHook();
     const client = new LocalHookClient(hook);
 
-    const toolCall: ToolCall = {
-      name: "test",
-      arguments: {},
+    const toolCall: CallToolRequest = {
+      method: "tools/call",
+      params: {
+        name: "test",
+        arguments: {},
+      },
     };
 
     // Should return continue response on error
     const response = await client.processRequest(toolCall);
 
-    expect(response.response).toBe("continue");
-    expect(response.body).toEqual(toolCall);
+    expect(response.resultType).toBe("continue");
+    expect((response as any).request).toEqual(toolCall);
   });
 });

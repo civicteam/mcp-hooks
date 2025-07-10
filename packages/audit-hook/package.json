@@ -22,6 +22,7 @@
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
     "@types/node": "^20.10.0",
     "@types/pg": "^8.10.9",
     "tsx": "^4.19.4",

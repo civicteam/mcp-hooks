@@ -11,6 +11,13 @@ import type {
 
 const scriptPath = join(__dirname, "../../../packages/passthrough-mcp-server");
 
+export type StdioTestServerType = "DEFAULT" | "WITH_LOCAL_TOOLS" | "WITH_LOCAL_TOOLS_AND_OVERRIDE";
+const commandArgs: Record<StdioTestServerType, string[]> = {
+  "DEFAULT": ["tsx", "src/cli.ts", "--stdio"],
+  "WITH_LOCAL_TOOLS": ["tsx", "stdio/test-server-with-local-tools.ts"],
+  "WITH_LOCAL_TOOLS_AND_OVERRIDE": ["tsx", "stdio/test-server-with-local-tools.ts", "echo"]
+}
+
 /**
  * Test client for stdio-based MCP server communication using the official SDK
  */
@@ -20,17 +27,34 @@ export class StdioTestClient {
 
   /**
    * Connect to the passthrough server via stdio
+   * For DEFAULT type, also accepts environment variables directly
    */
-  async connect(env: Record<string, string> = {}): Promise<void> {
+  async connect(envOrType: StdioTestServerType | Record<string, string> = "DEFAULT", env: Record<string, string> = {}): Promise<void> {
+    // Handle both old connect(env) and new connect(type, env) signatures
+    let type: StdioTestServerType;
+    let environment: Record<string, string>;
+    
+    if (typeof envOrType === "string") {
+      type = envOrType;
+      environment = env;
+    } else {
+      type = "DEFAULT";
+      environment = envOrType;
+    }
+    const args = commandArgs[type];
+    
+    // Determine the cwd based on the server type
+    const cwd = type === "DEFAULT" ? scriptPath : __dirname;
+    
     // Create transport specifying the server command
     this.transport = new StdioClientTransport({
       command: "npx",
-      args: ["tsx", "src/cli.ts", "--stdio"],
+      args: args,
       env: {
-        ...env,
+        ...environment,
         ...getDefaultEnvironment(), // ensure the PATH env var is set correctly
       },
-      cwd: scriptPath,
+      cwd,
     });
 
     // Initialize the client

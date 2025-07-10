@@ -7,10 +7,10 @@
  * - Preserves all headers including authorization
  */
 
-import http from "node:http";
-import https from "node:https";
+import * as http from "node:http";
+import * as https from "node:https";
 import { URL } from "node:url";
-import { logger } from "../utils/logger.js";
+import { logger } from "../../utils/logger.js";
 
 export interface ProxyOptions {
   targetUrl: string;

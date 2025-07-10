@@ -6,8 +6,8 @@
 
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
+  type CallToolRequest,
+  type ToolCallRequestHookResult,
 } from "@civic/hook-common";
 
 interface RateLimitInfo {
@@ -30,12 +30,14 @@ export class RateLimitHook extends AbstractHook {
     this.startCleanupTimer();
   }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     // Extract userId from metadata
     const userId = this.extractUserId(toolCall);
     if (!userId) {
       // No user ID, allow the request
-      return { response: "continue", body: toolCall };
+      return { resultType: "continue", request: toolCall };
     }
 
     const now = Date.now();
@@ -54,14 +56,8 @@ export class RateLimitHook extends AbstractHook {
     if (userLimits.count >= this.limitPerMinute) {
       const retryAfter = Math.ceil((userLimits.resetTime - now) / 1000); // seconds
       return {
-        response: "abort",
-        reason: "Rate limit exceeded",
-        body: {
-          error: "Too many requests",
-          retryAfter,
-          limit: this.limitPerMinute,
-          windowSeconds: 60,
-        },
+        resultType: "abort",
+        reason: `Rate limit exceeded. Too many requests. Retry after ${retryAfter} seconds. Limit: ${this.limitPerMinute} per minute`,
       };
     }
 
@@ -69,25 +65,20 @@ export class RateLimitHook extends AbstractHook {
     userLimits.count++;
     this.rateLimits.set(userId, userLimits);
 
-    return { response: "continue", body: toolCall };
+    return { resultType: "continue", request: toolCall };
   }
 
-  private extractUserId(toolCall: ToolCall): string | undefined {
+  private extractUserId(toolCall: CallToolRequest): string | undefined {
     // Try to extract userId from metadata
-    if (toolCall.metadata) {
+    const meta = toolCall.params._meta;
+    if (meta) {
       // Support different metadata structures
-      if (
-        typeof toolCall.metadata === "object" &&
-        "userId" in toolCall.metadata
-      ) {
-        return String(toolCall.metadata.userId);
+      if (typeof meta === "object" && "userId" in meta) {
+        return String(meta.userId);
       }
-      if (
-        typeof toolCall.metadata === "object" &&
-        "sessionId" in toolCall.metadata
-      ) {
+      if (typeof meta === "object" && "sessionId" in meta) {
         // Fallback to sessionId if no userId
-        return String(toolCall.metadata.sessionId);
+        return String(meta.sessionId);
       }
     }
     return undefined;

@@ -5,81 +5,63 @@
  */
 
 import type {
-  HookClient,
-  HookResponse,
-  ToolCall,
-  ToolsListRequest,
+  Hook,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
 } from "@civic/hook-common";
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../utils/logger.js";
-
-export interface ProcessRequestResult {
-  toolCall: ToolCall;
-  wasRejected: boolean;
-  rejectionResponse?: unknown;
-  rejectionReason?: string;
-  lastProcessedIndex: number;
-}
-
-export interface ProcessResponseResult {
-  response: unknown;
-  wasRejected: boolean;
-  rejectionResponse?: unknown;
-  rejectionReason?: string;
-  lastProcessedIndex: number;
-}
-
-export interface ProcessExceptionResult {
-  wasHandled: boolean;
-  response?: unknown;
-  reason?: string;
-  lastProcessedIndex: number;
-}
 
 /**
  * Process a tool call through a chain of hooks for request validation
  */
 export async function processRequestThroughHooks(
-  toolCall: ToolCall,
-  hooks: HookClient[],
-): Promise<ProcessRequestResult> {
-  let currentToolCall = toolCall;
-  let wasRejected = false;
-  let rejectionResponse: unknown = null;
-  let rejectionReason: string | undefined;
+  toolCall: CallToolRequest,
+  hooks: Hook[],
+): Promise<ToolCallRequestHookResult & { lastProcessedIndex: number }> {
+  let currentRequest = toolCall;
   let lastProcessedIndex = -1;
 
-  for (let i = 0; i < hooks.length && !wasRejected; i++) {
+  for (let i = 0; i < hooks.length; i++) {
     const hook = hooks[i];
 
     logger.info(
-      `Processing request through hook ${i + 1} (${hook.name}) for tool '${currentToolCall.name}'`,
+      `Processing request through hook ${i + 1} (${hook.name}) for tool '${currentRequest.params.name}'`,
     );
 
-    const hookResponse: HookResponse =
-      await hook.processRequest(currentToolCall);
+    const hookResult = await hook.processRequest(currentRequest);
     lastProcessedIndex = i;
 
-    if (hookResponse.response === "continue") {
-      currentToolCall = hookResponse.body as ToolCall;
+    if (hookResult.resultType === "continue") {
+      currentRequest = hookResult.request;
       logger.info(
-        `Hook ${i + 1} approved request for tool '${currentToolCall.name}'`,
+        `Hook ${i + 1} approved request for tool '${currentRequest.params.name}'`,
       );
+    } else if (hookResult.resultType === "respond") {
+      logger.info(
+        `Hook ${i + 1} handled request directly for tool '${currentRequest.params.name}'`,
+      );
+      return { ...hookResult, lastProcessedIndex };
     } else {
-      wasRejected = true;
-      rejectionResponse = hookResponse.body;
-      rejectionReason = hookResponse.reason;
+      // abort
       logger.info(
-        `Hook ${i + 1} rejected request: ${hookResponse.reason || "No reason provided"}`,
+        `Hook ${i + 1} rejected request: ${hookResult.reason || "No reason provided"}`,
       );
+      return { ...hookResult, lastProcessedIndex };
     }
   }
 
+  // All hooks passed, return continue
   return {
-    toolCall: currentToolCall,
-    wasRejected,
-    rejectionResponse,
-    rejectionReason,
+    resultType: "continue",
+    request: currentRequest,
     lastProcessedIndex,
   };
 }
@@ -88,53 +70,43 @@ export async function processRequestThroughHooks(
  * Process a response through a chain of hooks in reverse order
  */
 export async function processResponseThroughHooks(
-  response: unknown,
-  toolCall: ToolCall,
-  hooks: HookClient[],
+  response: CallToolResult,
+  toolCall: CallToolRequest,
+  hooks: Hook[],
   startIndex: number,
-): Promise<ProcessResponseResult> {
+): Promise<ToolCallResponseHookResult & { lastProcessedIndex: number }> {
   let currentResponse = response;
-  let wasRejected = false;
-  let rejectionResponse: unknown = null;
-  let rejectionReason: string | undefined;
   let lastProcessedIndex = startIndex;
 
   for (let i = startIndex; i >= 0; i--) {
     const hook = hooks[i];
 
     logger.info(
-      `Processing response through hook ${i + 1} (${hook.name}) for tool '${toolCall.name}'`,
+      `Processing response through hook ${i + 1} (${hook.name}) for tool '${toolCall.params.name}'`,
     );
 
-    const hookResponse: HookResponse = await hook.processResponse(
-      currentResponse,
-      toolCall,
-    );
+    const hookResult = await hook.processResponse(currentResponse, toolCall);
     lastProcessedIndex = i;
-    logger.info(`Response from hook: ${JSON.stringify(hookResponse, null, 2)}`);
+    logger.info(`Response from hook: ${JSON.stringify(hookResult, null, 2)}`);
 
-    if (hookResponse.response === "continue") {
-      currentResponse = hookResponse.body;
+    if (hookResult.resultType === "continue") {
+      currentResponse = hookResult.response;
       logger.info(
-        `Hook ${i + 1} approved response for tool '${toolCall.name}'`,
+        `Hook ${i + 1} approved response for tool '${toolCall.params.name}'`,
       );
     } else {
-      wasRejected = true;
-      rejectionResponse = hookResponse.body;
-      rejectionReason = hookResponse.reason;
+      // abort
       logger.info(
-        `Hook ${i + 1} rejected response: ${hookResponse.reason || "No reason provided"}`,
+        `Hook ${i + 1} rejected response: ${hookResult.reason || "No reason provided"}`,
       );
-      // For consistency, we'll let the caller handle formatting the rejection
-      break;
+      return { ...hookResult, lastProcessedIndex };
     }
   }
 
+  // All hooks passed, return continue
   return {
+    resultType: "continue",
     response: currentResponse,
-    wasRejected,
-    rejectionResponse,
-    rejectionReason,
     lastProcessedIndex,
   };
 }
@@ -143,16 +115,13 @@ export async function processResponseThroughHooks(
  * Process a tools/list request through a chain of hooks
  */
 export async function processToolsListRequestThroughHooks(
-  request: ToolsListRequest,
-  hooks: HookClient[],
-): Promise<ProcessRequestResult & { request: ToolsListRequest }> {
+  request: ListToolsRequest,
+  hooks: Hook[],
+): Promise<ListToolsRequestHookResult & { lastProcessedIndex: number }> {
   let currentRequest = request;
-  let wasRejected = false;
-  let rejectionResponse: unknown = null;
-  let rejectionReason: string | undefined;
   let lastProcessedIndex = -1;
 
-  for (let i = 0; i < hooks.length && !wasRejected; i++) {
+  for (let i = 0; i < hooks.length; i++) {
     const hook = hooks[i];
 
     // Check if hook supports tools/list processing
@@ -167,29 +136,27 @@ export async function processToolsListRequestThroughHooks(
       `Processing tools/list request through hook ${i + 1} (${hook.name})`,
     );
 
-    const hookResponse: HookResponse =
-      await hook.processToolsList(currentRequest);
+    const hookResult = await hook.processToolsList(currentRequest);
     lastProcessedIndex = i;
 
-    if (hookResponse.response === "continue") {
-      currentRequest = hookResponse.body as ToolsListRequest;
+    if (hookResult.resultType === "continue") {
+      currentRequest = hookResult.request;
       logger.info(`Hook ${i + 1} approved tools/list request`);
+    } else if (hookResult.resultType === "respond") {
+      return { ...hookResult, lastProcessedIndex };
     } else {
-      wasRejected = true;
-      rejectionResponse = hookResponse.body;
-      rejectionReason = hookResponse.reason;
+      // abort
       logger.info(
-        `Hook ${i + 1} rejected tools/list request: ${hookResponse.reason || "No reason provided"}`,
+        `Hook ${i + 1} rejected tools/list request: ${hookResult.reason || "No reason provided"}`,
       );
+      return { ...hookResult, lastProcessedIndex };
     }
   }
 
+  // All hooks passed, return continue
   return {
+    resultType: "continue",
     request: currentRequest,
-    toolCall: {} as ToolCall, // Not used for tools/list
-    wasRejected,
-    rejectionResponse,
-    rejectionReason,
     lastProcessedIndex,
   };
 }
@@ -199,14 +166,11 @@ export async function processToolsListRequestThroughHooks(
  */
 export async function processToolsListResponseThroughHooks(
   response: ListToolsResult,
-  request: ToolsListRequest,
-  hooks: HookClient[],
+  request: ListToolsRequest,
+  hooks: Hook[],
   startIndex: number,
-): Promise<ProcessResponseResult & { response: ListToolsResult }> {
+): Promise<ListToolsResponseHookResult & { lastProcessedIndex: number }> {
   let currentResponse = response;
-  let wasRejected = false;
-  let rejectionResponse: unknown = null;
-  let rejectionReason: string | undefined;
   let lastProcessedIndex = startIndex;
 
   for (let i = startIndex; i >= 0; i--) {
@@ -224,88 +188,28 @@ export async function processToolsListResponseThroughHooks(
       `Processing tools/list response through hook ${i + 1} (${hook.name})`,
     );
 
-    const hookResponse: HookResponse = await hook.processToolsListResponse(
+    const hookResult = await hook.processToolsListResponse(
       currentResponse,
       request,
     );
     lastProcessedIndex = i;
 
-    if (hookResponse.response === "continue") {
-      currentResponse = hookResponse.body as ListToolsResult;
+    if (hookResult.resultType === "continue") {
+      currentResponse = hookResult.response;
       logger.info(`Hook ${i + 1} approved tools/list response`);
     } else {
-      wasRejected = true;
-      rejectionResponse = hookResponse.body;
-      rejectionReason = hookResponse.reason;
+      // abort
       logger.info(
-        `Hook ${i + 1} rejected tools/list response: ${hookResponse.reason || "No reason provided"}`,
+        `Hook ${i + 1} rejected tools/list response: ${hookResult.reason || "No reason provided"}`,
       );
-      break;
+      return { ...hookResult, lastProcessedIndex };
     }
   }
 
+  // All hooks passed, return continue
   return {
+    resultType: "continue",
     response: currentResponse,
-    wasRejected,
-    rejectionResponse,
-    rejectionReason,
-    lastProcessedIndex,
-  };
-}
-
-/**
- * Process an exception through a chain of hooks
- */
-export async function processExceptionThroughHooks(
-  error: unknown,
-  toolCall: ToolCall,
-  hooks: HookClient[],
-): Promise<ProcessExceptionResult> {
-  let response: unknown = null;
-  let wasHandled = false;
-  let reason: string | undefined;
-  let lastProcessedIndex = -1;
-
-  for (let i = 0; i < hooks.length && !wasHandled; i++) {
-    const hook = hooks[i];
-
-    // Check if hook supports exception processing
-    if (!hook.processToolException) {
-      logger.info(
-        `Hook ${i + 1} (${hook.name}) does not support exception processing, skipping`,
-      );
-      continue;
-    }
-
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.info(
-      `Processing exception through hook ${i + 1} (${hook.name}) for tool '${toolCall.name}': ${errorMessage}`,
-    );
-
-    const hookResponse: HookResponse = await hook.processToolException(
-      error,
-      toolCall,
-    );
-    lastProcessedIndex = i;
-
-    if (hookResponse.response === "continue") {
-      logger.info(
-        `Hook ${i + 1} did not handle the exception for tool '${toolCall.name}'`,
-      );
-    } else {
-      wasHandled = true;
-      response = hookResponse.body;
-      reason = hookResponse.reason;
-      logger.info(
-        `Hook ${i + 1} handled exception for tool '${toolCall.name}': ${hookResponse.reason || "No reason provided"}`,
-      );
-    }
-  }
-
-  return {
-    wasHandled,
-    response,
-    reason,
     lastProcessedIndex,
   };
 }

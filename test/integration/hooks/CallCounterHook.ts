@@ -1,12 +1,13 @@
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
+  type CallToolRequest,
+  type CallToolResult,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
 } from "@civic/passthrough-mcp-server";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-type ToolCallWithHookData = {
-  _hookData: { sessionCount: number };
+type CallToolRequestWithHookData = CallToolRequest & {
+  _hookData?: { sessionCount: number };
 };
 
 /**
@@ -19,58 +20,51 @@ export class CallCounterHook extends AbstractHook {
     return "CallCounterHook";
   }
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
-    // Get session ID from metadata
-    const sessionId = toolCall.metadata?.sessionId || "default";
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+    // Get session ID from _meta
+    const sessionId = (toolCall.params as any)._meta?.sessionId || "default";
 
     // Increment count for this session
     const currentCount = (this.sessionCounts.get(sessionId) || 0) + 1;
     this.sessionCounts.set(sessionId, currentCount);
 
     console.log(
-      `[CallCounterHook] Session ${sessionId} - Request #${currentCount}: ${toolCall.name}`,
+      `[CallCounterHook] Session ${sessionId} - Request #${currentCount}: ${toolCall.params.name}`,
     );
 
     // Store the count in the tool call for use in processResponse
-    const modifiedToolCall = {
+    const modifiedToolCall: CallToolRequestWithHookData = {
       ...toolCall,
       _hookData: { sessionCount: currentCount },
     };
 
     return {
-      response: "continue",
-      body: modifiedToolCall,
+      resultType: "continue",
+      request: modifiedToolCall as CallToolRequest,
     };
   }
 
   async processResponse(
-    response: unknown,
-    originalToolCall: ToolCall & ToolCallWithHookData,
-  ): Promise<HookResponse> {
-    const callToolResult = response as CallToolResult;
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
     // Get the session count from the modified tool call
-    const sessionCount = originalToolCall._hookData?.sessionCount || 0;
+    const sessionCount = (originalToolCall as CallToolRequestWithHookData)._hookData?.sessionCount || 0;
 
     // Add request count to the response
-    if (response && typeof response === "object" && "content" in response) {
-      const modifiedResponse = {
-        ...callToolResult,
-        content: [
-          ...callToolResult.content,
-          {
-            type: "text",
-            text: `[Hook: Request count is ${sessionCount}]`,
-          },
-        ],
-      };
-      return {
-        response: "continue",
-        body: modifiedResponse,
-      };
-    }
+    const modifiedResponse: CallToolResult = {
+      ...response,
+      content: [
+        ...response.content,
+        {
+          type: "text" as const,
+          text: `[Hook: Request count is ${sessionCount}]`,
+        },
+      ],
+    };
     return {
-      response: "continue",
-      body: response,
+      resultType: "continue",
+      response: modifiedResponse,
     };
   }
 }

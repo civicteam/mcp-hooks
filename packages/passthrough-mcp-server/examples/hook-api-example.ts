@@ -7,90 +7,105 @@
 
 import {
   AbstractHook,
-  type HookClient,
-  type HookResponse,
-  type HookResult,
-  type ToolCall,
-  applyHooks,
+  type CallToolRequest,
+  type CallToolResult,
+  type Hook,
+  type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
   createHookClient,
   createHookClients,
+  processRequestThroughHooks,
+  processResponseThroughHooks,
 } from "@civic/passthrough-mcp-server";
 
 /**
  * Example: Create a validation hook using AbstractHook
  */
 class ValidationHook extends AbstractHook {
-  name = "validation-hook";
+  get name() {
+    return "validation-hook";
+  }
 
   private allowedTools = ["search", "calculate", "format"];
 
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     // Check if tool is allowed
-    if (!this.allowedTools.includes(toolCall.name)) {
+    if (!this.allowedTools.includes(toolCall.params.name)) {
       return {
-        response: "abort",
-        reason: `Tool '${toolCall.name}' is not allowed`,
-        body: { error: "Forbidden tool" },
+        resultType: "abort",
+        reason: `Tool '${toolCall.params.name}' is not allowed`,
       };
     }
 
     // All validations passed
-    return { response: "continue", body: toolCall };
+    return { resultType: "continue", request: toolCall };
+  }
+
+  async processResponse(
+    response: CallToolResult,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    return { resultType: "continue", response };
   }
 }
 
 /**
  * Example integration showing how to use the hook API
  */
-async function processToolCallWithHooks(toolCall: ToolCall): Promise<unknown> {
+async function processToolCallWithHooks(
+  toolCall: CallToolRequest,
+): Promise<unknown> {
   // Create hook clients from definitions
-  const hooks: HookClient[] = createHookClients([
+  const hooks: Hook[] = createHookClients([
     new ValidationHook(), // Local hook instance
     { url: "http://audit-service.example.com/hook" }, // Remote hook URL
   ]);
 
   // Apply request hooks
-  const requestResult: HookResult = await applyHooks(
-    "request",
-    hooks,
-    toolCall,
-  );
+  const requestResult = await processRequestThroughHooks(toolCall, hooks);
 
-  if (requestResult.rejected) {
-    console.error("Request rejected:", requestResult.rejectionReason);
+  if (requestResult.resultType === "abort") {
+    console.error("Request rejected:", requestResult.reason);
     return {
-      error: requestResult.rejectionReason,
+      error: requestResult.reason,
       status: "rejected",
     };
+  }
+
+  if (requestResult.resultType === "respond") {
+    // Hook provided a direct response
+    return requestResult.response;
   }
 
   // Process the tool call (this would be your actual tool execution)
-  const response = await executeToolCall(requestResult.data as ToolCall);
+  const response = await executeToolCall(requestResult.request);
 
   // Apply response hooks
-  const responseResult: HookResult = await applyHooks(
-    "response",
+  const responseResult = await processResponseThroughHooks(
+    response as CallToolResult,
+    requestResult.request,
     hooks,
-    response,
-    { toolCall: requestResult.data as ToolCall },
+    requestResult.lastProcessedIndex,
   );
 
-  if (responseResult.rejected) {
-    console.error("Response rejected:", responseResult.rejectionReason);
+  if (responseResult.resultType === "abort") {
+    console.error("Response rejected:", responseResult.reason);
     return {
-      error: responseResult.rejectionReason,
+      error: responseResult.reason,
       status: "rejected",
     };
   }
 
-  return responseResult.data;
+  return responseResult.response;
 }
 
 /**
  * Integration pattern for service classes
  */
 class ToolService {
-  private hooks: HookClient[];
+  private hooks: Hook[];
 
   constructor(
     hookDefinitions: Array<AbstractHook | { url: string; name?: string }>,
@@ -98,68 +113,97 @@ class ToolService {
     this.hooks = createHookClients(hookDefinitions);
   }
 
-  async execute(toolCall: ToolCall): Promise<unknown> {
+  async execute(toolCall: CallToolRequest): Promise<unknown> {
     // Apply request hooks
-    const { data, rejected, rejectionReason } = await applyHooks(
-      "request",
-      this.hooks,
+    const requestResult = await processRequestThroughHooks(
       toolCall,
+      this.hooks,
     );
 
-    if (rejected) {
-      throw new Error(`Request rejected: ${rejectionReason}`);
+    if (requestResult.resultType === "abort") {
+      throw new Error(`Request rejected: ${requestResult.reason}`);
+    }
+
+    if (requestResult.resultType === "respond") {
+      return requestResult.response;
     }
 
     // Execute the tool
-    const response = await this.executeInternal(data as ToolCall);
+    const response = await this.executeInternal(requestResult.request);
 
     // Apply response hooks
-    const responseResult = await applyHooks("response", this.hooks, response, {
-      toolCall: data as ToolCall,
-    });
+    const responseResult = await processResponseThroughHooks(
+      response as CallToolResult,
+      requestResult.request,
+      this.hooks,
+      requestResult.lastProcessedIndex,
+    );
 
-    if (responseResult.rejected) {
-      throw new Error(`Response rejected: ${responseResult.rejectionReason}`);
+    if (responseResult.resultType === "abort") {
+      throw new Error(`Response rejected: ${responseResult.reason}`);
     }
 
-    return responseResult.data;
+    return responseResult.response;
   }
 
-  private async executeInternal(toolCall: ToolCall): Promise<unknown> {
+  private async executeInternal(toolCall: CallToolRequest): Promise<unknown> {
     // Your actual tool execution logic here
-    console.log(`Executing tool: ${toolCall.name}`);
+    console.log(`Executing tool: ${toolCall.params.name}`);
     return {
-      result: `Executed ${toolCall.name}`,
-      timestamp: new Date().toISOString(),
+      content: [
+        {
+          type: "text",
+          text: `Executed ${toolCall.params.name}`,
+        },
+      ],
     };
   }
 }
 
 // Helper function to simulate tool execution
-async function executeToolCall(toolCall: ToolCall): Promise<unknown> {
-  console.log(`Executing tool: ${toolCall.name}`);
+async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
+  console.log(`Executing tool: ${toolCall.params.name}`);
 
   // Simulate different tool responses
-  switch (toolCall.name) {
+  switch (toolCall.params.name) {
     case "search":
       return {
-        results: [
-          { title: "Result 1", url: "https://example.com/1" },
-          { title: "Result 2", url: "https://example.com/2" },
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              results: [
+                { title: "Result 1", url: "https://example.com/1" },
+                { title: "Result 2", url: "https://example.com/2" },
+              ],
+              query: (toolCall.params.arguments as { query: string }).query,
+            }),
+          },
         ],
-        query: (toolCall.arguments as { query: string }).query,
       };
 
     case "calculate":
       return {
-        result: 42,
-        expression: (toolCall.arguments as { expression: string }).expression,
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              result: 42,
+              expression: (toolCall.params.arguments as { expression: string })
+                .expression,
+            }),
+          },
+        ],
       };
 
     default:
       return {
-        result: `Executed ${toolCall.name}`,
-        timestamp: new Date().toISOString(),
+        content: [
+          {
+            type: "text",
+            text: `Executed ${toolCall.params.name}`,
+          },
+        ],
       };
   }
 }
@@ -168,9 +212,12 @@ async function executeToolCall(toolCall: ToolCall): Promise<unknown> {
 async function main() {
   // Example 1: Direct usage
   console.log("=== Example 1: Direct Usage ===");
-  const searchCall: ToolCall = {
-    name: "search",
-    arguments: { query: "MCP hooks" },
+  const searchCall: CallToolRequest = {
+    method: "tools/call",
+    params: {
+      name: "search",
+      arguments: { query: "MCP hooks" },
+    },
   };
 
   const result1 = await processToolCallWithHooks(searchCall);
@@ -178,9 +225,12 @@ async function main() {
 
   // Example 2: Forbidden tool
   console.log("\n=== Example 2: Forbidden Tool ===");
-  const forbiddenCall: ToolCall = {
-    name: "delete",
-    arguments: { id: "123" },
+  const forbiddenCall: CallToolRequest = {
+    method: "tools/call",
+    params: {
+      name: "delete",
+      arguments: { id: "123" },
+    },
   };
 
   const result2 = await processToolCallWithHooks(forbiddenCall);
@@ -195,8 +245,11 @@ async function main() {
 
   try {
     const result3 = await service.execute({
-      name: "calculate",
-      arguments: { expression: "2 + 2" },
+      method: "tools/call",
+      params: {
+        name: "calculate",
+        arguments: { expression: "2 + 2" },
+      },
     });
     console.log("Calculation result:", result3);
   } catch (error) {

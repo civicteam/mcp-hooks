@@ -224,18 +224,23 @@ pnpm add @civic/hook-common @trpc/server
 
 3. **Implement your hook:**
 ```typescript
-import { AbstractHook, createHookRouter, HookResponse, ToolCall } from "@civic/hook-common";
+import { AbstractHook, createHookRouter, ToolCallRequestHookResult } from "@civic/hook-common";
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
+import type { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
 
 class MyHook extends AbstractHook {
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  get name(): string {
+    return "my-hook";
+  }
+
+  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Your logic here
-    console.log(`Processing: ${toolCall.name}`);
+    console.log(`Processing: ${toolCall.params.name}`);
     
     // Continue with the request
     return {
-      response: "continue",
-      body: toolCall
+      resultType: "continue",
+      request: toolCall
     };
   }
 }
@@ -270,7 +275,7 @@ They execute in order for requests and reverse order for responses.
 Hooks can return three types of responses:
 
 - **continue**: Proceed with the (possibly modified) request
-- **reject**: Stop processing and return an error
+- **abort**: Stop processing and return an error
 - **respond**: Return a response without calling the target server
 
 ### Environment Variables
@@ -314,10 +319,11 @@ All hooks implement this simple interface:
 
 ```typescript
 interface Hook {
-  processRequest?(toolCall: ToolCall): Promise<HookResponse>;
-  processResponse?(response: unknown, originalToolCall: ToolCall): Promise<HookResponse>;
-  processToolsList?(request: ToolsListRequest): Promise<HookResponse>;
-  processToolsListResponse?(response: ListToolsResult, originalRequest: ToolsListRequest): Promise<HookResponse>;
+  name: string;
+  processRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processResponse?(response: CallToolResult, originalToolCall: CallToolRequest): Promise<ToolCallResponseHookResult>;
+  processToolsList?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
+  processToolsListResponse?(response: ListToolsResult, originalRequest: ListToolsRequest): Promise<ListToolsResponseHookResult>;
 }
 ```
 

@@ -6,11 +6,14 @@
 
 import {
   AbstractHook,
-  type HookResponse,
-  type ToolCall,
-  type ToolsListRequest,
+  type ListToolsResponseHookResult,
+  type ToolCallRequestHookResult,
 } from "@civic/hook-common";
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolRequest,
+  ListToolsRequest,
+  ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 
 export class ExplainHook extends AbstractHook {
   /**
@@ -23,26 +26,24 @@ export class ExplainHook extends AbstractHook {
   /**
    * Process an incoming tool call request to validate and strip the reason parameter
    */
-  async processRequest(toolCall: ToolCall): Promise<HookResponse> {
+  async processRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     // Clone the tool call to avoid modifying the original
     const modifiedToolCall = { ...toolCall };
 
     // Check if arguments exist and are an object
     if (
-      typeof modifiedToolCall.arguments !== "object" ||
-      modifiedToolCall.arguments === null
+      typeof modifiedToolCall.params.arguments !== "object" ||
+      modifiedToolCall.params.arguments === null
     ) {
       return {
-        response: "abort",
-        body: {
-          error: "Tool call must include arguments with a 'reason' parameter",
-          code: "MISSING_REASON",
-        },
+        resultType: "abort",
         reason: "Tool call must include arguments with a 'reason' parameter",
       };
     }
 
-    const args = modifiedToolCall.arguments as Record<string, unknown>;
+    const args = modifiedToolCall.params.arguments as Record<string, unknown>;
 
     // Check if reason exists and is not empty
     if (
@@ -51,26 +52,22 @@ export class ExplainHook extends AbstractHook {
       (typeof args.reason === "string" && args.reason.trim() === "")
     ) {
       return {
-        response: "abort",
-        body: {
-          error:
-            "Missing or empty 'reason' parameter. Please provide a justification for using this tool.",
-          code: "MISSING_REASON",
-        },
-        reason: "Missing or empty 'reason' parameter",
+        resultType: "abort",
+        reason:
+          "Missing or empty 'reason' parameter. Please provide a justification for using this tool.",
       };
     }
 
     // Log the reason before removing it
-    console.log(`[${toolCall.name}] Reason: ${args.reason}`);
+    console.log(`[${toolCall.params.name}] Reason: ${args.reason}`);
 
     // Clone arguments and remove the reason
     const { reason: _, ...strippedArguments } = args;
-    modifiedToolCall.arguments = strippedArguments;
+    modifiedToolCall.params.arguments = strippedArguments;
 
     return {
-      response: "continue",
-      body: modifiedToolCall,
+      resultType: "continue",
+      request: modifiedToolCall,
     };
   }
   /**
@@ -78,8 +75,8 @@ export class ExplainHook extends AbstractHook {
    */
   async processToolsListResponse(
     response: ListToolsResult,
-    _originalRequest: ToolsListRequest,
-  ): Promise<HookResponse> {
+    _originalRequest: ListToolsRequest,
+  ): Promise<ListToolsResponseHookResult> {
     // Clone the response to avoid modifying the original
     const modifiedResponse: ListToolsResult = {
       ...response,
@@ -139,8 +136,8 @@ export class ExplainHook extends AbstractHook {
     console.log(`Added 'reason' parameter to ${response.tools.length} tools`);
 
     return {
-      response: "continue",
-      body: modifiedResponse,
+      resultType: "continue",
+      response: modifiedResponse,
     };
   }
 }
