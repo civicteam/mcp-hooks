@@ -25,7 +25,7 @@ const toolDefinitionToTool = <Args extends ZodRawShape>(
   name: tool.name,
   description: tool.description,
   inputSchema: zodToJsonSchema(
-    z.object(tool.paramsSchemaOrAnnotations),
+    z.object(tool.paramsSchema),
   ) as JsonSchema7ObjectType,
 });
 

@@ -175,9 +175,21 @@ const proxy = await createPassthroughProxy({
 
 #### With Hooks in Code
 
-Configure hooks programmatically:
+Configure hooks programmatically with both remote and local hooks:
 
 ```typescript
+import { LocalToolsHook } from '@civic/local-tools-hook';
+
+// Create a local hook instance
+const localToolsHook = new LocalToolsHook([
+  {
+    name: "getCurrentTime",
+    description: "Get the current time",
+    inputSchema: { type: "object", properties: {} },
+    handler: async () => ({ content: [{ type: "text", text: new Date().toISOString() }] })
+  }
+]);
+
 const proxy = await createPassthroughProxy({
   transportType: "httpStream",
   port: 34000,
@@ -186,6 +198,7 @@ const proxy = await createPassthroughProxy({
     transportType: "httpStream"
   },
   hooks: [
+    // Remote hooks
     {
       url: "http://localhost:8080/trpc",
       name: "audit-hook"
@@ -193,7 +206,9 @@ const proxy = await createPassthroughProxy({
     {
       url: "http://localhost:8081/trpc",
       name: "security-hook"
-    }
+    },
+    // Local hook instance
+    localToolsHook
   ]
 });
 ```
@@ -262,22 +277,22 @@ The passthrough server provides a comprehensive API for applying hooks to reques
 
 ### Key Features
 
-- **Unified `applyHooks` function**: Single entry point for processing both request and response hooks
-- **Hook creation utilities**: `createHookClient` and `createHookClients` for easy hook instantiation
+- **Hook processing functions**: Direct exports from the processor module for applying hooks
+- **Hook creation utilities**: `createLocalHookClient` for creating local hook instances
 - **Type exports**: All necessary types from `@civic/hook-common` are re-exported for convenience
 - **AbstractHook base class**: Simplifies creating custom local hooks
 
 ### Hook-Related Exports
 
-- `applyHooks` - Main function for applying hooks to data
-- `createHookClient`, `createHookClients` - Utilities for creating hook instances
+- `processRequest` - Process a tool call request through hooks
+- `processResponse` - Process a tool call response through hooks
+- `processToolsList` - Process a tools list request through hooks
+- `processToolsListResponse` - Process a tools list response through hooks
+- `createLocalHookClient` - Create a local hook client instance
 - `AbstractHook` - Base class for implementing custom hooks
-- Types: `Hook`, `HookClient`, `HookResponse`, `ToolCall`, `HookType`, `HookResult`, `HookContext`
+- Types: `Hook`, `ToolCallRequestHookResult`, `ToolCallResponseHookResult`, `ListToolsRequestHookResult`, `ListToolsResponseHookResult`
 
 ### Examples
-
-For a complete example of using the hook API, see:
-- `examples/hook-api-example.ts` - Hook API usage patterns and implementation
 
 See the `examples/` directory for additional working examples of programmatic usage.
 
@@ -305,15 +320,15 @@ Each module has accompanying unit tests located alongside the source files for e
 
 ## Creating Custom Hooks
 
-To create a custom tRPC hook:
+To create a custom hook:
 
-1. Install `hook-common` as a dependency
-2. Implement the `Hook` interface from `hook-common/types`
-3. Create a tRPC server using `createHTTPServer` and `createHookRouter`
-4. Start the server on a specific port
-5. Add the hook URL to the `HOOKS` environment variable
+1. Install `@civic/hook-common` as a dependency
+2. Extend the `AbstractHook` class and implement the `name` getter
+3. Override the hook methods you need (processRequest, processResponse, etc.)
+4. For remote hooks: Create a tRPC server using `createHTTPServer` and `createHookRouter`
+5. For local hooks: Pass the hook instance directly to the passthrough proxy configuration
 
-See the audit-hook and guardrail-hook packages for examples.
+See the audit-hook and guardrail-hook packages for remote hook examples, and local-tools-hook for a local hook example.
 
 ## Example Setup
 

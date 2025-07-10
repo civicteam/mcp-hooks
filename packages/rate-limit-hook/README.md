@@ -64,7 +64,7 @@ When rate limit is exceeded:
 
 ```json
 {
-  "response": "abort",
+  "resultType": "abort",
   "reason": "Rate limit exceeded",
   "body": {
     "error": "Too many requests",
@@ -85,11 +85,14 @@ Example tool call with metadata:
 
 ```typescript
 {
-  name: "search",
-  arguments: { query: "example" },
-  metadata: {
-    userId: "user-123",
-    sessionId: "session-456"
+  method: "tools/call",
+  params: {
+    name: "search",
+    arguments: { query: "example" },
+    _meta: {
+      userId: "user-123",
+      sessionId: "session-456"
+    }
   }
 }
 ```

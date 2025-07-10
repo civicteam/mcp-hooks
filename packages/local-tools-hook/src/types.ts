@@ -4,6 +4,6 @@ import type { ZodRawShape } from "zod";
 export type ToolDefinition<Args extends ZodRawShape> = {
   name: string;
   description: string;
-  paramsSchemaOrAnnotations: Args;
+  paramsSchema: Args;
   cb: ToolCallback<Args>;
 };

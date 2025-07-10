@@ -75,18 +75,4 @@ export abstract class AbstractHook implements Hook {
       response: response,
     };
   }
-
-  /**
-   * Handle exceptions thrown during tool execution.
-   * Default implementation does not handle the exception (continues).
-   */
-  async processToolException?(
-    error: unknown,
-    originalToolCall: CallToolRequest,
-  ): Promise<unknown> {
-    return {
-      resultType: "continue",
-      body: null,
-    };
-  }
 }

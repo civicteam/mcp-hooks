@@ -14,7 +14,7 @@ const echoTool: ToolDefinition<{
 }> = {
   name: "echo",
   description: "Echoes back the input message",
-  paramsSchemaOrAnnotations: {
+  paramsSchema: {
     message: z.string(),
   },
   cb: async ({ message }) => ({
@@ -28,7 +28,7 @@ const addTool: ToolDefinition<{
 }> = {
   name: "add",
   description: "Adds two numbers",
-  paramsSchemaOrAnnotations: {
+  paramsSchema: {
     a: z.number(),
     b: z.number(),
   },
@@ -115,7 +115,7 @@ describe("LocalToolsHook", () => {
       const errorTool: ToolDefinition<any> = {
         name: "error-tool",
         description: "Always throws an error",
-        paramsSchemaOrAnnotations: {},
+        paramsSchema: {},
         cb: async () => {
           throw new Error("Tool execution failed");
         },

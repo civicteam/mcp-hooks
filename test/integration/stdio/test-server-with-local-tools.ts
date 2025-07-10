@@ -23,7 +23,7 @@ async function main() {
   localTools.push({
     name: "local-reverse",
     description: "Reverses a string locally",
-    paramsSchemaOrAnnotations: {
+    paramsSchema: {
       text: z.string().describe("Text to reverse"),
     },
     cb: async (args) => {
@@ -47,7 +47,7 @@ async function main() {
   localTools.push({
     name: "local-error",
     description: "A tool that always fails",
-    paramsSchemaOrAnnotations: {},
+    paramsSchema: {},
     cb: async () => {
       throw new Error("This tool always fails");
     }
@@ -58,7 +58,7 @@ async function main() {
     localTools.push({
       name: "echo",
       description: "Local echo tool that overrides the remote one",
-      paramsSchemaOrAnnotations: {
+      paramsSchema: {
         message: z.string().describe("Message to echo"),
       },
       cb: async (args) => {

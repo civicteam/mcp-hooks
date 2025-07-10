@@ -82,11 +82,11 @@ To add new guardrails, edit `src/hook.ts` and add your validation logic to eithe
 Example:
 ```typescript
 // Block requests to specific tools
-if (toolCall.name === 'dangerous-tool') {
+if (toolCall.params.name === 'dangerous-tool') {
   return {
-    response: 'abort',
-    body: 'This tool is not allowed',
-    reason: 'Tool blacklisted'
+    resultType: 'abort',
+    reason: 'Tool blacklisted',
+    body: 'This tool is not allowed'
   };
 }
 ```
