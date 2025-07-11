@@ -11,6 +11,7 @@ import {
   ListToolsResponseHookResultSchema,
   ToolCallRequestHookResultSchema,
   ToolCallResponseHookResultSchema,
+  TransportErrorSchema,
 } from "./types.js";
 import type { Hook } from "./types.js";
 
@@ -28,7 +29,7 @@ const baseRouter = t.router({
   /**
    * Process an incoming tool call request
    */
-  processRequest: t.procedure
+  processToolCallRequest: t.procedure
     .input(CallToolRequestSchema)
     .output(ToolCallRequestHookResultSchema)
     .mutation(async ({ input }) => {
@@ -38,7 +39,7 @@ const baseRouter = t.router({
   /**
    * Process a tool call response
    */
-  processResponse: t.procedure
+  processToolCallResponse: t.procedure
     .input(
       z.object({
         response: z.any(),
@@ -58,11 +59,11 @@ const toolsListRouter = t.router({
   /**
    * Process a tools/list request
    */
-  processToolsList: t.procedure
+  processToolsListRequest: t.procedure
     .input(ListToolsRequestSchema)
     .output(ListToolsRequestHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processToolsList not implemented");
+      throw new Error("processToolsListRequest not implemented");
     }),
 
   /**
@@ -112,14 +113,14 @@ export type HookRouter = typeof fullRouter;
 export function createHookRouter(hook: Hook) {
   // biome-ignore lint/suspicious/noExplicitAny: tRPC procedures need flexible typing
   const procedures: any = {
-    processRequest: t.procedure
+    processToolCallRequest: t.procedure
       .input(CallToolRequestSchema)
       .output(ToolCallRequestHookResultSchema)
       .mutation(async ({ input }) => {
-        return await hook.processRequest(input);
+        return await hook.processToolCallRequest(input);
       }),
 
-    processResponse: t.procedure
+    processToolCallResponse: t.procedure
       .input(
         z.object({
           response: z.any(),
@@ -128,7 +129,7 @@ export function createHookRouter(hook: Hook) {
       )
       .output(ToolCallResponseHookResultSchema)
       .mutation(async ({ input }) => {
-        return await hook.processResponse(
+        return await hook.processToolCallResponse(
           input.response,
           input.originalToolCall,
         );
@@ -136,16 +137,16 @@ export function createHookRouter(hook: Hook) {
   };
 
   // Add optional procedures if the hook supports them
-  if (hook.processToolsList) {
-    procedures.processToolsList = t.procedure
+  if (hook.processToolsListRequest) {
+    procedures.processToolsListRequest = t.procedure
       .input(ListToolsRequestSchema)
       .output(ListToolsRequestHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processToolsList) {
-          throw new Error("processToolsList not implemented");
+        if (!hook.processToolsListRequest) {
+          throw new Error("processToolsListRequest not implemented");
         }
-        return await hook.processToolsList(input);
+        return await hook.processToolsListRequest(input);
       });
   }
 
@@ -165,6 +166,70 @@ export function createHookRouter(hook: Hook) {
         }
         return await hook.processToolsListResponse(
           input.response,
+          input.originalRequest,
+        );
+      });
+  }
+
+  if (hook.processToolCallTransportError) {
+    procedures.processToolCallTransportError = t.procedure
+      .input(
+        z.object({
+          error: TransportErrorSchema,
+          originalToolCall: CallToolRequestSchema,
+        }),
+      )
+      .output(
+        z.discriminatedUnion("resultType", [
+          z.object({
+            resultType: z.literal("abort"),
+            reason: z.string(),
+          }),
+          z.object({
+            resultType: z.literal("continue"),
+            error: TransportErrorSchema,
+          }),
+        ]),
+      )
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processToolCallTransportError) {
+          throw new Error("processToolCallTransportError not implemented");
+        }
+        return await hook.processToolCallTransportError(
+          input.error,
+          input.originalToolCall,
+        );
+      });
+  }
+
+  if (hook.processToolsListTransportError) {
+    procedures.processToolsListTransportError = t.procedure
+      .input(
+        z.object({
+          error: TransportErrorSchema,
+          originalRequest: ListToolsRequestSchema,
+        }),
+      )
+      .output(
+        z.discriminatedUnion("resultType", [
+          z.object({
+            resultType: z.literal("abort"),
+            reason: z.string(),
+          }),
+          z.object({
+            resultType: z.literal("continue"),
+            error: TransportErrorSchema,
+          }),
+        ]),
+      )
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processToolsListTransportError) {
+          throw new Error("processToolsListTransportError not implemented");
+        }
+        return await hook.processToolsListTransportError(
+          input.error,
           input.originalRequest,
         );
       });

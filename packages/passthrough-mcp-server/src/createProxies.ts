@@ -2,6 +2,7 @@
  * Transport-specific factory functions for creating passthrough proxies
  */
 
+import type { Config } from "./lib/config.js";
 import { HttpPassthroughProxyImpl } from "./server/http/httpPassthroughProxy.js";
 import { StdioPassthroughProxyImpl } from "./server/stdio/stdioPassthroughProxy.js";
 import type {
@@ -9,7 +10,6 @@ import type {
   PassthroughProxy,
   StdioPassthroughProxy,
 } from "./types.js";
-import type { Config } from "./utils/config.js";
 
 export type StdioProxyConfig = Omit<Config, "transportType" | "port"> & {
   autoStart?: boolean;

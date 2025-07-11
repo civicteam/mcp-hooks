@@ -8,8 +8,11 @@ import type {
   Hook,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
+  ToolCallTransportErrorHookResult,
+  TransportError,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -17,7 +20,7 @@ import type {
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../lib/logger.js";
 
 /**
  * Process a tool call through a chain of hooks for request validation
@@ -36,7 +39,7 @@ export async function processRequestThroughHooks(
       `Processing request through hook ${i + 1} (${hook.name}) for tool '${currentRequest.params.name}'`,
     );
 
-    const hookResult = await hook.processRequest(currentRequest);
+    const hookResult = await hook.processToolCallRequest(currentRequest);
     lastProcessedIndex = i;
 
     if (hookResult.resultType === "continue") {
@@ -85,7 +88,10 @@ export async function processResponseThroughHooks(
       `Processing response through hook ${i + 1} (${hook.name}) for tool '${toolCall.params.name}'`,
     );
 
-    const hookResult = await hook.processResponse(currentResponse, toolCall);
+    const hookResult = await hook.processToolCallResponse(
+      currentResponse,
+      toolCall,
+    );
     lastProcessedIndex = i;
     logger.info(`Response from hook: ${JSON.stringify(hookResult, null, 2)}`);
 
@@ -125,7 +131,7 @@ export async function processToolsListRequestThroughHooks(
     const hook = hooks[i];
 
     // Check if hook supports tools/list processing
-    if (!hook.processToolsList) {
+    if (!hook.processToolsListRequest) {
       logger.info(
         `Hook ${i + 1} (${hook.name}) does not support tools/list processing, skipping`,
       );
@@ -136,7 +142,7 @@ export async function processToolsListRequestThroughHooks(
       `Processing tools/list request through hook ${i + 1} (${hook.name})`,
     );
 
-    const hookResult = await hook.processToolsList(currentRequest);
+    const hookResult = await hook.processToolsListRequest(currentRequest);
     lastProcessedIndex = i;
 
     if (hookResult.resultType === "continue") {
@@ -210,6 +216,112 @@ export async function processToolsListResponseThroughHooks(
   return {
     resultType: "continue",
     response: currentResponse,
+    lastProcessedIndex,
+  };
+}
+
+/**
+ * Process a tool call transport error through a chain of hooks in reverse order
+ */
+export async function processToolCallTransportErrorThroughHooks(
+  error: TransportError,
+  toolCall: CallToolRequest,
+  hooks: Hook[],
+  startIndex: number,
+): Promise<ToolCallTransportErrorHookResult & { lastProcessedIndex: number }> {
+  let currentError = error;
+  let lastProcessedIndex = startIndex;
+
+  for (let i = startIndex; i >= 0; i--) {
+    const hook = hooks[i];
+
+    // Check if hook supports transport error processing
+    if (!hook.processToolCallTransportError) {
+      logger.info(
+        `Hook ${i + 1} (${hook.name}) does not support tool call transport error processing, skipping`,
+      );
+      continue;
+    }
+
+    logger.info(
+      `Processing tool call transport error through hook ${i + 1} (${hook.name})`,
+    );
+
+    const hookResult = await hook.processToolCallTransportError(
+      currentError,
+      toolCall,
+    );
+    lastProcessedIndex = i;
+
+    if (hookResult.resultType === "continue") {
+      currentError = hookResult.error;
+      logger.info(`Hook ${i + 1} passed error through`);
+    } else {
+      // abort
+      logger.info(
+        `Hook ${i + 1} aborted error processing: ${hookResult.reason || "No reason provided"}`,
+      );
+      return { ...hookResult, lastProcessedIndex };
+    }
+  }
+
+  // All hooks passed, return continue with final error
+  return {
+    resultType: "continue",
+    error: currentError,
+    lastProcessedIndex,
+  };
+}
+
+/**
+ * Process a tools/list transport error through a chain of hooks in reverse order
+ */
+export async function processToolsListTransportErrorThroughHooks(
+  error: TransportError,
+  request: ListToolsRequest,
+  hooks: Hook[],
+  startIndex: number,
+): Promise<ListToolsTransportErrorHookResult & { lastProcessedIndex: number }> {
+  let currentError = error;
+  let lastProcessedIndex = startIndex;
+
+  for (let i = startIndex; i >= 0; i--) {
+    const hook = hooks[i];
+
+    // Check if hook supports transport error processing
+    if (!hook.processToolsListTransportError) {
+      logger.info(
+        `Hook ${i + 1} (${hook.name}) does not support tools/list transport error processing, skipping`,
+      );
+      continue;
+    }
+
+    logger.info(
+      `Processing tools/list transport error through hook ${i + 1} (${hook.name})`,
+    );
+
+    const hookResult = await hook.processToolsListTransportError(
+      currentError,
+      request,
+    );
+    lastProcessedIndex = i;
+
+    if (hookResult.resultType === "continue") {
+      currentError = hookResult.error;
+      logger.info(`Hook ${i + 1} passed error through`);
+    } else {
+      // abort
+      logger.info(
+        `Hook ${i + 1} aborted error processing: ${hookResult.reason || "No reason provided"}`,
+      );
+      return { ...hookResult, lastProcessedIndex };
+    }
+  }
+
+  // All hooks passed, return continue with final error
+  return {
+    resultType: "continue",
+    error: currentError,
     lastProcessedIndex,
   };
 }

@@ -2,10 +2,12 @@ import {
   AbstractHook,
   type ListToolsResponseHookResult,
   type ToolCallRequestHookResult,
+  type ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   CallToolRequest,
+  CallToolResult,
   ListToolsRequest,
   ListToolsResult,
   ServerNotification,
@@ -49,7 +51,7 @@ export class LocalToolsHook extends AbstractHook {
    * If the tool is a local tool, execute it and return a "respond" response
    * Otherwise, return "continue" to pass through to the remote server
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Check if this tool call is for one of our local tools
@@ -106,6 +108,18 @@ export class LocalToolsHook extends AbstractHook {
   /**
    * Process a tools/list response to add local tools to the list
    */
+  async processToolCallResponse(
+    response: CallToolResult,
+    originalRequest: CallToolRequest,
+  ): Promise<ToolCallResponseHookResult> {
+    // Local tools are handled in processToolCallRequest,
+    // so we always continue with the response as-is
+    return {
+      resultType: "continue",
+      response,
+    };
+  }
+
   async processToolsListResponse(
     response: ListToolsResult,
     originalRequest: ListToolsRequest,

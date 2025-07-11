@@ -95,7 +95,7 @@ async function example4_withProgrammaticHooks() {
       return "LoggingHook";
     }
 
-    async processRequest(
+    async processToolCallRequest(
       toolCall: ToolCall,
     ): Promise<ToolCallRequestHookResult> {
       console.log(
@@ -108,7 +108,7 @@ async function example4_withProgrammaticHooks() {
       };
     }
 
-    async processResponse(
+    async processToolCallResponse(
       response: CallToolResult,
       originalToolCall: ToolCall,
     ): Promise<ToolCallResponseHookResult> {
@@ -129,7 +129,7 @@ async function example4_withProgrammaticHooks() {
       return "ValidationHook";
     }
 
-    async processRequest(
+    async processToolCallRequest(
       toolCall: ToolCall,
     ): Promise<ToolCallRequestHookResult> {
       // Block dangerous operations

@@ -9,10 +9,10 @@ import type { IncomingMessage } from "node:http";
 import { URL } from "node:url";
 import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../../utils/config.js";
-import { makeHttpRequest } from "../../utils/http.js";
-import { logger } from "../../utils/logger.js";
-import { SSEParser } from "../../utils/sse.js";
+import type { Config } from "../../lib/config.js";
+import { makeHttpRequest } from "../../lib/http/index.js";
+import { logger } from "../../lib/logger.js";
+import { SSEParser } from "../../lib/sse.js";
 
 /**
  * Establish SSE connection to receive server-initiated messages

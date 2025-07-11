@@ -70,8 +70,8 @@ The interface for implementing hooks:
 ```typescript
 interface Hook {
   name: string;
-  processRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
-  processResponse?(
+  processToolCallRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processToolCallResponse?(
     response: CallToolResult,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallResponseHookResult>;
@@ -80,6 +80,14 @@ interface Hook {
     response: ListToolsResult,
     originalRequest: ListToolsRequest
   ): Promise<ListToolsResponseHookResult>;
+  processToolCallTransportError?(
+    error: unknown,
+    originalToolCall: CallToolRequest
+  ): Promise<ToolCallTransportErrorHookResult>;
+  processToolsListTransportError?(
+    error: unknown,
+    originalRequest: ListToolsRequest
+  ): Promise<ListToolsTransportErrorHookResult>;
 }
 ```
 
@@ -96,7 +104,7 @@ export class MyCustomHook extends AbstractHook {
     return 'my-custom-hook';
   }
 
-  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Analyze the tool call
     console.log(`Processing request for tool: ${toolCall.params.name}`);
     
@@ -119,7 +127,7 @@ export class MyCustomHook extends AbstractHook {
     };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {
@@ -175,7 +183,7 @@ export class LoggingHook extends AbstractHook {
     return 'logging-hook';
   }
 
-  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     console.log(`[${new Date().toISOString()}] Tool called: ${toolCall.params.name}`);
     console.log('Arguments:', JSON.stringify(toolCall.params.arguments, null, 2));
     
@@ -185,7 +193,7 @@ export class LoggingHook extends AbstractHook {
     };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {
@@ -208,7 +216,7 @@ export class ValidationHook extends AbstractHook {
     return 'validation-hook';
   }
 
-  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Validate tool calls
     if (toolCall.params.name === 'dangerous-tool') {
       return {
@@ -224,7 +232,7 @@ export class ValidationHook extends AbstractHook {
     };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {

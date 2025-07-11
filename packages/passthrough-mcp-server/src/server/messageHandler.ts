@@ -24,14 +24,33 @@ import { getHookClients } from "../hooks/manager.js";
 import {
   processRequestThroughHooks,
   processResponseThroughHooks,
+  processToolCallTransportErrorThroughHooks,
   processToolsListRequestThroughHooks,
   processToolsListResponseThroughHooks,
+  processToolsListTransportErrorThroughHooks,
 } from "../hooks/processor.js";
-import type { Config } from "../utils/config.js";
-import { messageFromError } from "../utils/error.js";
-import { extractResponseHeaders, makeHttpRequest } from "../utils/http.js";
-import { logger } from "../utils/logger.js";
-import { SSEParser } from "../utils/sse.js";
+import type { Config } from "../lib/config.js";
+import { messageFromError } from "../lib/error.js";
+import { handleTransportError } from "../lib/hooks/transport-error.js";
+import type { ForwardResult } from "../lib/hooks/types.js";
+import { extractResponseHeaders } from "../lib/http/headers.js";
+import {
+  buildRequestOptions,
+  makeHttpRequestAsync,
+} from "../lib/http/request.js";
+import {
+  createErrorResponse,
+  createErrorResponseFromTransportError,
+  httpErrorToForwardResult,
+  isHttpError,
+} from "../lib/jsonrpc/errors.js";
+import { normalizeResponse } from "../lib/jsonrpc/normalize.js";
+import {
+  createAbortResponse,
+  createSuccessResponse,
+} from "../lib/jsonrpc/responses.js";
+import { logger } from "../lib/logger.js";
+import { SSEParser } from "../lib/sse.js";
 
 export class MessageHandler {
   private hooks: Hook[];
@@ -42,6 +61,30 @@ export class MessageHandler {
     this.hooks = getHookClients(config);
     this.targetUrl = config.target.url;
     this.targetMcpPath = config.target.mcpPath || "/mcp";
+  }
+
+  /**
+   * Handle HTTP response and convert to ForwardResult
+   */
+  private async handleResponse(
+    res: http.IncomingMessage,
+    requestId: string | number,
+  ): Promise<ForwardResult> {
+    logger.info(`[MessageHandler] Response status: ${res.statusCode}`);
+
+    const responseHeaders = extractResponseHeaders(res.headers);
+    logger.info(
+      `[MessageHandler] Response headers: ${JSON.stringify(responseHeaders)}`,
+    );
+
+    const contentType = res.headers["content-type"] || "";
+    const isSSE = contentType.includes("text/event-stream");
+
+    const result = isSSE
+      ? await this.handleSSEResponse(res, responseHeaders)
+      : await this.handleJSONResponse(res, responseHeaders, requestId);
+
+    return normalizeResponse(result.response, result.headers);
   }
 
   /**
@@ -77,25 +120,36 @@ export class MessageHandler {
 
       // Forward all other requests directly
       const result = await this.forwardRequest(request, headers);
-      return { message: result.response, headers: result.headers };
+
+      // Handle the result based on type
+      if (result.type === "error") {
+        return createErrorResponseFromTransportError(
+          result.error,
+          request.id,
+          result.headers,
+        );
+      }
+
+      return {
+        message: {
+          jsonrpc: "2.0",
+          id: request.id,
+          result: result.result,
+        } as JSONRPCResponse,
+        headers: result.headers,
+      };
     } catch (error) {
       const errorMessage = messageFromError(error);
       logger.error(
         `[MessageHandler] Error processing message: ${errorMessage}`,
       );
 
-      return {
-        message: {
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: "Internal error",
-            data: errorMessage,
-          },
-          id: "id" in message ? message.id : null,
-        } as JSONRPCError,
-        headers: {},
-      };
+      return createErrorResponse(
+        -32603,
+        "Internal error",
+        errorMessage,
+        "id" in message ? message.id : null,
+      );
     }
   }
 
@@ -129,88 +183,70 @@ export class MessageHandler {
       );
 
       if (requestResult.resultType === "abort") {
-        return {
-          message: {
-            jsonrpc: "2.0",
-            error: {
-              code: -32001,
-              message: requestResult.reason || "Request rejected by hook",
-              data: null,
-            },
-            id: request.id,
-          } as JSONRPCError,
-          headers: {},
-        };
+        return createAbortResponse(
+          "request",
+          requestResult.reason,
+          request.id,
+          {},
+        );
       }
 
       // Check if a hook provided a direct response
       if (requestResult.resultType === "respond") {
-        return {
-          message: {
-            jsonrpc: "2.0",
-            id: request.id,
-            result: requestResult.response,
-          } as JSONRPCResponse,
-          headers: {},
-        };
+        return createSuccessResponse(requestResult.response, request.id, {});
       }
 
       // Forward to target
       const forwardResult = await this.forwardRequest(request, headers);
-      const response = forwardResult.response;
-      const responseHeaders = forwardResult.headers;
 
-      // Process response through hooks if successful
-      if ("result" in response) {
-        const responseResult = await processResponseThroughHooks(
-          response.result as CallToolResult,
-          requestResult.request,
-          this.hooks,
-          requestResult.lastProcessedIndex,
+      if (forwardResult.type === "error") {
+        return handleTransportError(
+          forwardResult.error,
+          request.id,
+          forwardResult.headers,
+          () =>
+            processToolCallTransportErrorThroughHooks(
+              forwardResult.error,
+              requestResult.request,
+              this.hooks,
+              requestResult.lastProcessedIndex,
+            ),
         );
-
-        if (responseResult.resultType === "abort") {
-          return {
-            message: {
-              jsonrpc: "2.0",
-              error: {
-                code: -32002,
-                message: responseResult.reason || "Response rejected by hook",
-                data: null,
-              },
-              id: request.id,
-            } as JSONRPCError,
-            headers: responseHeaders,
-          };
-        }
-
-        // Return modified response
-        return {
-          message: {
-            ...response,
-            result:
-              responseResult.resultType === "continue"
-                ? responseResult.response
-                : response.result,
-          },
-          headers: responseHeaders,
-        };
       }
 
-      return { message: response, headers: responseHeaders };
+      // Process successful response through hooks
+      const responseResult = await processResponseThroughHooks(
+        forwardResult.result as CallToolResult,
+        requestResult.request,
+        this.hooks,
+        requestResult.lastProcessedIndex,
+      );
+
+      if (responseResult.resultType === "abort") {
+        return createAbortResponse(
+          "response",
+          responseResult.reason,
+          request.id,
+          forwardResult.headers,
+        );
+      }
+
+      // Return modified response
+      return createSuccessResponse(
+        responseResult.resultType === "continue"
+          ? responseResult.response
+          : forwardResult.result,
+        request.id,
+        forwardResult.headers,
+      );
     } catch (error) {
-      return {
-        message: {
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: `Error processing tool call: ${messageFromError(error)}`,
-            data: messageFromError(error),
-          },
-          id: request.id,
-        } as JSONRPCError,
-        headers: {},
-      };
+      const errorMsg = messageFromError(error);
+      return createErrorResponse(
+        -32603,
+        `Error processing tool call: ${errorMsg}`,
+        errorMsg,
+        request.id,
+      );
     }
   }
 
@@ -241,78 +277,69 @@ export class MessageHandler {
       );
 
       if (requestResult.resultType === "abort") {
-        return {
-          message: {
-            jsonrpc: "2.0",
-            error: {
-              code: -32001,
-              message: requestResult.reason || "Request rejected by hook",
-              data: null,
-            },
-            id: request.id,
-          } as JSONRPCError,
-          headers: {},
-        };
+        return createAbortResponse(
+          "request",
+          requestResult.reason,
+          request.id,
+          {},
+        );
       }
 
       // Forward to target
       const forwardResult = await this.forwardRequest(request, headers);
-      const response = forwardResult.response;
-      const responseHeaders = forwardResult.headers;
 
-      // Process response through hooks if successful
-      if ("result" in response) {
-        const responseResult = await processToolsListResponseThroughHooks(
-          response.result as ListToolsResult,
-          requestResult.resultType === "continue"
-            ? requestResult.request
-            : toolsListRequest,
-          this.hooks,
-          requestResult.lastProcessedIndex,
+      if (forwardResult.type === "error") {
+        return handleTransportError(
+          forwardResult.error,
+          request.id,
+          forwardResult.headers,
+          () =>
+            processToolsListTransportErrorThroughHooks(
+              forwardResult.error,
+              requestResult.resultType === "continue"
+                ? requestResult.request
+                : toolsListRequest,
+              this.hooks,
+              requestResult.lastProcessedIndex,
+            ),
         );
-
-        if (responseResult.resultType === "abort") {
-          return {
-            message: {
-              jsonrpc: "2.0",
-              error: {
-                code: -32002,
-                message: responseResult.reason || "Response rejected by hook",
-                data: null,
-              },
-              id: request.id,
-            } as JSONRPCError,
-            headers: responseHeaders,
-          };
-        }
-
-        // Return modified response
-        return {
-          message: {
-            ...response,
-            result:
-              responseResult.resultType === "continue"
-                ? responseResult.response
-                : response.result,
-          },
-          headers: responseHeaders,
-        };
       }
 
-      return { message: response, headers: responseHeaders };
+      // Process successful response through hooks
+      const responseResult = await processToolsListResponseThroughHooks(
+        forwardResult.result as ListToolsResult,
+        requestResult.resultType === "continue"
+          ? requestResult.request
+          : toolsListRequest,
+        this.hooks,
+        requestResult.lastProcessedIndex,
+      );
+
+      if (responseResult.resultType === "abort") {
+        return createAbortResponse(
+          "response",
+          responseResult.reason,
+          request.id,
+          forwardResult.headers,
+        );
+      }
+
+      // Return modified response
+      return createSuccessResponse(
+        responseResult.resultType === "continue"
+          ? responseResult.response
+          : forwardResult.result,
+        request.id,
+        forwardResult.headers,
+      );
     } catch (error) {
-      return {
-        message: {
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: `Error processing tools list: ${messageFromError(error)}`,
-            data: messageFromError(error),
-          },
-          id: request.id,
-        } as JSONRPCError,
-        headers: {},
-      };
+      const errorMsg = messageFromError(error);
+      return createErrorResponse(
+        -32603,
+        `Error processing tools list: ${errorMsg}`,
+        errorMsg,
+        request.id,
+      );
     }
   }
 
@@ -391,7 +418,12 @@ export class MessageHandler {
         logger.info(`[MessageHandler] Response body: ${responseBody}`);
 
         if (!res.statusCode || res.statusCode >= 400) {
-          reject(new Error(`HTTP ${res.statusCode}: ${responseBody}`));
+          const httpError = {
+            code: res.statusCode || 500,
+            message: `HTTP ${res.statusCode}`,
+            data: responseBody,
+          };
+          reject(httpError);
           return;
         }
 
@@ -431,96 +463,29 @@ export class MessageHandler {
   private async forwardRequest(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<{
-    response: JSONRPCResponse | JSONRPCError;
-    headers: Record<string, string>;
-  }> {
+  ): Promise<ForwardResult> {
     const fullTargetUrl = this.targetUrl + this.targetMcpPath;
+    const targetUrl = new URL(fullTargetUrl);
+    const requestBody = JSON.stringify(request);
+
     logger.info(
-      `[MessageHandler] Forwarding to ${fullTargetUrl}: ${JSON.stringify(request)}`,
+      `[MessageHandler] Forwarding to ${fullTargetUrl}: ${requestBody}`,
     );
     logger.info(`[MessageHandler] Forward headers: ${JSON.stringify(headers)}`);
 
-    return new Promise<{
-      response: JSONRPCResponse | JSONRPCError;
-      headers: Record<string, string>;
-    }>((resolve, reject) => {
-      try {
-        const targetUrlObj = new URL(fullTargetUrl);
-        const requestBody = JSON.stringify(request);
-
-        const options: http.RequestOptions = {
-          hostname: targetUrlObj.hostname,
-          port: targetUrlObj.port,
-          path: targetUrlObj.pathname + targetUrlObj.search,
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json, text/event-stream",
-            ...headers,
-            "Content-Length": Buffer.byteLength(requestBody),
-          },
-        };
-
-        const req = makeHttpRequest(options, targetUrlObj);
-
-        req.on("response", async (res) => {
-          logger.info(`[MessageHandler] Response status: ${res.statusCode}`);
-
-          // Extract response headers
-          const responseHeaders = extractResponseHeaders(res.headers);
-          logger.info(
-            `[MessageHandler] Response headers: ${JSON.stringify(responseHeaders)}`,
-          );
-
-          // Check if this is an SSE response
-          const contentType = res.headers["content-type"] || "";
-          const isSSE = contentType.includes("text/event-stream");
-
-          try {
-            if (isSSE) {
-              const result = await this.handleSSEResponse(res, responseHeaders);
-              resolve(result);
-            } else {
-              const result = await this.handleJSONResponse(
-                res,
-                responseHeaders,
-                request.id,
-              );
-              resolve(result);
-            }
-          } catch (error) {
-            reject(error);
-          }
-        });
-
-        req.on("error", (error) => {
-          logger.error(`[MessageHandler] Request error: ${error}`);
-          reject(error);
-        });
-
-        // Write request body
-        req.write(requestBody);
-        req.end();
-      } catch (error) {
-        reject(error);
-      }
-    }).catch((error) => {
-      logger.error(
-        `[MessageHandler] Forward error: ${messageFromError(error)}`,
+    try {
+      const options = buildRequestOptions(targetUrl, requestBody, headers);
+      const response = await makeHttpRequestAsync(
+        options,
+        targetUrl,
+        requestBody,
       );
-      return {
-        response: {
-          jsonrpc: "2.0",
-          error: {
-            code: -32603,
-            message: `Failed to forward request: ${messageFromError(error)}`,
-            data: messageFromError(error),
-          },
-          id: request.id,
-        } as JSONRPCError,
-        headers: {},
-      };
-    });
+      return await this.handleResponse(response, request.id);
+    } catch (error) {
+      if (isHttpError(error)) {
+        return httpErrorToForwardResult(error);
+      }
+      throw error;
+    }
   }
 }

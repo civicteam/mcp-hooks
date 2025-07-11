@@ -11,8 +11,8 @@ import {
   createHttpPassthroughProxy,
   createStdioPassthroughProxy,
 } from "./createProxies.js";
-import { loadConfig } from "./utils/config.js";
-import { logger } from "./utils/logger.js";
+import { loadConfig } from "./lib/config.js";
+import { logger } from "./lib/logger.js";
 
 /**
  * Main function to start the passthrough MCP server

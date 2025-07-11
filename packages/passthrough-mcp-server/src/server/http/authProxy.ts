@@ -10,7 +10,7 @@
 import * as http from "node:http";
 import * as https from "node:https";
 import { URL } from "node:url";
-import { logger } from "../../utils/logger.js";
+import { logger } from "../../lib/logger.js";
 
 export interface ProxyOptions {
   targetUrl: string;

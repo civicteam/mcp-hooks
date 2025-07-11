@@ -26,7 +26,7 @@ export class ExplainHook extends AbstractHook {
   /**
    * Process an incoming tool call request to validate and strip the reason parameter
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Clone the tool call to avoid modifying the original

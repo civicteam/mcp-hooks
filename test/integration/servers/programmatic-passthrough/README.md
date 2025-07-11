@@ -24,7 +24,7 @@ PORT=34101 TARGET_SERVER_URL=http://localhost:33100 pnpm start
 ## Hook Implementation
 
 The `CallCounterHook` extends `AbstractHook` and:
-- Increments a counter in `processRequest`
-- Adds a text content element with the count in `processResponse`
+- Increments a counter in `processToolCallRequest`
+- Adds a text content element with the count in `processToolCallResponse`
 
 This allows tests to verify that hooks are being executed by checking the response content.

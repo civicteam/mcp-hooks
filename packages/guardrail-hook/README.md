@@ -48,8 +48,8 @@ The server can be configured through environment variables:
 
 This server implements the `Hook` interface with two main methods:
 
-1. `processRequest`: Validates incoming tool call requests against guardrail rules
-2. `processResponse`: Validates responses from tool calls for sensitive data
+1. `processToolCallRequest`: Validates incoming tool call requests against guardrail rules
+2. `processToolCallResponse`: Validates responses from tool calls for sensitive data
 
 ### Current Guardrails
 
@@ -76,8 +76,8 @@ pnpm start
 ## Extending Guardrails
 
 To add new guardrails, edit `src/hook.ts` and add your validation logic to either:
-- `processRequest()` - for validating incoming requests
-- `processResponse()` - for validating responses
+- `processToolCallRequest()` - for validating incoming requests
+- `processToolCallResponse()` - for validating responses
 
 Example:
 ```typescript

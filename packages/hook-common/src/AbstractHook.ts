@@ -8,8 +8,11 @@ import type {
   Hook,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
+  ToolCallTransportErrorHookResult,
+  TransportError,
 } from "./types.js";
 
 /**
@@ -26,7 +29,7 @@ export abstract class AbstractHook implements Hook {
    * Process an incoming tool call request.
    * Default implementation passes through without modification.
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     return {
@@ -39,7 +42,7 @@ export abstract class AbstractHook implements Hook {
    * Process a tool call response.
    * Default implementation passes through without modification.
    */
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
@@ -53,7 +56,7 @@ export abstract class AbstractHook implements Hook {
    * Process a tools/list request.
    * Default implementation passes through without modification.
    */
-  async processToolsList?(
+  async processToolsListRequest?(
     request: ListToolsRequest,
   ): Promise<ListToolsRequestHookResult> {
     return {
@@ -73,6 +76,34 @@ export abstract class AbstractHook implements Hook {
     return {
       resultType: "continue",
       response: response,
+    };
+  }
+
+  /**
+   * Process transport errors for tool calls.
+   * Default implementation passes through without modification.
+   */
+  async processToolCallTransportError?(
+    error: TransportError,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallTransportErrorHookResult> {
+    return {
+      resultType: "continue",
+      error: error,
+    };
+  }
+
+  /**
+   * Process transport errors for tools/list requests.
+   * Default implementation passes through without modification.
+   */
+  async processToolsListTransportError?(
+    error: TransportError,
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsTransportErrorHookResult> {
+    return {
+      resultType: "continue",
+      error: error,
     };
   }
 }

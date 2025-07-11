@@ -7,8 +7,8 @@
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../../utils/config.js";
-import { logger } from "../../utils/logger.js";
+import type { Config } from "../../lib/config.js";
+import { logger } from "../../lib/logger.js";
 import { MessageHandler } from "../messageHandler.js";
 import { establishSSEConnection } from "./sseConnection.js";
 

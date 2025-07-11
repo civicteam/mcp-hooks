@@ -13,14 +13,14 @@ import type {
   JSONRPCMessage,
   JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../../utils/config.js";
-import { messageFromError } from "../../utils/error.js";
-import { logger } from "../../utils/logger.js";
+import type { Config } from "../../lib/config.js";
+import { messageFromError } from "../../lib/error.js";
+import { logger } from "../../lib/logger.js";
 import {
   formatSSEEvent,
   isSSERequest,
   parseSSERequest,
-} from "../../utils/sse.js";
+} from "../../lib/sse.js";
 import { MessageHandler } from "../messageHandler.js";
 import { StreamingMessageHandler } from "./streamingMessageHandler.js";
 
@@ -150,6 +150,10 @@ function sendResponse(
   headers: Record<string, string>,
   clientHeaders: http.IncomingHttpHeaders,
 ): void {
+  // Determine HTTP status code based on whether this is an error response
+  const isError = "error" in message;
+  const statusCode = isError ? 500 : 200;
+  
   if (clientExpectsSSE(clientHeaders)) {
     // Client expects SSE format
     const { "content-type": _, ...targetHeaders } = headers;
@@ -160,7 +164,7 @@ function sendResponse(
       ...targetHeaders,
     };
 
-    res.writeHead(200, responseHeaders);
+    res.writeHead(statusCode, responseHeaders);
 
     // Format response as SSE
     const sseEvent = formatSSEEvent({
@@ -176,7 +180,7 @@ function sendResponse(
       ...targetHeaders,
     };
 
-    res.writeHead(200, responseHeaders);
+    res.writeHead(statusCode, responseHeaders);
     res.end(JSON.stringify(message));
   }
 }

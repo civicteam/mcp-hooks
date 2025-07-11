@@ -20,7 +20,7 @@ export class CallCounterHook extends AbstractHook {
     return "CallCounterHook";
   }
 
-  async processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Get session ID from _meta
     const sessionId = (toolCall.params as any)._meta?.sessionId || "default";
 
@@ -44,7 +44,7 @@ export class CallCounterHook extends AbstractHook {
     };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {

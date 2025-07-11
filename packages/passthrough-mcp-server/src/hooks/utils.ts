@@ -6,8 +6,8 @@
 
 import type { Hook } from "@civic/hook-common";
 import { LocalHookClient, RemoteHookClient } from "@civic/hook-common";
-import type { HookDefinition, RemoteHookConfig } from "../utils/config.js";
-import { logger } from "../utils/logger.js";
+import type { HookDefinition, RemoteHookConfig } from "../lib/config.js";
+import { logger } from "../lib/logger.js";
 
 /**
  * Check if a hook definition is a Hook instance

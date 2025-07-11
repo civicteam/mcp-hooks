@@ -18,7 +18,7 @@ class TestLoggingHook extends AbstractHook {
     return "TestLoggingHook";
   }
 
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     this.logs.push(`REQUEST: ${toolCall.params.name}`);
@@ -28,7 +28,7 @@ class TestLoggingHook extends AbstractHook {
     };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
@@ -46,7 +46,7 @@ class TestValidationHook extends AbstractHook {
     return "TestValidationHook";
   }
 
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     if (toolCall.params.name.includes("dangerous")) {
@@ -82,7 +82,7 @@ describe("LocalHookClient", () => {
       },
     };
 
-    const response = await client.processRequest(toolCall);
+    const response = await client.processToolCallRequest(toolCall);
 
     expect(response.resultType).toBe("continue");
     expect((response as any).request).toEqual(toolCall);
@@ -110,7 +110,10 @@ describe("LocalHookClient", () => {
       ],
     };
 
-    const response = await client.processResponse(toolResponse, toolCall);
+    const response = await client.processToolCallResponse(
+      toolResponse,
+      toolCall,
+    );
 
     expect(response.resultType).toBe("continue");
     expect((response as any).response).toEqual(toolResponse);
@@ -129,7 +132,7 @@ describe("LocalHookClient", () => {
       },
     };
 
-    const response = await client.processRequest(toolCall);
+    const response = await client.processToolCallRequest(toolCall);
 
     expect(response.resultType).toBe("abort");
     expect((response as any).reason).toBe("Dangerous operation blocked");
@@ -142,7 +145,7 @@ describe("LocalHookClient", () => {
         return "ErrorHook";
       }
 
-      async processRequest(): Promise<ToolCallRequestHookResult> {
+      async processToolCallRequest(): Promise<ToolCallRequestHookResult> {
         throw new Error("Hook error");
       }
     }
@@ -159,7 +162,7 @@ describe("LocalHookClient", () => {
     };
 
     // Should return continue response on error
-    const response = await client.processRequest(toolCall);
+    const response = await client.processToolCallRequest(toolCall);
 
     expect(response.resultType).toBe("continue");
     expect((response as any).request).toEqual(toolCall);

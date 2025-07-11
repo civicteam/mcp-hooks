@@ -30,7 +30,7 @@ export class RateLimitHook extends AbstractHook {
     this.startCleanupTimer();
   }
 
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Extract userId from metadata

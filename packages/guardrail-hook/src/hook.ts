@@ -34,7 +34,7 @@ export class GuardrailHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     const { name, arguments: toolArgs } = toolCall.params;
@@ -116,7 +116,7 @@ export class GuardrailHook implements Hook {
   /**
    * Process a tool call response
    */
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {

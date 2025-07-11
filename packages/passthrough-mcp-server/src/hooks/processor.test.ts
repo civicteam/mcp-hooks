@@ -1,11 +1,14 @@
 import type {
   CallToolRequest,
   CallToolResult,
+  ListToolsRequest,
 } from "@modelcontextprotocol/sdk/types";
 import { describe, expect, it, vi } from "vitest";
 import {
   processRequestThroughHooks,
   processResponseThroughHooks,
+  processToolCallTransportErrorThroughHooks,
+  processToolsListTransportErrorThroughHooks,
 } from "./processor.js";
 
 const toToolCall = (params: CallToolRequest["params"]): CallToolRequest => ({
@@ -35,11 +38,11 @@ describe("Hook Processor", () => {
 
       const mockHook = {
         name: "test-hook",
-        processRequest: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
         }),
-        processResponse: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const result = await processRequestThroughHooks(toolCall, [
@@ -49,7 +52,7 @@ describe("Hook Processor", () => {
       expect(result.resultType).toBe("continue");
       expect((result as any).request).toEqual(toolCall);
       expect(result.lastProcessedIndex).toBe(0);
-      expect(mockHook.processRequest).toHaveBeenCalledWith(toolCall);
+      expect(mockHook.processToolCallRequest).toHaveBeenCalledWith(toolCall);
     });
 
     it("should handle hook rejection", async () => {
@@ -60,11 +63,11 @@ describe("Hook Processor", () => {
 
       const mockHook = {
         name: "security-hook",
-        processRequest: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Destructive operation",
         }),
-        processResponse: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const result = await processRequestThroughHooks(toolCall, [
@@ -84,26 +87,26 @@ describe("Hook Processor", () => {
 
       const hook1 = {
         name: "hook1",
-        processRequest: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
         }),
-        processResponse: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const hook2 = {
         name: "hook2",
-        processRequest: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Blocked by hook2",
         }),
-        processResponse: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const hook3 = {
         name: "hook3",
-        processRequest: vi.fn(),
-        processResponse: vi.fn(),
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const result = await processRequestThroughHooks(toolCall, [
@@ -114,9 +117,9 @@ describe("Hook Processor", () => {
 
       expect(result.resultType).toBe("abort");
       expect(result.lastProcessedIndex).toBe(1);
-      expect(hook1.processRequest).toHaveBeenCalled();
-      expect(hook2.processRequest).toHaveBeenCalled();
-      expect(hook3.processRequest).not.toHaveBeenCalled();
+      expect(hook1.processToolCallRequest).toHaveBeenCalled();
+      expect(hook2.processToolCallRequest).toHaveBeenCalled();
+      expect(hook3.processToolCallRequest).not.toHaveBeenCalled();
     });
 
     it("should allow hooks to modify tool call", async () => {
@@ -132,11 +135,11 @@ describe("Hook Processor", () => {
 
       const mockHook = {
         name: "modifier-hook",
-        processRequest: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn().mockResolvedValue({
           resultType: "continue",
           request: modifiedToolCall,
         }),
-        processResponse: vi.fn(),
+        processToolCallResponse: vi.fn(),
       };
 
       const result = await processRequestThroughHooks(originalToolCall, [
@@ -161,24 +164,24 @@ describe("Hook Processor", () => {
       const hooks = [
         {
           name: "hook1",
-          processRequest: vi.fn(),
-          processResponse: vi.fn().mockImplementation(async () => {
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
             callOrder.push("hook1");
             return { resultType: "continue", response: response };
           }),
         },
         {
           name: "hook2",
-          processRequest: vi.fn(),
-          processResponse: vi.fn().mockImplementation(async () => {
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
             callOrder.push("hook2");
             return { resultType: "continue", response: response };
           }),
         },
         {
           name: "hook3",
-          processRequest: vi.fn(),
-          processResponse: vi.fn().mockImplementation(async () => {
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
             callOrder.push("hook3");
             return { resultType: "continue", response: response };
           }),
@@ -203,8 +206,8 @@ describe("Hook Processor", () => {
 
       const mockHook = {
         name: "filter-hook",
-        processRequest: vi.fn(),
-        processResponse: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Sensitive content",
         }),
@@ -233,8 +236,8 @@ describe("Hook Processor", () => {
 
       const mockHook = {
         name: "modifier-hook",
-        processRequest: vi.fn(),
-        processResponse: vi.fn().mockResolvedValue({
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn().mockResolvedValue({
           resultType: "continue",
           response: modifiedResponse,
         }),
@@ -249,6 +252,342 @@ describe("Hook Processor", () => {
 
       expect(result.resultType).toBe("continue");
       expect((result as any).response).toEqual(modifiedResponse);
+      expect(result.lastProcessedIndex).toBe(0);
+    });
+  });
+
+  describe("processToolCallTransportErrorThroughHooks", () => {
+    it("should process error through hooks in reverse order", async () => {
+      const error = { code: -32603, message: "Internal error" };
+      const callOrder: string[] = [];
+
+      const hooks = [
+        {
+          name: "hook1",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolCallTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook1");
+              return { resultType: "continue", error };
+            }),
+        },
+        {
+          name: "hook2",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolCallTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook2");
+              return { resultType: "continue", error };
+            }),
+        },
+        {
+          name: "hook3",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolCallTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook3");
+              return { resultType: "continue", error };
+            }),
+        },
+      ];
+
+      const toolCall = toToolCall({ name: "test", arguments: {} });
+      await processToolCallTransportErrorThroughHooks(
+        error,
+        toolCall,
+        hooks as Parameters<
+          typeof processToolCallTransportErrorThroughHooks
+        >[2],
+        2,
+      );
+
+      expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
+    });
+
+    it("should skip hooks without processToolCallTransportError", async () => {
+      const error = { code: 401, message: "Unauthorized" };
+      const callOrder: string[] = [];
+
+      const hooks = [
+        {
+          name: "hook1",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          // No processToolCallTransportError
+        },
+        {
+          name: "hook2",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolCallTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook2");
+              return { resultType: "continue", error };
+            }),
+        },
+      ];
+
+      const toolCall = toToolCall({ name: "test", arguments: {} });
+      const result = await processToolCallTransportErrorThroughHooks(
+        error,
+        toolCall,
+        hooks as Parameters<
+          typeof processToolCallTransportErrorThroughHooks
+        >[2],
+        1,
+      );
+
+      expect(callOrder).toEqual(["hook2"]);
+      expect(result.resultType).toBe("continue");
+      expect(result.error).toEqual(error);
+    });
+
+    it("should handle error abort", async () => {
+      const error = { code: 401, message: "Unauthorized" };
+
+      const mockHook = {
+        name: "auth-hook",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolCallTransportError: vi.fn().mockResolvedValue({
+          resultType: "abort",
+          reason: "Authentication required",
+        }),
+      };
+
+      const toolCall = toToolCall({ name: "test", arguments: {} });
+      const result = await processToolCallTransportErrorThroughHooks(
+        error,
+        toolCall,
+        [mockHook] as Parameters<
+          typeof processToolCallTransportErrorThroughHooks
+        >[2],
+        0,
+      );
+
+      expect(result.resultType).toBe("abort");
+      expect((result as any).reason).toBe("Authentication required");
+      expect(result.lastProcessedIndex).toBe(0);
+    });
+
+    it("should allow hooks to modify error", async () => {
+      const originalError = { code: 401, message: "Unauthorized" };
+      const modifiedError = {
+        code: 401,
+        message: "Please authenticate",
+        customField: "retry-auth",
+      };
+
+      const mockHook = {
+        name: "error-modifier-hook",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolCallTransportError: vi.fn().mockResolvedValue({
+          resultType: "continue",
+          error: modifiedError,
+        }),
+      };
+
+      const toolCall = toToolCall({ name: "test", arguments: {} });
+      const result = await processToolCallTransportErrorThroughHooks(
+        originalError,
+        toolCall,
+        [mockHook] as Parameters<
+          typeof processToolCallTransportErrorThroughHooks
+        >[2],
+        0,
+      );
+
+      expect(result.resultType).toBe("continue");
+      expect(result.error).toEqual(modifiedError);
+      expect(result.lastProcessedIndex).toBe(0);
+    });
+
+    it("should stop processing on first abort", async () => {
+      const error = { code: 401, message: "Unauthorized" };
+
+      const hook1 = {
+        name: "hook1",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolCallTransportError: vi.fn().mockResolvedValue({
+          resultType: "continue",
+          error,
+        }),
+      };
+
+      const hook2 = {
+        name: "hook2",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolCallTransportError: vi.fn().mockResolvedValue({
+          resultType: "abort",
+          reason: "Blocked by hook2",
+        }),
+      };
+
+      const hook3 = {
+        name: "hook3",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolCallTransportError: vi.fn().mockResolvedValue({
+          resultType: "continue",
+          error,
+        }),
+      };
+
+      const toolCall = toToolCall({ name: "test", arguments: {} });
+      const result = await processToolCallTransportErrorThroughHooks(
+        error,
+        toolCall,
+        [hook1, hook2, hook3] as Parameters<
+          typeof processToolCallTransportErrorThroughHooks
+        >[2],
+        2,
+      );
+
+      expect(result.resultType).toBe("abort");
+      expect(result.lastProcessedIndex).toBe(1);
+      expect(hook3.processToolCallTransportError).toHaveBeenCalled();
+      expect(hook2.processToolCallTransportError).toHaveBeenCalled();
+      expect(hook1.processToolCallTransportError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("processToolsListTransportErrorThroughHooks", () => {
+    it("should process error through hooks in reverse order", async () => {
+      const error = { code: -32603, message: "Internal error" };
+      const callOrder: string[] = [];
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const hooks = [
+        {
+          name: "hook1",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolsListTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook1");
+              return { resultType: "continue", error };
+            }),
+        },
+        {
+          name: "hook2",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolsListTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook2");
+              return { resultType: "continue", error };
+            }),
+        },
+        {
+          name: "hook3",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolsListTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook3");
+              return { resultType: "continue", error };
+            }),
+        },
+      ];
+
+      await processToolsListTransportErrorThroughHooks(
+        error,
+        request,
+        hooks as Parameters<
+          typeof processToolsListTransportErrorThroughHooks
+        >[2],
+        2,
+      );
+
+      expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
+    });
+
+    it("should skip hooks without processToolsListTransportError", async () => {
+      const error = { code: 401, message: "Unauthorized" };
+      const callOrder: string[] = [];
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const hooks = [
+        {
+          name: "hook1",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          // No processToolsListTransportError
+        },
+        {
+          name: "hook2",
+          processToolCallRequest: vi.fn(),
+          processToolCallResponse: vi.fn(),
+          processToolsListTransportError: vi
+            .fn()
+            .mockImplementation(async () => {
+              callOrder.push("hook2");
+              return { resultType: "continue", error };
+            }),
+        },
+      ];
+
+      const result = await processToolsListTransportErrorThroughHooks(
+        error,
+        request,
+        hooks as Parameters<
+          typeof processToolsListTransportErrorThroughHooks
+        >[2],
+        1,
+      );
+
+      expect(callOrder).toEqual(["hook2"]);
+      expect(result.resultType).toBe("continue");
+      expect(result.error).toEqual(error);
+    });
+
+    it("should handle error abort", async () => {
+      const error = { code: 401, message: "Unauthorized" };
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const mockHook = {
+        name: "auth-hook",
+        processToolCallRequest: vi.fn(),
+        processToolCallResponse: vi.fn(),
+        processToolsListTransportError: vi.fn().mockResolvedValue({
+          resultType: "abort",
+          reason: "Authentication required",
+        }),
+      };
+
+      const result = await processToolsListTransportErrorThroughHooks(
+        error,
+        request,
+        [mockHook] as Parameters<
+          typeof processToolsListTransportErrorThroughHooks
+        >[2],
+        0,
+      );
+
+      expect(result.resultType).toBe("abort");
+      expect((result as any).reason).toBe("Authentication required");
       expect(result.lastProcessedIndex).toBe(0);
     });
   });

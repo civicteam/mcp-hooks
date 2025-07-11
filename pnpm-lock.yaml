@@ -18,6 +18,34 @@ importers:
         specifier: ^2.5.2
         version: 2.5.4
 
+  packages/alert-hook:
+    dependencies:
+      '@civic/hook-common':
+        specifier: workspace:^
+        version: link:../hook-common
+      '@trpc/server':
+        specifier: ^11.1.2
+        version: 11.4.3(typescript@5.8.3)
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
+    devDependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.15.0
+        version: 1.15.0
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.19.2
+      tsx:
+        specifier: ^4.19.4
+        version: 4.20.3
+      typescript:
+        specifier: ^5.2.2
+        version: 5.8.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@20.19.2)
+
   packages/audit-hook:
     dependencies:
       '@civic/hook-common':
@@ -344,6 +372,22 @@ importers:
         version: 22.15.34
       typescript:
         specifier: ^5.7.2
+        version: 5.8.3
+
+  test/integration/servers/broken-server:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.15.0
+        version: 1.15.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.2
+      tsx:
+        specifier: ^4.0.0
+        version: 4.20.3
+      typescript:
+        specifier: ^5.0.0
         version: 5.8.3
 
   test/integration/servers/echo:

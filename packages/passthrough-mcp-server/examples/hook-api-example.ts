@@ -28,7 +28,7 @@ class ValidationHook extends AbstractHook {
 
   private allowedTools = ["search", "calculate", "format"];
 
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Check if tool is allowed
@@ -43,7 +43,7 @@ class ValidationHook extends AbstractHook {
     return { resultType: "continue", request: toolCall };
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {

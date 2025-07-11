@@ -7,9 +7,9 @@
 
 import * as crypto from "node:crypto";
 import type { Server as HttpServer } from "node:http";
+import type { Config } from "../../lib/config.js";
+import { logger } from "../../lib/logger.js";
 import type { HttpPassthroughProxy } from "../../types.js";
-import type { Config } from "../../utils/config.js";
-import { logger } from "../../utils/logger.js";
 import { createAuthProxyServer } from "./authProxy.js";
 import { createMCPHandler } from "./mcpHandler.js";
 

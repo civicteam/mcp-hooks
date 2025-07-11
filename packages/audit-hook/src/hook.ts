@@ -28,7 +28,7 @@ export class AuditHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     const sessionId =
@@ -64,7 +64,7 @@ export class AuditHook implements Hook {
   /**
    * Process a tool call response
    */
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {

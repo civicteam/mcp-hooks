@@ -5,8 +5,8 @@
  * for transparent message forwarding to HTTP targets.
  */
 
-import type { Config } from "../../utils/config.js";
-import { logger } from "../../utils/logger.js";
+import type { Config } from "../../lib/config.js";
+import { logger } from "../../lib/logger.js";
 import type { MessageHandler } from "../messageHandler.js";
 import { ProxyStdioServerTransport } from "./ProxyStdioServerTransport.js";
 

@@ -12,10 +12,13 @@ import type {
   JSONRPCError,
   JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Config } from "../../utils/config.js";
-import { messageFromError } from "../../utils/error.js";
-import { extractResponseHeaders, makeHttpRequest } from "../../utils/http.js";
-import { logger } from "../../utils/logger.js";
+import type { Config } from "../../lib/config.js";
+import { messageFromError } from "../../lib/error.js";
+import {
+  extractResponseHeaders,
+  makeHttpRequest,
+} from "../../lib/http/index.js";
+import { logger } from "../../lib/logger.js";
 
 export interface StreamingResult {
   stream: Readable;

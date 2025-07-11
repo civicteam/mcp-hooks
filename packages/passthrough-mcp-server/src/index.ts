@@ -33,7 +33,7 @@ export type {
   BaseConfig,
   HookDefinition,
   RemoteHookConfig,
-} from "./utils/config.js";
+} from "./lib/config.js";
 
 // Export hook-related types and interfaces
 export type {
@@ -64,4 +64,4 @@ export { getHookClients } from "./hooks/manager.js";
 export { createHookClient, createHookClients } from "./hooks/utils.js";
 
 // Export utility functions that users might need
-export { loadConfig } from "./utils/config.js";
+export { loadConfig } from "./lib/config.js";

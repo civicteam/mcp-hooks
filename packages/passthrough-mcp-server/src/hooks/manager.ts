@@ -9,7 +9,7 @@ import {
   LocalHookClient,
   RemoteHookClient,
 } from "@civic/hook-common";
-import type { Config, HookDefinition } from "../utils/config.js";
+import type { Config, HookDefinition } from "../lib/config.js";
 
 /**
  * Check if a hook definition is a Hook instance
@@ -17,8 +17,8 @@ import type { Config, HookDefinition } from "../utils/config.js";
 function isHookInstance(hook: HookDefinition): hook is Hook {
   return (
     typeof hook === "object" &&
-    "processRequest" in hook &&
-    "processResponse" in hook &&
+    "processToolCallRequest" in hook &&
+    "processToolCallResponse" in hook &&
     "name" in hook
   );
 }

@@ -18,6 +18,15 @@ export type {
   ListToolsResult,
 };
 
+// Generic error type for transport errors
+export const TransportErrorSchema = z.object({
+  code: z.number(),
+  message: z.string(),
+  data: z.unknown().optional(),
+});
+
+export type TransportError = z.infer<typeof TransportErrorSchema>;
+
 // Abort the request or response, and return to the caller with the abort reason
 const HookAbortSchema = z.object({
   resultType: z.literal("abort"),
@@ -82,6 +91,30 @@ export const ListToolsResponseHookResultSchema = z.discriminatedUnion(
   ],
 );
 
+export const ToolCallTransportErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+      error: TransportErrorSchema,
+    }),
+  ],
+);
+
+export const ListToolsTransportErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+      error: TransportErrorSchema,
+    }),
+  ],
+);
+
 export type ToolCallRequestHookResult = z.infer<
   typeof ToolCallRequestHookResultSchema
 >;
@@ -93,6 +126,12 @@ export type ListToolsRequestHookResult = z.infer<
 >;
 export type ListToolsResponseHookResult = z.infer<
   typeof ListToolsResponseHookResultSchema
+>;
+export type ToolCallTransportErrorHookResult = z.infer<
+  typeof ToolCallTransportErrorHookResultSchema
+>;
+export type ListToolsTransportErrorHookResult = z.infer<
+  typeof ListToolsTransportErrorHookResultSchema
 >;
 /**
  * Hook interface that all hooks must implement
@@ -106,12 +145,14 @@ export interface Hook {
   /**
    * Process an incoming tool call request
    */
-  processRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processToolCallRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult>;
 
   /**
    * Process a tool call response
    */
-  processResponse(
+  processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult>;
@@ -119,7 +160,7 @@ export interface Hook {
   /**
    * Process a tools/list request (optional)
    */
-  processToolsList?(
+  processToolsListRequest?(
     request: ListToolsRequest,
   ): Promise<ListToolsRequestHookResult>;
 
@@ -130,4 +171,20 @@ export interface Hook {
     response: ListToolsResult,
     originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult>;
+
+  /**
+   * Process transport errors for tool calls (optional)
+   */
+  processToolCallTransportError?(
+    error: TransportError,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallTransportErrorHookResult>;
+
+  /**
+   * Process transport errors for tools/list requests (optional)
+   */
+  processToolsListTransportError?(
+    error: TransportError,
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsTransportErrorHookResult>;
 }

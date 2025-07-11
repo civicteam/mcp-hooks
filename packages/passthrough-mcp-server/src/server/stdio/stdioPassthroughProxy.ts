@@ -5,9 +5,9 @@
  */
 
 import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { Config } from "../../lib/config.js";
+import { logger } from "../../lib/logger.js";
 import type { StdioPassthroughProxy } from "../../types.js";
-import type { Config } from "../../utils/config.js";
-import { logger } from "../../utils/logger.js";
 import { createStdioServer } from "./stdioHandler.js";
 
 export class StdioPassthroughProxyImpl implements StdioPassthroughProxy {

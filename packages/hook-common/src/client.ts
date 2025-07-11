@@ -49,11 +49,11 @@ export class RemoteHookClient implements Hook {
   /**
    * Process a tool call through the hook
    */
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     try {
-      return await this.client.processRequest.mutate(toolCall);
+      return await this.client.processToolCallRequest.mutate(toolCall);
     } catch (error) {
       console.error(`Hook ${this.name} request processing failed:`, error);
       // On error, continue with unmodified request
@@ -67,12 +67,12 @@ export class RemoteHookClient implements Hook {
   /**
    * Process a response through the hook
    */
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     try {
-      return await this.client.processResponse.mutate({
+      return await this.client.processToolCallResponse.mutate({
         response,
         originalToolCall,
       });
@@ -89,11 +89,11 @@ export class RemoteHookClient implements Hook {
   /**
    * Process a tools/list request through the hook
    */
-  async processToolsList(
+  async processToolsListRequest(
     request: ListToolsRequest,
   ): Promise<ListToolsRequestHookResult> {
     try {
-      return await this.client.processToolsList.mutate(request);
+      return await this.client.processToolsListRequest.mutate(request);
     } catch (error) {
       // Check if it's a "not implemented" error
       if (error instanceof Error && error.message.includes("not implemented")) {

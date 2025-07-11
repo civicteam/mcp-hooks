@@ -48,14 +48,14 @@ describe("LocalToolsHook", () => {
 
   const hook = new LocalToolsHook(testTools);
 
-  describe("processRequest", () => {
+  describe("processToolCallRequest", () => {
     it("should execute local tools and return 'respond'", async () => {
       const toolCall = toToolCall({
         name: "echo",
         arguments: { message: "Hello, World!" },
       });
 
-      const result = await hook.processRequest(toolCall);
+      const result = await hook.processToolCallRequest(toolCall);
 
       expect(result.resultType).toBe("respond");
       if (result.resultType === "respond") {
@@ -71,7 +71,7 @@ describe("LocalToolsHook", () => {
         arguments: { a: 5, b: 3 },
       });
 
-      const result = await hook.processRequest(toolCall);
+      const result = await hook.processToolCallRequest(toolCall);
 
       expect(result.resultType).toBe("respond");
       if (result.resultType === "respond") {
@@ -87,7 +87,7 @@ describe("LocalToolsHook", () => {
         arguments: { foo: "bar" },
       });
 
-      const result = await hook.processRequest(toolCall);
+      const result = await hook.processToolCallRequest(toolCall);
 
       expect(result.resultType).toBe("continue");
       if (result.resultType === "continue") {
@@ -101,7 +101,7 @@ describe("LocalToolsHook", () => {
         arguments: { wrongArg: "test" }, // Missing required 'message' argument
       });
 
-      const result = await hook.processRequest(toolCall);
+      const result = await hook.processToolCallRequest(toolCall);
 
       // The tool will be executed but may fail due to missing argument
       expect(result.resultType).toBe("respond");
@@ -127,7 +127,7 @@ describe("LocalToolsHook", () => {
         arguments: {},
       });
 
-      const result = await hookWithError.processRequest(toolCall);
+      const result = await hookWithError.processToolCallRequest(toolCall);
 
       expect(result.resultType).toBe("abort");
       if (result.resultType === "abort") {
@@ -136,7 +136,7 @@ describe("LocalToolsHook", () => {
     });
   });
 
-  describe("processResponse", () => {
+  describe("processToolCallResponse", () => {
     it("should always return 'continue'", async () => {
       const response: CallToolResult = {
         content: [{ type: "text" as const, text: "test response" }],
@@ -146,7 +146,7 @@ describe("LocalToolsHook", () => {
         arguments: {},
       });
 
-      const result = await hook.processResponse(response, toolCall);
+      const result = await hook.processToolCallResponse(response, toolCall);
 
       expect(result.resultType).toBe("continue");
       if (result.resultType === "continue") {

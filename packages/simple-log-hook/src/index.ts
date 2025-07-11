@@ -29,23 +29,23 @@ class SimpleLogHook extends AbstractHook {
     return "SimpleLogHook";
   }
 
-  async processRequest(
+  async processToolCallRequest(
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     console.log(`[REQUEST] ${toolCall.params.name}`, toolCall.params.arguments);
 
     // Call parent implementation to continue with unmodified tool call
-    return super.processRequest(toolCall);
+    return super.processToolCallRequest(toolCall);
   }
 
-  async processResponse(
+  async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     console.log(`[RESPONSE] ${originalToolCall.params.name}`, response);
 
     // Call parent implementation to continue with unmodified response
-    return super.processResponse(response, originalToolCall);
+    return super.processToolCallResponse(response, originalToolCall);
   }
 }
 
