@@ -148,7 +148,7 @@ function sendResponse(
   message: JSONRPCMessage | any,
   headers: Record<string, string>,
   clientHeaders: http.IncomingHttpHeaders,
-  statusCode: number = 200,
+  statusCode = 200,
 ): void {
   // Check if this is an HTTP error response (not JSON-RPC)
   if (message.statusCode && message.body !== undefined && !message.jsonrpc) {
@@ -202,7 +202,13 @@ async function handleWithHooks(
   res: http.ServerResponse,
 ): Promise<void> {
   const result = await messageHandler.handle(message, forwardHeaders);
-  sendResponse(res, result.message, result.headers, req.headers, result.statusCode || 200);
+  sendResponse(
+    res,
+    result.message,
+    result.headers,
+    req.headers,
+    result.statusCode || 200,
+  );
 }
 
 /**

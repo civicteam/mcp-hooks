@@ -12,7 +12,6 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 33200;
 
 // Create an HTTP server that always returns 500
 const server = createServer((req, res) => {
-  console.log(`[BrokenServer] Received ${req.method} ${req.url}`);
   res.writeHead(500, { "Content-Type": "text/plain" });
   res.end("Internal Server Error");
 });

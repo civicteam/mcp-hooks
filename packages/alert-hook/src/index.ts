@@ -54,7 +54,6 @@ export class AlertHook extends AbstractHook {
     error: TransportError,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallTransportErrorHookResult> {
-    // Check if error is a 5xx HTTP error
     if (this.is5xxError(error)) {
       await this.sendAlert({
         type: "tool_call_error",
@@ -63,12 +62,7 @@ export class AlertHook extends AbstractHook {
         timestamp: new Date().toISOString(),
       });
     }
-
-    // Continue with the error
-    return {
-      resultType: "continue",
-      error: error,
-    };
+    return { resultType: "continue", error };
   }
 
   /**
@@ -78,7 +72,6 @@ export class AlertHook extends AbstractHook {
     error: TransportError,
     _originalRequest: ListToolsRequest,
   ): Promise<ListToolsTransportErrorHookResult> {
-    // Check if error is a 5xx HTTP error
     if (this.is5xxError(error)) {
       await this.sendAlert({
         type: "tools_list_error",
@@ -86,12 +79,7 @@ export class AlertHook extends AbstractHook {
         timestamp: new Date().toISOString(),
       });
     }
-
-    // Continue with the error
-    return {
-      resultType: "continue",
-      error: error,
-    };
+    return { resultType: "continue", error };
   }
 
   /**
@@ -101,25 +89,14 @@ export class AlertHook extends AbstractHook {
     error: TransportError,
     _originalRequest: InitializeRequest,
   ): Promise<InitializeTransportErrorHookResult> {
-    console.log(`[AlertHook] processInitializeTransportError called with error:`, error);
-    
-    // Check if error is a 5xx HTTP error
     if (this.is5xxError(error)) {
-      console.log(`[AlertHook] Detected 5xx error, sending alert`);
       await this.sendAlert({
         type: "initialize_error",
         error: this.formatError(error),
         timestamp: new Date().toISOString(),
       });
-    } else {
-      console.log(`[AlertHook] Error code ${error.code} is not 5xx, skipping alert`);
     }
-
-    // Continue with the error
-    return {
-      resultType: "continue",
-      error: error,
-    };
+    return { resultType: "continue", error };
   }
 
   /**
@@ -144,32 +121,24 @@ export class AlertHook extends AbstractHook {
    * Send alert notification
    */
   private async sendAlert(alert: Record<string, unknown>): Promise<void> {
-    console.log(`[AlertHook] Sending alert:`, JSON.stringify(alert, null, 2));
-    
-    // Send to webhook if configured
-    if (this.config.webhookUrl) {
-      console.log(`[AlertHook] Sending to webhook: ${this.config.webhookUrl}`);
-      try {
-        const response = await fetch(this.config.webhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(alert),
-        });
+    if (!this.config.webhookUrl) return;
 
-        if (!response.ok) {
-          console.error(
-            `Failed to send alert to webhook: ${response.status} ${response.statusText}`,
-          );
-        } else {
-          console.log(`[AlertHook] Alert sent successfully`);
-        }
-      } catch (error) {
-        console.error("Error sending alert to webhook:", error);
+    try {
+      const response = await fetch(this.config.webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(alert),
+      });
+
+      if (!response.ok) {
+        console.error(
+          `Failed to send alert to webhook: ${response.status} ${response.statusText}`,
+        );
       }
-    } else {
-      console.log(`[AlertHook] No webhook URL configured`);
+    } catch (error) {
+      console.error("Error sending alert to webhook:", error);
     }
   }
 }

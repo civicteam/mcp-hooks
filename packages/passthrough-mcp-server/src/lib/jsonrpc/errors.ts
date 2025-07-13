@@ -89,7 +89,7 @@ export function createErrorResponseFromTransportError(
     return {
       message: {
         statusCode: error.code,
-        body: error.data as string || error.message,
+        body: (error.data as string) || error.message,
       } as any,
       headers,
       statusCode: error.code,

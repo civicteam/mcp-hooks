@@ -338,15 +338,11 @@ export async function processInitializeTransportErrorThroughHooks(
 ): Promise<
   InitializeTransportErrorHookResult & { lastProcessedIndex: number }
 > {
-  logger.info(`[processInitializeTransportErrorThroughHooks] Called with error: ${JSON.stringify(error)}`);
-  logger.info(`[processInitializeTransportErrorThroughHooks] Number of hooks: ${hooks.length}, startIndex: ${startIndex}`);
-  
   let currentError = error;
   let lastProcessedIndex = startIndex;
 
   for (let i = startIndex; i >= 0; i--) {
     const hook = hooks[i];
-    logger.info(`[processInitializeTransportErrorThroughHooks] Processing hook ${i + 1}: ${hook.name}`);
 
     // Check if hook supports transport error processing
     if (!hook.processInitializeTransportError) {

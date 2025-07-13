@@ -15,13 +15,11 @@ describe("Transport Error Alert Hook", () => {
   beforeAll(async () => {
     // Start a simple webhook server to receive alerts on port 9999
     webhookServer = http.createServer((req, res) => {
-      console.log(`[Test Webhook Server] Received ${req.method} ${req.url}`);
       let body = "";
       req.on("data", (chunk) => {
         body += chunk.toString();
       });
       req.on("end", () => {
-        console.log(`[Test Webhook Server] Body: ${body}`);
         try {
           alertWebhookCalls.push({ url: req.url!, body: JSON.parse(body) });
         } catch (e) {
@@ -35,7 +33,6 @@ describe("Transport Error Alert Hook", () => {
     await new Promise<void>((resolve) => {
       webhookServer.listen(9999, resolve);
     });
-    console.log("[Test Webhook Server] Started on port 9999");
   });
 
   afterAll(async () => {
@@ -71,12 +68,6 @@ describe("Transport Error Alert Hook", () => {
 
     // Wait for webhook to be called
     await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Debug: log webhook calls
-    console.log("Webhook calls received:", alertWebhookCalls.length);
-    if (alertWebhookCalls.length > 0) {
-      console.log("First webhook call:", JSON.stringify(alertWebhookCalls[0], null, 2));
-    }
 
     // Verify alert was triggered
     expect(alertWebhookCalls).toHaveLength(1);

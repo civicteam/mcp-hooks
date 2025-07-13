@@ -5,7 +5,6 @@
 import type { TransportError } from "@civic/hook-common";
 import type { JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
 import { createAbortResponse } from "../jsonrpc/responses.js";
-import { logger } from "../logger.js";
 
 /**
  * Handle transport errors through hooks and return appropriate JSON-RPC error
@@ -22,15 +21,16 @@ export async function handleTransportError<
   headers: Record<string, string>;
   statusCode?: number;
 }> {
-  logger.info(`[handleTransportError] Called with error: ${JSON.stringify(error)}`);
-  
   const errorResult = await processError();
-  
-  logger.info(`[handleTransportError] Hook processing result: ${JSON.stringify(errorResult)}`);
 
   if (errorResult.resultType === "abort") {
     // Hook wants to override the error
-    const abortResponse = createAbortResponse("error", errorResult.reason, requestId, headers);
+    const abortResponse = createAbortResponse(
+      "error",
+      errorResult.reason,
+      requestId,
+      headers,
+    );
     return {
       ...abortResponse,
       statusCode: 200, // Abort responses are JSON-RPC errors
@@ -39,20 +39,20 @@ export async function handleTransportError<
 
   // Continue with the original error (possibly modified by hooks)
   const finalError = errorResult.error || error;
-  
+
   // Check responseType to determine how to return the error
   if (finalError.responseType === "http") {
     // Return as HTTP error
     return {
       message: {
         statusCode: finalError.code,
-        body: finalError.data as string || finalError.message,
+        body: (finalError.data as string) || finalError.message,
       } as any, // Type assertion needed for HTTP response
       headers,
       statusCode: finalError.code,
     };
   }
-  
+
   // Return as JSON-RPC error (default)
   return {
     message: {

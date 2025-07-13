@@ -71,9 +71,22 @@ import { SSEParser } from "../lib/sse.js";
 interface RequestHandlerConfig<
   TRequest,
   TResponse,
-  TRequestResult extends { resultType: string; reason?: string; request?: any; response?: any },
-  TResponseResult extends { resultType: string; reason?: string; response?: any },
-  TErrorResult extends { resultType: string; reason?: string; error?: TransportError },
+  TRequestResult extends {
+    resultType: string;
+    reason?: string;
+    request?: any;
+    response?: any;
+  },
+  TResponseResult extends {
+    resultType: string;
+    reason?: string;
+    response?: any;
+  },
+  TErrorResult extends {
+    resultType: string;
+    reason?: string;
+    error?: TransportError;
+  },
 > {
   /**
    * Build a typed request from the JSON-RPC request
@@ -217,9 +230,22 @@ export class MessageHandler {
   private async handleRequestWithHooks<
     TRequest,
     TResponse,
-    TRequestResult extends { resultType: string; reason?: string; request?: any; response?: any },
-    TResponseResult extends { resultType: string; reason?: string; response?: any },
-    TErrorResult extends { resultType: string; reason?: string; error?: TransportError },
+    TRequestResult extends {
+      resultType: string;
+      reason?: string;
+      request?: any;
+      response?: any;
+    },
+    TResponseResult extends {
+      resultType: string;
+      reason?: string;
+      response?: any;
+    },
+    TErrorResult extends {
+      resultType: string;
+      reason?: string;
+      error?: TransportError;
+    },
   >(
     request: JSONRPCRequest,
     headers: Record<string, string>,
@@ -276,9 +302,6 @@ export class MessageHandler {
 
       // Handle transport errors
       if (forwardResult.type === "error") {
-        logger.info(`[MessageHandler] Transport error detected: ${JSON.stringify(forwardResult.error)}`);
-        logger.info(`[MessageHandler] Processing through ${this.hooks.length} hooks`);
-        
         return handleTransportError(
           forwardResult.error,
           request.id,
@@ -286,7 +309,10 @@ export class MessageHandler {
           async () => {
             // Fix: When no request hooks were processed (lastProcessedIndex = -1),
             // start from the last hook to ensure all hooks are processed
-            const startIndex = lastProcessedIndex >= 0 ? lastProcessedIndex : this.hooks.length - 1;
+            const startIndex =
+              lastProcessedIndex >= 0
+                ? lastProcessedIndex
+                : this.hooks.length - 1;
             const result = await config.processTransportError(
               forwardResult.error,
               processedRequest,
