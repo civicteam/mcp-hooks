@@ -5,6 +5,7 @@
 import type { TransportError } from "@civic/hook-common";
 import type { JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
 import { createAbortResponse } from "../jsonrpc/responses.js";
+import { logger } from "../logger.js";
 
 /**
  * Handle transport errors through hooks and return appropriate JSON-RPC error
@@ -16,16 +17,43 @@ export async function handleTransportError<
   requestId: string | number,
   headers: Record<string, string>,
   processError: () => Promise<T>,
-): Promise<{ message: JSONRPCError; headers: Record<string, string> }> {
+): Promise<{
+  message: JSONRPCError | { statusCode: number; body: string };
+  headers: Record<string, string>;
+  statusCode?: number;
+}> {
+  logger.info(`[handleTransportError] Called with error: ${JSON.stringify(error)}`);
+  
   const errorResult = await processError();
+  
+  logger.info(`[handleTransportError] Hook processing result: ${JSON.stringify(errorResult)}`);
 
   if (errorResult.resultType === "abort") {
     // Hook wants to override the error
-    return createAbortResponse("error", errorResult.reason, requestId, headers);
+    const abortResponse = createAbortResponse("error", errorResult.reason, requestId, headers);
+    return {
+      ...abortResponse,
+      statusCode: 200, // Abort responses are JSON-RPC errors
+    };
   }
 
   // Continue with the original error (possibly modified by hooks)
   const finalError = errorResult.error || error;
+  
+  // Check responseType to determine how to return the error
+  if (finalError.responseType === "http") {
+    // Return as HTTP error
+    return {
+      message: {
+        statusCode: finalError.code,
+        body: finalError.data as string || finalError.message,
+      } as any, // Type assertion needed for HTTP response
+      headers,
+      statusCode: finalError.code,
+    };
+  }
+  
+  // Return as JSON-RPC error (default)
   return {
     message: {
       jsonrpc: "2.0",
@@ -37,5 +65,6 @@ export async function handleTransportError<
       },
     },
     headers,
+    statusCode: 200, // JSON-RPC errors use 200 status
   };
 }

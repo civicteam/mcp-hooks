@@ -29,6 +29,7 @@ export function httpErrorToForwardResult(error: {
   code: number;
   message?: string;
   data?: unknown;
+  responseType?: "http" | "jsonrpc";
 }): ForwardResult {
   return {
     type: "error",
@@ -36,6 +37,7 @@ export function httpErrorToForwardResult(error: {
       code: error.code,
       message: error.message || `HTTP ${error.code}`,
       data: error.data,
+      responseType: error.responseType || "http",
     },
     headers: {},
   };
@@ -50,7 +52,11 @@ export function createErrorResponse(
   data: unknown,
   requestId: string | number | null,
   headers: Record<string, string> = {},
-): { message: JSONRPCError; headers: Record<string, string> } {
+): {
+  message: JSONRPCError;
+  headers: Record<string, string>;
+  statusCode?: number;
+} {
   return {
     message: {
       jsonrpc: "2.0",
@@ -62,6 +68,7 @@ export function createErrorResponse(
       },
     },
     headers,
+    statusCode: 200,
   };
 }
 
@@ -72,7 +79,24 @@ export function createErrorResponseFromTransportError(
   error: TransportError,
   requestId: string | number,
   headers: Record<string, string> = {},
-): { message: JSONRPCError; headers: Record<string, string> } {
+): {
+  message: JSONRPCError | any;
+  headers: Record<string, string>;
+  statusCode?: number;
+} {
+  // Check if this is an HTTP error that should be returned as-is
+  if (error.responseType === "http") {
+    return {
+      message: {
+        statusCode: error.code,
+        body: error.data as string || error.message,
+      } as any,
+      headers,
+      statusCode: error.code,
+    };
+  }
+
+  // Otherwise return as JSON-RPC error
   return createErrorResponse(
     error.code || -32603,
     error.message || "Internal error",

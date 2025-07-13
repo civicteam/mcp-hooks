@@ -11,7 +11,19 @@ import type {
   CallToolRequest,
   CallToolResult,
   Hook,
+  InitializeRequest,
+  InitializeRequestHookResult,
+  InitializeResponseHookResult,
+  InitializeResult,
+  InitializeTransportErrorHookResult,
   ListToolsRequest,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
+  ListToolsTransportErrorHookResult,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+  ToolCallTransportErrorHookResult,
+  TransportError,
 } from "@civic/hook-common";
 import type {
   JSONRPCError,
@@ -22,6 +34,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { getHookClients } from "../hooks/manager.js";
 import {
+  processInitializeTransportErrorThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
   processToolCallTransportErrorThroughHooks,
@@ -52,15 +65,285 @@ import {
 import { logger } from "../lib/logger.js";
 import { SSEParser } from "../lib/sse.js";
 
+/**
+ * Configuration for generic request handling with hooks
+ */
+interface RequestHandlerConfig<
+  TRequest,
+  TResponse,
+  TRequestResult extends { resultType: string; reason?: string; request?: any; response?: any },
+  TResponseResult extends { resultType: string; reason?: string; response?: any },
+  TErrorResult extends { resultType: string; reason?: string; error?: TransportError },
+> {
+  /**
+   * Build a typed request from the JSON-RPC request
+   */
+  buildRequest: (
+    request: JSONRPCRequest,
+    headers: Record<string, string>,
+  ) => TRequest;
+
+  /**
+   * Process request through hooks (optional)
+   */
+  processRequest?: (
+    request: TRequest,
+    hooks: Hook[],
+  ) => Promise<TRequestResult & { lastProcessedIndex: number }>;
+
+  /**
+   * Process response through hooks (optional)
+   */
+  processResponse?: (
+    response: TResponse,
+    request: TRequest,
+    hooks: Hook[],
+    startIndex: number,
+  ) => Promise<TResponseResult & { lastProcessedIndex: number }>;
+
+  /**
+   * Process transport error through hooks
+   */
+  processTransportError: (
+    error: TransportError,
+    request: TRequest,
+    hooks: Hook[],
+    startIndex: number,
+  ) => Promise<TErrorResult & { lastProcessedIndex: number }>;
+
+  /**
+   * Error message prefix for catch block
+   */
+  errorPrefix: string;
+
+  /**
+   * Whether the handler supports direct responses from hooks
+   */
+  supportsDirectResponse?: boolean;
+}
+
 export class MessageHandler {
   private hooks: Hook[];
   private targetUrl: string;
   private targetMcpPath: string;
 
+  // Request handler configurations
+  private readonly toolCallConfig: RequestHandlerConfig<
+    CallToolRequest,
+    CallToolResult,
+    ToolCallRequestHookResult,
+    ToolCallResponseHookResult,
+    ToolCallTransportErrorHookResult
+  > = {
+    buildRequest: (request, headers) => {
+      const params = request.params as { name: string; arguments?: unknown };
+      return {
+        method: "tools/call",
+        params: {
+          name: params.name,
+          arguments: params.arguments || {},
+          _meta: {
+            sessionId: headers["mcp-session-id"] || "unknown",
+            timestamp: new Date().toISOString(),
+            source: "passthrough-server",
+          },
+        },
+      };
+    },
+    processRequest: processRequestThroughHooks,
+    processResponse: processResponseThroughHooks,
+    processTransportError: processToolCallTransportErrorThroughHooks,
+    errorPrefix: "Error processing tool call",
+    supportsDirectResponse: true,
+  };
+
+  private readonly toolsListConfig: RequestHandlerConfig<
+    ListToolsRequest,
+    ListToolsResult,
+    ListToolsRequestHookResult,
+    ListToolsResponseHookResult,
+    ListToolsTransportErrorHookResult
+  > = {
+    buildRequest: (request, headers) => ({
+      method: "tools/list",
+      params: {
+        _meta: {
+          sessionId: headers["mcp-session-id"] || "unknown",
+          timestamp: new Date().toISOString(),
+          source: "passthrough-server",
+        },
+      },
+    }),
+    processRequest: processToolsListRequestThroughHooks,
+    processResponse: processToolsListResponseThroughHooks,
+    processTransportError: processToolsListTransportErrorThroughHooks,
+    errorPrefix: "Error processing tools list",
+    supportsDirectResponse: true,
+  };
+
+  private readonly initializeConfig: RequestHandlerConfig<
+    InitializeRequest,
+    InitializeResult,
+    InitializeRequestHookResult,
+    InitializeResponseHookResult,
+    InitializeTransportErrorHookResult
+  > = {
+    buildRequest: (request) => ({
+      method: "initialize",
+      params: request.params as InitializeRequest["params"],
+    }),
+    // No request/response hooks for initialize yet
+    processTransportError: processInitializeTransportErrorThroughHooks,
+    errorPrefix: "Error processing initialize",
+    supportsDirectResponse: false,
+  };
+
   constructor(private config: Config) {
     this.hooks = getHookClients(config);
     this.targetUrl = config.target.url;
     this.targetMcpPath = config.target.mcpPath || "/mcp";
+  }
+
+  /**
+   * Check if hooks are configured
+   */
+  hasHooks(): boolean {
+    return this.hooks.length > 0;
+  }
+
+  /**
+   * Generic handler for requests with hook processing
+   */
+  private async handleRequestWithHooks<
+    TRequest,
+    TResponse,
+    TRequestResult extends { resultType: string; reason?: string; request?: any; response?: any },
+    TResponseResult extends { resultType: string; reason?: string; response?: any },
+    TErrorResult extends { resultType: string; reason?: string; error?: TransportError },
+  >(
+    request: JSONRPCRequest,
+    headers: Record<string, string>,
+    config: RequestHandlerConfig<
+      TRequest,
+      TResponse,
+      TRequestResult,
+      TResponseResult,
+      TErrorResult
+    >,
+  ): Promise<{
+    message: JSONRPCMessage | any; // Can be HTTP error response
+    headers: Record<string, string>;
+    statusCode?: number;
+  }> {
+    try {
+      // Build the typed request
+      const typedRequest = config.buildRequest(request, headers);
+      let processedRequest = typedRequest;
+      let lastProcessedIndex = -1;
+
+      // Process through request hooks if configured
+      if (config.processRequest) {
+        const requestResult = await config.processRequest(
+          typedRequest,
+          this.hooks,
+        );
+        lastProcessedIndex = requestResult.lastProcessedIndex;
+
+        if (requestResult.resultType === "abort") {
+          return createAbortResponse(
+            "request",
+            requestResult.reason,
+            request.id,
+            {},
+          );
+        }
+
+        // Check for direct response if supported
+        if (
+          config.supportsDirectResponse &&
+          requestResult.resultType === "respond"
+        ) {
+          return createSuccessResponse(requestResult.response, request.id, {});
+        }
+
+        if (requestResult.resultType === "continue") {
+          processedRequest = requestResult.request;
+        }
+      }
+
+      // Forward the request
+      const forwardResult = await this.forwardRequest(request, headers);
+
+      // Handle transport errors
+      if (forwardResult.type === "error") {
+        logger.info(`[MessageHandler] Transport error detected: ${JSON.stringify(forwardResult.error)}`);
+        logger.info(`[MessageHandler] Processing through ${this.hooks.length} hooks`);
+        
+        return handleTransportError(
+          forwardResult.error,
+          request.id,
+          forwardResult.headers,
+          async () => {
+            // Fix: When no request hooks were processed (lastProcessedIndex = -1),
+            // start from the last hook to ensure all hooks are processed
+            const startIndex = lastProcessedIndex >= 0 ? lastProcessedIndex : this.hooks.length - 1;
+            const result = await config.processTransportError(
+              forwardResult.error,
+              processedRequest,
+              this.hooks,
+              startIndex,
+            );
+            return {
+              resultType: result.resultType,
+              error: result.error,
+              reason: result.reason,
+            } as TErrorResult;
+          },
+        );
+      }
+
+      // Process response through hooks if configured
+      if (config.processResponse) {
+        const responseResult = await config.processResponse(
+          forwardResult.result as TResponse,
+          processedRequest,
+          this.hooks,
+          lastProcessedIndex,
+        );
+
+        if (responseResult.resultType === "abort") {
+          return createAbortResponse(
+            "response",
+            responseResult.reason,
+            request.id,
+            forwardResult.headers,
+          );
+        }
+
+        if (responseResult.resultType === "continue") {
+          return createSuccessResponse(
+            responseResult.response,
+            request.id,
+            forwardResult.headers,
+          );
+        }
+      }
+
+      // Return the unmodified result
+      return createSuccessResponse(
+        forwardResult.result,
+        request.id,
+        forwardResult.headers,
+      );
+    } catch (error) {
+      const errorMsg = messageFromError(error);
+      return createErrorResponse(
+        -32603,
+        `${config.errorPrefix}: ${errorMsg}`,
+        errorMsg,
+        request.id,
+      );
+    }
   }
 
   /**
@@ -84,7 +367,10 @@ export class MessageHandler {
       ? await this.handleSSEResponse(res, responseHeaders)
       : await this.handleJSONResponse(res, responseHeaders, requestId);
 
-    return normalizeResponse(result.response, result.headers);
+    const forwardResult = normalizeResponse(result.response, result.headers);
+    // Add status code to the result
+    forwardResult.statusCode = res.statusCode;
+    return forwardResult;
   }
 
   /**
@@ -93,7 +379,11 @@ export class MessageHandler {
   async handle(
     message: JSONRPCMessage,
     headers: Record<string, string> = {},
-  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
+  ): Promise<{
+    message: JSONRPCMessage | any; // Can be HTTP error response
+    headers: Record<string, string>;
+    statusCode?: number;
+  }> {
     logger.info(
       `[MessageHandler] Processing message: ${JSON.stringify(message)}`,
     );
@@ -105,7 +395,7 @@ export class MessageHandler {
         logger.warn(
           `[MessageHandler] Received non-request message: ${JSON.stringify(message)}`,
         );
-        return { message, headers: {} };
+        return { message, headers: {}, statusCode: 200 };
       }
 
       const request = message as JSONRPCRequest;
@@ -116,6 +406,9 @@ export class MessageHandler {
       }
       if (request.method === "tools/list") {
         return await this.handleToolsList(request, headers);
+      }
+      if (request.method === "initialize") {
+        return await this.handleInitialize(request, headers);
       }
 
       // Forward all other requests directly
@@ -137,6 +430,7 @@ export class MessageHandler {
           result: result.result,
         } as JSONRPCResponse,
         headers: result.headers,
+        statusCode: result.statusCode || 200,
       };
     } catch (error) {
       const errorMessage = messageFromError(error);
@@ -159,95 +453,12 @@ export class MessageHandler {
   private async handleToolCall(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
-    try {
-      // Extract tool call information
-      const params = request.params as { name: string; arguments?: unknown };
-      const toolCall: CallToolRequest = {
-        method: "tools/call",
-        params: {
-          name: params.name,
-          arguments: params.arguments || {},
-          _meta: {
-            sessionId: headers["mcp-session-id"] || "unknown",
-            timestamp: new Date().toISOString(),
-            source: "passthrough-server",
-          },
-        },
-      };
-
-      // Process through request hooks
-      const requestResult = await processRequestThroughHooks(
-        toolCall,
-        this.hooks,
-      );
-
-      if (requestResult.resultType === "abort") {
-        return createAbortResponse(
-          "request",
-          requestResult.reason,
-          request.id,
-          {},
-        );
-      }
-
-      // Check if a hook provided a direct response
-      if (requestResult.resultType === "respond") {
-        return createSuccessResponse(requestResult.response, request.id, {});
-      }
-
-      // Forward to target
-      const forwardResult = await this.forwardRequest(request, headers);
-
-      if (forwardResult.type === "error") {
-        return handleTransportError(
-          forwardResult.error,
-          request.id,
-          forwardResult.headers,
-          () =>
-            processToolCallTransportErrorThroughHooks(
-              forwardResult.error,
-              requestResult.request,
-              this.hooks,
-              requestResult.lastProcessedIndex,
-            ),
-        );
-      }
-
-      // Process successful response through hooks
-      const responseResult = await processResponseThroughHooks(
-        forwardResult.result as CallToolResult,
-        requestResult.request,
-        this.hooks,
-        requestResult.lastProcessedIndex,
-      );
-
-      if (responseResult.resultType === "abort") {
-        return createAbortResponse(
-          "response",
-          responseResult.reason,
-          request.id,
-          forwardResult.headers,
-        );
-      }
-
-      // Return modified response
-      return createSuccessResponse(
-        responseResult.resultType === "continue"
-          ? responseResult.response
-          : forwardResult.result,
-        request.id,
-        forwardResult.headers,
-      );
-    } catch (error) {
-      const errorMsg = messageFromError(error);
-      return createErrorResponse(
-        -32603,
-        `Error processing tool call: ${errorMsg}`,
-        errorMsg,
-        request.id,
-      );
-    }
+  ): Promise<{
+    message: JSONRPCMessage | any; // Can be HTTP error response
+    headers: Record<string, string>;
+    statusCode?: number;
+  }> {
+    return this.handleRequestWithHooks(request, headers, this.toolCallConfig);
   }
 
   /**
@@ -256,91 +467,26 @@ export class MessageHandler {
   private async handleToolsList(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-  ): Promise<{ message: JSONRPCMessage; headers: Record<string, string> }> {
-    try {
-      // Create tools list request
-      const toolsListRequest: ListToolsRequest = {
-        method: "tools/list",
-        params: {
-          _meta: {
-            sessionId: headers["mcp-session-id"] || "unknown",
-            timestamp: new Date().toISOString(),
-            source: "passthrough-server",
-          },
-        },
-      };
+  ): Promise<{
+    message: JSONRPCMessage | any; // Can be HTTP error response
+    headers: Record<string, string>;
+    statusCode?: number;
+  }> {
+    return this.handleRequestWithHooks(request, headers, this.toolsListConfig);
+  }
 
-      // Process through request hooks
-      const requestResult = await processToolsListRequestThroughHooks(
-        toolsListRequest,
-        this.hooks,
-      );
-
-      if (requestResult.resultType === "abort") {
-        return createAbortResponse(
-          "request",
-          requestResult.reason,
-          request.id,
-          {},
-        );
-      }
-
-      // Forward to target
-      const forwardResult = await this.forwardRequest(request, headers);
-
-      if (forwardResult.type === "error") {
-        return handleTransportError(
-          forwardResult.error,
-          request.id,
-          forwardResult.headers,
-          () =>
-            processToolsListTransportErrorThroughHooks(
-              forwardResult.error,
-              requestResult.resultType === "continue"
-                ? requestResult.request
-                : toolsListRequest,
-              this.hooks,
-              requestResult.lastProcessedIndex,
-            ),
-        );
-      }
-
-      // Process successful response through hooks
-      const responseResult = await processToolsListResponseThroughHooks(
-        forwardResult.result as ListToolsResult,
-        requestResult.resultType === "continue"
-          ? requestResult.request
-          : toolsListRequest,
-        this.hooks,
-        requestResult.lastProcessedIndex,
-      );
-
-      if (responseResult.resultType === "abort") {
-        return createAbortResponse(
-          "response",
-          responseResult.reason,
-          request.id,
-          forwardResult.headers,
-        );
-      }
-
-      // Return modified response
-      return createSuccessResponse(
-        responseResult.resultType === "continue"
-          ? responseResult.response
-          : forwardResult.result,
-        request.id,
-        forwardResult.headers,
-      );
-    } catch (error) {
-      const errorMsg = messageFromError(error);
-      return createErrorResponse(
-        -32603,
-        `Error processing tools list: ${errorMsg}`,
-        errorMsg,
-        request.id,
-      );
-    }
+  /**
+   * Handle initialize requests with hook processing
+   */
+  private async handleInitialize(
+    request: JSONRPCRequest,
+    headers: Record<string, string>,
+  ): Promise<{
+    message: JSONRPCMessage | any; // Can be HTTP error response
+    headers: Record<string, string>;
+    statusCode?: number;
+  }> {
+    return this.handleRequestWithHooks(request, headers, this.initializeConfig);
   }
 
   /**
@@ -417,16 +563,6 @@ export class MessageHandler {
       res.on("end", () => {
         logger.info(`[MessageHandler] Response body: ${responseBody}`);
 
-        if (!res.statusCode || res.statusCode >= 400) {
-          const httpError = {
-            code: res.statusCode || 500,
-            message: `HTTP ${res.statusCode}`,
-            data: responseBody,
-          };
-          reject(httpError);
-          return;
-        }
-
         // Handle empty responses (e.g., from notifications)
         if (!responseBody || responseBody.trim() === "") {
           resolve({
@@ -440,15 +576,35 @@ export class MessageHandler {
           return;
         }
 
+        // Try to parse as JSON-RPC response first
         try {
           const jsonResponse = JSON.parse(responseBody) as JSONRPCMessage;
-          resolve({
-            response: jsonResponse as JSONRPCResponse | JSONRPCError,
-            headers: responseHeaders,
-          });
+          // Check if it's a valid JSON-RPC response or error
+          if ("jsonrpc" in jsonResponse) {
+            resolve({
+              response: jsonResponse as JSONRPCResponse | JSONRPCError,
+              headers: responseHeaders,
+            });
+            return;
+          }
         } catch (error) {
-          reject(new Error(`Failed to parse JSON response: ${error}`));
+          // Not valid JSON, fall through to HTTP error handling
         }
+
+        // If we have an HTTP error status, create an HTTP transport error
+        if (!res.statusCode || res.statusCode >= 400) {
+          const httpError = {
+            code: res.statusCode || 500,
+            message: `HTTP ${res.statusCode}`,
+            data: responseBody,
+            responseType: "http" as const,
+          };
+          reject(httpError);
+          return;
+        }
+
+        // If we get here, it's a 2xx response but not valid JSON-RPC
+        reject(new Error(`Invalid JSON-RPC response: ${responseBody}`));
       });
 
       res.on("error", (error) => {

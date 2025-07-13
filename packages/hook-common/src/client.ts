@@ -1,6 +1,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import type {
   CallToolRequest,
+  InitializeRequest,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -9,10 +10,14 @@ import superjson from "superjson";
 import type { HookRouter } from "./router.js";
 import type {
   Hook,
+  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
+  ToolCallTransportErrorHookResult,
+  TransportError,
 } from "./types.js";
 
 /**
@@ -180,6 +185,114 @@ export class RemoteHookClient implements Hook {
       return {
         resultType: "continue",
         body: null,
+      };
+    }
+  }
+
+  /**
+   * Process a tool call transport error through the hook
+   */
+  async processToolCallTransportError(
+    error: TransportError,
+    originalToolCall: CallToolRequest,
+  ): Promise<ToolCallTransportErrorHookResult> {
+    try {
+      return await this.client.processToolCallTransportError.mutate({
+        error,
+        originalToolCall,
+      });
+    } catch (clientError) {
+      // Check if it's a "not implemented" error
+      if (
+        clientError instanceof Error &&
+        clientError.message.includes("not implemented")
+      ) {
+        // Hook doesn't support this method, continue with unmodified error
+        return {
+          resultType: "continue",
+          error,
+        };
+      }
+      console.error(
+        `Hook ${this.name} tool call transport error processing failed:`,
+        clientError,
+      );
+      // On other errors, continue with unmodified error
+      return {
+        resultType: "continue",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Process a tools/list transport error through the hook
+   */
+  async processToolsListTransportError(
+    error: TransportError,
+    originalRequest: ListToolsRequest,
+  ): Promise<ListToolsTransportErrorHookResult> {
+    try {
+      return await this.client.processToolsListTransportError.mutate({
+        error,
+        originalRequest,
+      });
+    } catch (clientError) {
+      // Check if it's a "not implemented" error
+      if (
+        clientError instanceof Error &&
+        clientError.message.includes("not implemented")
+      ) {
+        // Hook doesn't support this method, continue with unmodified error
+        return {
+          resultType: "continue",
+          error,
+        };
+      }
+      console.error(
+        `Hook ${this.name} tools/list transport error processing failed:`,
+        clientError,
+      );
+      // On other errors, continue with unmodified error
+      return {
+        resultType: "continue",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Process an initialize transport error through the hook
+   */
+  async processInitializeTransportError(
+    error: TransportError,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeTransportErrorHookResult> {
+    try {
+      return await this.client.processInitializeTransportError.mutate({
+        error,
+        originalRequest,
+      });
+    } catch (clientError) {
+      // Check if it's a "not implemented" error
+      if (
+        clientError instanceof Error &&
+        clientError.message.includes("not implemented")
+      ) {
+        // Hook doesn't support this method, continue with unmodified error
+        return {
+          resultType: "continue",
+          error,
+        };
+      }
+      console.error(
+        `Hook ${this.name} initialize transport error processing failed:`,
+        clientError,
+      );
+      // On other errors, continue with unmodified error
+      return {
+        resultType: "continue",
+        error,
       };
     }
   }

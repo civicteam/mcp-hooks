@@ -1,11 +1,16 @@
 import type {
   CallToolRequest,
   CallToolResult,
+  InitializeRequest,
+  InitializeResult,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
   Hook,
+  InitializeRequestHookResult,
+  InitializeResponseHookResult,
+  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   ListToolsTransportErrorHookResult,
@@ -101,6 +106,47 @@ export abstract class AbstractHook implements Hook {
     error: TransportError,
     originalRequest: ListToolsRequest,
   ): Promise<ListToolsTransportErrorHookResult> {
+    return {
+      resultType: "continue",
+      error: error,
+    };
+  }
+
+  /**
+   * Process an initialize request.
+   * Default implementation passes through without modification.
+   */
+  async processInitializeRequest?(
+    request: InitializeRequest,
+  ): Promise<InitializeRequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process an initialize response.
+   * Default implementation passes through without modification.
+   */
+  async processInitializeResponse?(
+    response: InitializeResult,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process transport errors for initialize requests.
+   * Default implementation passes through without modification.
+   */
+  async processInitializeTransportError?(
+    error: TransportError,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeTransportErrorHookResult> {
     return {
       resultType: "continue",
       error: error,

@@ -6,6 +6,8 @@
 
 import type {
   Hook,
+  InitializeRequest,
+  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   ListToolsTransportErrorHookResult,
@@ -301,6 +303,64 @@ export async function processToolsListTransportErrorThroughHooks(
     );
 
     const hookResult = await hook.processToolsListTransportError(
+      currentError,
+      request,
+    );
+    lastProcessedIndex = i;
+
+    if (hookResult.resultType === "continue") {
+      currentError = hookResult.error;
+      logger.info(`Hook ${i + 1} passed error through`);
+    } else {
+      // abort
+      logger.info(
+        `Hook ${i + 1} aborted error processing: ${hookResult.reason || "No reason provided"}`,
+      );
+      return { ...hookResult, lastProcessedIndex };
+    }
+  }
+
+  // All hooks passed, return continue with final error
+  return {
+    resultType: "continue",
+    error: currentError,
+    lastProcessedIndex,
+  };
+}
+/**
+ * Process an initialize transport error through a chain of hooks in reverse order
+ */
+export async function processInitializeTransportErrorThroughHooks(
+  error: TransportError,
+  request: InitializeRequest,
+  hooks: Hook[],
+  startIndex: number,
+): Promise<
+  InitializeTransportErrorHookResult & { lastProcessedIndex: number }
+> {
+  logger.info(`[processInitializeTransportErrorThroughHooks] Called with error: ${JSON.stringify(error)}`);
+  logger.info(`[processInitializeTransportErrorThroughHooks] Number of hooks: ${hooks.length}, startIndex: ${startIndex}`);
+  
+  let currentError = error;
+  let lastProcessedIndex = startIndex;
+
+  for (let i = startIndex; i >= 0; i--) {
+    const hook = hooks[i];
+    logger.info(`[processInitializeTransportErrorThroughHooks] Processing hook ${i + 1}: ${hook.name}`);
+
+    // Check if hook supports transport error processing
+    if (!hook.processInitializeTransportError) {
+      logger.info(
+        `Hook ${i + 1} (${hook.name}) does not support initialize transport error processing, skipping`,
+      );
+      continue;
+    }
+
+    logger.info(
+      `Processing initialize transport error through hook ${i + 1} (${hook.name})`,
+    );
+
+    const hookResult = await hook.processInitializeTransportError(
       currentError,
       request,
     );

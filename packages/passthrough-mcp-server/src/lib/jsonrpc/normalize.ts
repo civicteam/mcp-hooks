@@ -24,6 +24,7 @@ export function normalizeResponse(
         code: response.error.code,
         message: response.error.message,
         data: response.error.data,
+        responseType: "jsonrpc", // JSON-RPC errors come from 200 responses
       },
       headers,
     };

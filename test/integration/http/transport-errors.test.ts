@@ -15,11 +15,13 @@ describe("Transport Error Alert Hook", () => {
   beforeAll(async () => {
     // Start a simple webhook server to receive alerts on port 9999
     webhookServer = http.createServer((req, res) => {
+      console.log(`[Test Webhook Server] Received ${req.method} ${req.url}`);
       let body = "";
       req.on("data", (chunk) => {
         body += chunk.toString();
       });
       req.on("end", () => {
+        console.log(`[Test Webhook Server] Body: ${body}`);
         try {
           alertWebhookCalls.push({ url: req.url!, body: JSON.parse(body) });
         } catch (e) {
@@ -33,6 +35,7 @@ describe("Transport Error Alert Hook", () => {
     await new Promise<void>((resolve) => {
       webhookServer.listen(9999, resolve);
     });
+    console.log("[Test Webhook Server] Started on port 9999");
   });
 
   afterAll(async () => {
@@ -49,23 +52,22 @@ describe("Transport Error Alert Hook", () => {
     alertWebhookCalls = [];
   });
 
-  it("should trigger alert hook when 5xx error occurs", async () => {
+  it("should trigger alert hook when 5xx error occurs during initialization", async () => {
     // The broken server and passthrough with alert hook are already running
     // from setup-test-servers.sh
-    client = await createUnauthenticatedClient(PASSTHROUGH_WITH_ALERT_URL);
-
-    // Make a request that will trigger a 500 error
     let errorThrown = false;
+    let errorMessage = "";
+    
     try {
-      await client.callTool({
-        name: "always_error",
-        arguments: {},
-      });
+      client = await createUnauthenticatedClient(PASSTHROUGH_WITH_ALERT_URL);
     } catch (error) {
       errorThrown = true;
-      // Expected error - the passthrough server returns the error to the client
+      errorMessage = error instanceof Error ? error.message : String(error);
+      // Expected error - the broken server returns 500 for all requests
     }
+    
     expect(errorThrown).toBe(true);
+    expect(errorMessage).toContain("500");
 
     // Wait for webhook to be called
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -79,40 +81,9 @@ describe("Transport Error Alert Hook", () => {
     // Verify alert was triggered
     expect(alertWebhookCalls).toHaveLength(1);
     const alertCall = alertWebhookCalls[0];
+    expect(alertCall.url).toBe("/webhook");
     expect(alertCall.body).toMatchObject({
-      type: "tool_call_error",
-      tool: "always_error",
-      error: {
-        code: 500,
-        message: expect.stringContaining("HTTP 500"),
-        data: expect.any(String),
-      },
-      timestamp: expect.any(String),
-    });
-  });
-
-  it("should trigger alert for tools/list errors", async () => {
-    // The broken server and passthrough with alert hook are already running
-    client = await createUnauthenticatedClient(PASSTHROUGH_WITH_ALERT_URL);
-
-    // Make a request that will trigger a 500 error
-    let errorThrown = false;
-    try {
-      await client.listTools();
-    } catch (error) {
-      errorThrown = true;
-      // Expected error
-    }
-    expect(errorThrown).toBe(true);
-
-    // Wait for webhook to be called
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Verify alert was triggered
-    expect(alertWebhookCalls).toHaveLength(1);
-    const alertCall = alertWebhookCalls[0];
-    expect(alertCall.body).toMatchObject({
-      type: "tools_list_error",
+      type: "initialize_error",
       error: {
         code: 500,
         message: expect.stringContaining("HTTP 500"),
@@ -126,12 +97,10 @@ describe("Transport Error Alert Hook", () => {
     // Create a client that will trigger a 401 error (auth required)
     // Using the auth-protected server without credentials
     const authProtectedUrl = "http://localhost:34008/mcp";
-    client = await createUnauthenticatedClient(authProtectedUrl);
-
-    // Make a request that will trigger a 401 error
+    
     let errorThrown = false;
     try {
-      await client.listTools();
+      client = await createUnauthenticatedClient(authProtectedUrl);
     } catch (error) {
       errorThrown = true;
       // Expected error - 401 unauthorized

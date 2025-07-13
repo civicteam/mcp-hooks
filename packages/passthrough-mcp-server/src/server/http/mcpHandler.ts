@@ -128,9 +128,8 @@ function extractForwardHeaders(
  * Check if request needs hook processing
  */
 function needsHookProcessing(message: JSONRPCMessage): boolean {
-  if (!("method" in message)) return false;
-  const request = message as JSONRPCRequest;
-  return request.method === "tools/call" || request.method === "tools/list";
+  // All requests should go through hook processing
+  return "method" in message;
 }
 
 /**
@@ -146,14 +145,21 @@ function clientExpectsSSE(headers: http.IncomingHttpHeaders): boolean {
  */
 function sendResponse(
   res: http.ServerResponse,
-  message: JSONRPCMessage,
+  message: JSONRPCMessage | any,
   headers: Record<string, string>,
   clientHeaders: http.IncomingHttpHeaders,
+  statusCode: number = 200,
 ): void {
-  // Determine HTTP status code based on whether this is an error response
-  const isError = "error" in message;
-  const statusCode = isError ? 500 : 200;
-  
+  // Check if this is an HTTP error response (not JSON-RPC)
+  if (message.statusCode && message.body !== undefined && !message.jsonrpc) {
+    // This is an HTTP error, return it as-is
+    res.writeHead(message.statusCode, headers);
+    res.end(message.body);
+    return;
+  }
+
+  // Otherwise handle as JSON-RPC
+
   if (clientExpectsSSE(clientHeaders)) {
     // Client expects SSE format
     const { "content-type": _, ...targetHeaders } = headers;
@@ -196,7 +202,7 @@ async function handleWithHooks(
   res: http.ServerResponse,
 ): Promise<void> {
   const result = await messageHandler.handle(message, forwardHeaders);
-  sendResponse(res, result.message, result.headers, req.headers);
+  sendResponse(res, result.message, result.headers, req.headers, result.statusCode || 200);
 }
 
 /**

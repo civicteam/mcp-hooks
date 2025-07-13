@@ -1,8 +1,14 @@
-import type { CallToolRequest } from "@modelcontextprotocol/sdk/types";
+import type {
+  CallToolRequest,
+  InitializeRequest,
+  InitializeResult,
+} from "@modelcontextprotocol/sdk/types";
 import {
   CallToolRequestSchema,
   type CallToolResult,
   CallToolResultSchema,
+  InitializeRequestSchema,
+  InitializeResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
@@ -16,6 +22,8 @@ export type {
   CallToolResult,
   ListToolsRequest,
   ListToolsResult,
+  InitializeRequest,
+  InitializeResult,
 };
 
 // Generic error type for transport errors
@@ -23,6 +31,7 @@ export const TransportErrorSchema = z.object({
   code: z.number(),
   message: z.string(),
   data: z.unknown().optional(),
+  responseType: z.enum(["http", "jsonrpc"]).optional(), // Track original response type
 });
 
 export type TransportError = z.infer<typeof TransportErrorSchema>;
@@ -115,6 +124,47 @@ export const ListToolsTransportErrorHookResultSchema = z.discriminatedUnion(
   ],
 );
 
+export const InitializeRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: InitializeRequestSchema,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: InitializeResultSchema,
+    }),
+  ],
+);
+
+export const InitializeResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: InitializeResultSchema,
+    }),
+  ],
+);
+
+export const InitializeTransportErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    HookAbortSchema,
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+      error: TransportErrorSchema,
+    }),
+  ],
+);
+
 export type ToolCallRequestHookResult = z.infer<
   typeof ToolCallRequestHookResultSchema
 >;
@@ -132,6 +182,15 @@ export type ToolCallTransportErrorHookResult = z.infer<
 >;
 export type ListToolsTransportErrorHookResult = z.infer<
   typeof ListToolsTransportErrorHookResultSchema
+>;
+export type InitializeRequestHookResult = z.infer<
+  typeof InitializeRequestHookResultSchema
+>;
+export type InitializeResponseHookResult = z.infer<
+  typeof InitializeResponseHookResultSchema
+>;
+export type InitializeTransportErrorHookResult = z.infer<
+  typeof InitializeTransportErrorHookResultSchema
 >;
 /**
  * Hook interface that all hooks must implement
@@ -187,4 +246,27 @@ export interface Hook {
     error: TransportError,
     originalRequest: ListToolsRequest,
   ): Promise<ListToolsTransportErrorHookResult>;
+
+  /**
+   * Process an initialize request (optional)
+   */
+  processInitializeRequest?(
+    request: InitializeRequest,
+  ): Promise<InitializeRequestHookResult>;
+
+  /**
+   * Process an initialize response (optional)
+   */
+  processInitializeResponse?(
+    response: InitializeResult,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeResponseHookResult>;
+
+  /**
+   * Process transport errors for initialize requests (optional)
+   */
+  processInitializeTransportError?(
+    error: TransportError,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeTransportErrorHookResult>;
 }

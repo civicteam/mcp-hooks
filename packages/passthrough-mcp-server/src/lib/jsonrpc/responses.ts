@@ -17,7 +17,11 @@ export function createAbortResponse(
   reason: string | undefined,
   requestId: string | number,
   headers: Record<string, string>,
-): { message: JSONRPCError; headers: Record<string, string> } {
+): {
+  message: JSONRPCError;
+  headers: Record<string, string>;
+  statusCode?: number;
+} {
   // Determine error code and default message based on response type
   let code: number;
   let defaultMessage: string;
@@ -47,6 +51,7 @@ export function createAbortResponse(
       },
     },
     headers,
+    statusCode: 200, // JSON-RPC errors use 200 status
   };
 }
 
@@ -57,11 +62,16 @@ export const createSuccessResponse = (
   result: Record<string, unknown>,
   requestId: string | number,
   headers: Record<string, string>,
-): { message: JSONRPCResponse; headers: Record<string, string> } => ({
+): {
+  message: JSONRPCResponse;
+  headers: Record<string, string>;
+  statusCode?: number;
+} => ({
   message: {
     jsonrpc: "2.0",
     id: requestId,
     result,
   },
   headers,
+  statusCode: 200,
 });

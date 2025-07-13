@@ -9,5 +9,11 @@ export type ForwardResult =
       type: "success";
       result: Record<string, unknown>;
       headers: Record<string, string>;
+      statusCode?: number;
     }
-  | { type: "error"; error: TransportError; headers: Record<string, string> };
+  | {
+      type: "error";
+      error: TransportError;
+      headers: Record<string, string>;
+      statusCode?: number;
+    };

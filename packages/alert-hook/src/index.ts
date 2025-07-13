@@ -6,6 +6,7 @@
  */
 import {
   AbstractHook,
+  type InitializeTransportErrorHookResult,
   type ListToolsTransportErrorHookResult,
   type ToolCallTransportErrorHookResult,
   type TransportError,
@@ -13,6 +14,7 @@ import {
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
+  InitializeRequest,
   ListToolsRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
@@ -93,6 +95,34 @@ export class AlertHook extends AbstractHook {
   }
 
   /**
+   * Process transport errors for initialize requests
+   */
+  async processInitializeTransportError(
+    error: TransportError,
+    _originalRequest: InitializeRequest,
+  ): Promise<InitializeTransportErrorHookResult> {
+    console.log(`[AlertHook] processInitializeTransportError called with error:`, error);
+    
+    // Check if error is a 5xx HTTP error
+    if (this.is5xxError(error)) {
+      console.log(`[AlertHook] Detected 5xx error, sending alert`);
+      await this.sendAlert({
+        type: "initialize_error",
+        error: this.formatError(error),
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      console.log(`[AlertHook] Error code ${error.code} is not 5xx, skipping alert`);
+    }
+
+    // Continue with the error
+    return {
+      resultType: "continue",
+      error: error,
+    };
+  }
+
+  /**
    * Check if the error is a 5xx HTTP error
    */
   private is5xxError(error: TransportError): boolean {
@@ -114,8 +144,11 @@ export class AlertHook extends AbstractHook {
    * Send alert notification
    */
   private async sendAlert(alert: Record<string, unknown>): Promise<void> {
+    console.log(`[AlertHook] Sending alert:`, JSON.stringify(alert, null, 2));
+    
     // Send to webhook if configured
     if (this.config.webhookUrl) {
+      console.log(`[AlertHook] Sending to webhook: ${this.config.webhookUrl}`);
       try {
         const response = await fetch(this.config.webhookUrl, {
           method: "POST",
@@ -129,10 +162,14 @@ export class AlertHook extends AbstractHook {
           console.error(
             `Failed to send alert to webhook: ${response.status} ${response.statusText}`,
           );
+        } else {
+          console.log(`[AlertHook] Alert sent successfully`);
         }
       } catch (error) {
         console.error("Error sending alert to webhook:", error);
       }
+    } else {
+      console.log(`[AlertHook] No webhook URL configured`);
     }
   }
 }
