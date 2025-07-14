@@ -4,7 +4,7 @@
 
 import type { TransportError } from "@civic/hook-common";
 import type { JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
-import type { ForwardResult } from "../hooks/types.js";
+import type { ForwardResult, HttpErrorResponse } from "../hooks/types.js";
 
 /**
  * Type guard to check if an error is an HTTP error
@@ -80,7 +80,7 @@ export function createErrorResponseFromTransportError(
   requestId: string | number,
   headers: Record<string, string> = {},
 ): {
-  message: JSONRPCError | any;
+  message: JSONRPCError | HttpErrorResponse;
   headers: Record<string, string>;
   statusCode?: number;
 } {
@@ -90,7 +90,7 @@ export function createErrorResponseFromTransportError(
       message: {
         statusCode: error.code,
         body: (error.data as string) || error.message,
-      } as any,
+      },
       headers,
       statusCode: error.code,
     };

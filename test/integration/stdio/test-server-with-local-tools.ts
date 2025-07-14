@@ -5,16 +5,20 @@
  * to add local tools to a stdio passthrough proxy
  */
 
-import { createStdioPassthroughProxy } from "@civic/passthrough-mcp-server";
 import { LocalToolsHook } from "@civic/local-tools-hook";
 import type { ToolDefinition } from "@civic/local-tools-hook";
+import { createStdioPassthroughProxy } from "@civic/passthrough-mcp-server";
 import { z } from "zod";
 
 async function main() {
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33100";
   const targetTransport = process.env.TARGET_SERVER_TRANSPORT || "httpStream";
 
-  console.error("[Test Server] Starting with target:", targetUrl, targetTransport);
+  console.error(
+    "[Test Server] Starting with target:",
+    targetUrl,
+    targetTransport,
+  );
 
   // Define local tools
   const localTools: ToolDefinition<any>[] = [];
@@ -27,7 +31,10 @@ async function main() {
       text: z.string().describe("Text to reverse"),
     },
     cb: async (args) => {
-      console.error("[Test Server] local-reverse called with args:", JSON.stringify(args));
+      console.error(
+        "[Test Server] local-reverse called with args:",
+        JSON.stringify(args),
+      );
       const text = args?.text;
       if (!text) {
         throw new Error("text parameter is required");
@@ -40,7 +47,7 @@ async function main() {
           },
         ],
       };
-    }
+    },
   });
 
   // Add a tool that always errors for testing
@@ -50,7 +57,7 @@ async function main() {
     paramsSchema: {},
     cb: async () => {
       throw new Error("This tool always fails");
-    }
+    },
   });
 
   // Check if we should add an override for the echo tool
@@ -62,7 +69,10 @@ async function main() {
         message: z.string().describe("Message to echo"),
       },
       cb: async (args) => {
-        console.error("[Test Server] local echo called with args:", JSON.stringify(args));
+        console.error(
+          "[Test Server] local echo called with args:",
+          JSON.stringify(args),
+        );
         const message = args?.message;
         return {
           content: [
@@ -72,7 +82,7 @@ async function main() {
             },
           ],
         };
-      }
+      },
     });
   }
 

@@ -22,18 +22,18 @@ describe("Stdio Passthrough Local Tools", () => {
     });
 
     it("should execute local tools", async () => {
-      const result = await client.callTool("local-reverse", {
+      const result = (await client.callTool("local-reverse", {
         text: "hello",
-      }) as CallToolResult;
+      })) as CallToolResult;
 
       expect(result.content[0].type).toBe("text");
       expect(result.content[0].text).toBe("olleh");
     });
 
     it("should still execute remote tools", async () => {
-      const result = await client.callTool("echo", {
+      const result = (await client.callTool("echo", {
         message: "test",
-      }) as CallToolResult;
+      })) as CallToolResult;
 
       expect(result.content[0].type).toBe("text");
       expect(result.content[0].text).toBe("Echo: test");
@@ -61,7 +61,9 @@ describe("Stdio Passthrough Local Tools", () => {
 
     it("should handle errors gracefully when local tool fails", async () => {
       // LocalToolsHook returns abort which becomes an error
-      await expect(client.callTool("local-error", {})).rejects.toThrow("This tool always fails");
+      await expect(client.callTool("local-error", {})).rejects.toThrow(
+        "This tool always fails",
+      );
     });
   });
 
@@ -75,9 +77,9 @@ describe("Stdio Passthrough Local Tools", () => {
     });
 
     it("should prioritize local tools over remote tools with same name", async () => {
-      const result = await client.callTool("echo", {
+      const result = (await client.callTool("echo", {
         message: "test",
-      }) as CallToolResult;
+      })) as CallToolResult;
 
       // Should use the local echo tool that adds "LOCAL: " prefix
       expect(result.content[0].type).toBe("text");

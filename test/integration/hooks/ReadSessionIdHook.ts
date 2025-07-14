@@ -14,7 +14,9 @@ export class ReadSessionIdHook extends AbstractHook {
     return "ReadSessionIdHook";
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     return {
       resultType: "continue",
       request: toolCall,

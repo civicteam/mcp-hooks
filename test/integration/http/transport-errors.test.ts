@@ -1,8 +1,8 @@
+import * as http from "node:http";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { afterEach, beforeAll, afterAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createUnauthenticatedClient } from "../test-client";
 import { TEST_CONFIG } from "../test-config";
-import * as http from "http";
 
 describe("Transport Error Alert Hook", () => {
   let client: Client | undefined;
@@ -21,10 +21,13 @@ describe("Transport Error Alert Hook", () => {
       });
       req.on("end", () => {
         try {
-          alertWebhookCalls.push({ url: req.url!, body: JSON.parse(body) });
+          alertWebhookCalls.push({
+            url: req.url || "",
+            body: JSON.parse(body),
+          });
         } catch (e) {
           // Not JSON, store as string
-          alertWebhookCalls.push({ url: req.url!, body });
+          alertWebhookCalls.push({ url: req.url || "", body });
         }
         res.writeHead(200);
         res.end();
@@ -54,7 +57,7 @@ describe("Transport Error Alert Hook", () => {
     // from setup-test-servers.sh
     let errorThrown = false;
     let errorMessage = "";
-    
+
     try {
       client = await createUnauthenticatedClient(PASSTHROUGH_WITH_ALERT_URL);
     } catch (error) {
@@ -62,7 +65,7 @@ describe("Transport Error Alert Hook", () => {
       errorMessage = error instanceof Error ? error.message : String(error);
       // Expected error - the broken server returns 500 for all requests
     }
-    
+
     expect(errorThrown).toBe(true);
     expect(errorMessage).toContain("500");
 
@@ -88,7 +91,7 @@ describe("Transport Error Alert Hook", () => {
     // Create a client that will trigger a 401 error (auth required)
     // Using the auth-protected server without credentials
     const authProtectedUrl = "http://localhost:34008/mcp";
-    
+
     let errorThrown = false;
     try {
       client = await createUnauthenticatedClient(authProtectedUrl);

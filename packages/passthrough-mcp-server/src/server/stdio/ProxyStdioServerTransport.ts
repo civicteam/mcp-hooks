@@ -6,8 +6,12 @@
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  JSONRPCError,
+  JSONRPCMessage,
+} from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
+import type { HttpErrorResponse } from "../../lib/hooks/types.js";
 import { logger } from "../../lib/logger.js";
 import { MessageHandler } from "../messageHandler.js";
 import { establishSSEConnection } from "./sseConnection.js";
@@ -80,7 +84,28 @@ export class ProxyStdioServerTransport extends StdioServerTransport {
 
     // Send the response back through stdio
     if (result.message) {
-      await this.send(result.message);
+      // Check if this is an HttpErrorResponse that needs conversion
+      if (
+        "statusCode" in result.message &&
+        "body" in result.message &&
+        !("jsonrpc" in result.message)
+      ) {
+        // Convert HttpErrorResponse to JSON-RPC error
+        const httpError = result.message as HttpErrorResponse;
+        const jsonRpcError: JSONRPCError = {
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: `HTTP ${httpError.statusCode}`,
+            data: httpError.body,
+          },
+          id: "id" in message ? message.id : 0,
+        };
+        await this.send(jsonRpcError);
+      } else {
+        // Regular JSON-RPC message
+        await this.send(result.message as JSONRPCMessage);
+      }
     }
   }
 

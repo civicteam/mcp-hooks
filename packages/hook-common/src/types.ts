@@ -270,3 +270,88 @@ export interface Hook {
     originalRequest: InitializeRequest,
   ): Promise<InitializeTransportErrorHookResult>;
 }
+
+/**
+ * Generic TypeScript types for hook results
+ */
+
+/**
+ * Generic type for request hook results
+ * - abort: Stop processing with a reason
+ * - continue: Continue with potentially modified request
+ * - respond: Return response directly without forwarding
+ */
+export type GenericRequestHookResult<TRequest, TResponse> =
+  | { resultType: "abort"; reason: string }
+  | { resultType: "continue"; request: TRequest }
+  | { resultType: "respond"; response: TResponse };
+
+/**
+ * Generic type for response hook results
+ * - abort: Stop processing with a reason
+ * - continue: Continue with potentially modified response
+ */
+export type GenericResponseHookResult<TResponse> =
+  | { resultType: "abort"; reason: string }
+  | { resultType: "continue"; response: TResponse };
+
+/**
+ * Generic type for transport error hook results
+ * - abort: Stop processing with a reason
+ * - continue: Continue with potentially modified error
+ */
+export type GenericTransportErrorHookResult =
+  | { resultType: "abort"; reason: string }
+  | { resultType: "continue"; error: TransportError };
+
+/**
+ * Generic schema creators for hook results
+ */
+
+/**
+ * Create a request hook result schema with proper types
+ */
+export const createRequestHookResultSchema = <
+  TRequest extends z.ZodType,
+  TResponse extends z.ZodType,
+>(
+  requestSchema: TRequest,
+  responseSchema: TResponse,
+) =>
+  z.discriminatedUnion("resultType", [
+    HookAbortSchema,
+    z.object({
+      resultType: z.literal("continue"),
+      request: requestSchema,
+    }),
+    z.object({
+      resultType: z.literal("respond"),
+      response: responseSchema,
+    }),
+  ]);
+
+/**
+ * Create a response hook result schema with proper types
+ */
+export const createResponseHookResultSchema = <TResponse extends z.ZodType>(
+  responseSchema: TResponse,
+) =>
+  z.discriminatedUnion("resultType", [
+    HookAbortSchema,
+    z.object({
+      resultType: z.literal("continue"),
+      response: responseSchema,
+    }),
+  ]);
+
+/**
+ * Create a transport error hook result schema
+ */
+export const createTransportErrorHookResultSchema = () =>
+  z.discriminatedUnion("resultType", [
+    HookAbortSchema,
+    z.object({
+      resultType: z.literal("continue"),
+      error: TransportErrorSchema,
+    }),
+  ]);

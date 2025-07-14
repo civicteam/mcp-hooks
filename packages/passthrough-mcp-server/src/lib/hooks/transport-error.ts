@@ -5,6 +5,7 @@
 import type { TransportError } from "@civic/hook-common";
 import type { JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
 import { createAbortResponse } from "../jsonrpc/responses.js";
+import type { HttpErrorResponse } from "./types.js";
 
 /**
  * Handle transport errors through hooks and return appropriate JSON-RPC error
@@ -17,7 +18,7 @@ export async function handleTransportError<
   headers: Record<string, string>,
   processError: () => Promise<T>,
 ): Promise<{
-  message: JSONRPCError | { statusCode: number; body: string };
+  message: JSONRPCError | HttpErrorResponse;
   headers: Record<string, string>;
   statusCode?: number;
 }> {
@@ -47,7 +48,7 @@ export async function handleTransportError<
       message: {
         statusCode: finalError.code,
         body: (finalError.data as string) || finalError.message,
-      } as any, // Type assertion needed for HTTP response
+      },
       headers,
       statusCode: finalError.code,
     };

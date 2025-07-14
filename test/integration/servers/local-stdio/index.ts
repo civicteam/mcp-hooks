@@ -2,7 +2,7 @@
 
 /**
  * Local MCP server for testing local tools functionality
- * 
+ *
  * This server implements a single tool (reverse-text) and is used
  * to test the hybrid transport architecture.
  */
@@ -11,14 +11,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 // Create the MCP server
-const server = new McpServer({
-  name: "local-test-server",
-  version: "1.0.0"
-}, {
-  capabilities: {
-    tools: {}
-  }
-});
+const server = new McpServer(
+  {
+    name: "local-test-server",
+    version: "1.0.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  },
+);
 
 // Add the reverse-text tool
 server.tool(
@@ -27,40 +30,40 @@ server.tool(
   {
     text: {
       type: "string",
-      description: "Text to reverse"
-    }
+      description: "Text to reverse",
+    },
   },
   async ({ text }) => {
     console.error(`[LocalServer] reverse-text called with: "${text}"`);
-    
+
     if (!text) {
       throw new Error("text parameter is required");
     }
-    
+
     const reversed = text.split("").reverse().join("");
-    
+
     return {
       content: [
         {
           type: "text",
-          text: reversed
-        }
-      ]
+          text: reversed,
+        },
+      ],
     };
-  }
+  },
 );
 
 // Main function to start the server
 async function main() {
   console.error("[LocalServer] Starting local test server...");
   console.error("[LocalServer] Available tools: reverse-text");
-  
+
   // Create stdio transport
   const transport = new StdioServerTransport();
-  
+
   // Connect the server to the transport
   await server.connect(transport);
-  
+
   console.error("[LocalServer] Server running on stdio transport");
   console.error("[LocalServer] Ready to handle requests");
 }

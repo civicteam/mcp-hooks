@@ -20,7 +20,9 @@ export class CallCounterHook extends AbstractHook {
     return "CallCounterHook";
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processToolCallRequest(
+    toolCall: CallToolRequest,
+  ): Promise<ToolCallRequestHookResult> {
     // Get session ID from _meta
     const sessionId = (toolCall.params as any)._meta?.sessionId || "default";
 
@@ -49,7 +51,9 @@ export class CallCounterHook extends AbstractHook {
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     // Get the session count from the modified tool call
-    const sessionCount = (originalToolCall as CallToolRequestWithHookData)._hookData?.sessionCount || 0;
+    const sessionCount =
+      (originalToolCall as CallToolRequestWithHookData)._hookData
+        ?.sessionCount || 0;
 
     // Add request count to the response
     const modifiedResponse: CallToolResult = {

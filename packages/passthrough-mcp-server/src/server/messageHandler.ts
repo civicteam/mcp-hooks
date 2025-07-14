@@ -10,19 +10,13 @@ import { URL } from "node:url";
 import type {
   CallToolRequest,
   CallToolResult,
+  GenericRequestHookResult,
+  GenericResponseHookResult,
+  GenericTransportErrorHookResult,
   Hook,
   InitializeRequest,
-  InitializeRequestHookResult,
-  InitializeResponseHookResult,
   InitializeResult,
-  InitializeTransportErrorHookResult,
   ListToolsRequest,
-  ListToolsRequestHookResult,
-  ListToolsResponseHookResult,
-  ListToolsTransportErrorHookResult,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
-  ToolCallTransportErrorHookResult,
   TransportError,
 } from "@civic/hook-common";
 import type {
@@ -45,7 +39,7 @@ import {
 import type { Config } from "../lib/config.js";
 import { messageFromError } from "../lib/error.js";
 import { handleTransportError } from "../lib/hooks/transport-error.js";
-import type { ForwardResult } from "../lib/hooks/types.js";
+import type { ForwardResult, HttpErrorResponse } from "../lib/hooks/types.js";
 import { extractResponseHeaders } from "../lib/http/headers.js";
 import {
   buildRequestOptions,
@@ -68,26 +62,7 @@ import { SSEParser } from "../lib/sse.js";
 /**
  * Configuration for generic request handling with hooks
  */
-interface RequestHandlerConfig<
-  TRequest,
-  TResponse,
-  TRequestResult extends {
-    resultType: string;
-    reason?: string;
-    request?: any;
-    response?: any;
-  },
-  TResponseResult extends {
-    resultType: string;
-    reason?: string;
-    response?: any;
-  },
-  TErrorResult extends {
-    resultType: string;
-    reason?: string;
-    error?: TransportError;
-  },
-> {
+interface RequestHandlerConfig<TRequest, TResponse> {
   /**
    * Build a typed request from the JSON-RPC request
    */
@@ -102,7 +77,11 @@ interface RequestHandlerConfig<
   processRequest?: (
     request: TRequest,
     hooks: Hook[],
-  ) => Promise<TRequestResult & { lastProcessedIndex: number }>;
+  ) => Promise<
+    GenericRequestHookResult<TRequest, TResponse> & {
+      lastProcessedIndex: number;
+    }
+  >;
 
   /**
    * Process response through hooks (optional)
@@ -112,7 +91,9 @@ interface RequestHandlerConfig<
     request: TRequest,
     hooks: Hook[],
     startIndex: number,
-  ) => Promise<TResponseResult & { lastProcessedIndex: number }>;
+  ) => Promise<
+    GenericResponseHookResult<TResponse> & { lastProcessedIndex: number }
+  >;
 
   /**
    * Process transport error through hooks
@@ -122,7 +103,9 @@ interface RequestHandlerConfig<
     request: TRequest,
     hooks: Hook[],
     startIndex: number,
-  ) => Promise<TErrorResult & { lastProcessedIndex: number }>;
+  ) => Promise<
+    GenericTransportErrorHookResult & { lastProcessedIndex: number }
+  >;
 
   /**
    * Error message prefix for catch block
@@ -136,17 +119,14 @@ interface RequestHandlerConfig<
 }
 
 export class MessageHandler {
-  private hooks: Hook[];
-  private targetUrl: string;
-  private targetMcpPath: string;
+  private readonly hooks: Hook[];
+  private readonly targetUrl: string;
+  private readonly targetMcpPath: string;
 
   // Request handler configurations
   private readonly toolCallConfig: RequestHandlerConfig<
     CallToolRequest,
-    CallToolResult,
-    ToolCallRequestHookResult,
-    ToolCallResponseHookResult,
-    ToolCallTransportErrorHookResult
+    CallToolResult
   > = {
     buildRequest: (request, headers) => {
       const params = request.params as { name: string; arguments?: unknown };
@@ -172,10 +152,7 @@ export class MessageHandler {
 
   private readonly toolsListConfig: RequestHandlerConfig<
     ListToolsRequest,
-    ListToolsResult,
-    ListToolsRequestHookResult,
-    ListToolsResponseHookResult,
-    ListToolsTransportErrorHookResult
+    ListToolsResult
   > = {
     buildRequest: (request, headers) => ({
       method: "tools/list",
@@ -196,10 +173,7 @@ export class MessageHandler {
 
   private readonly initializeConfig: RequestHandlerConfig<
     InitializeRequest,
-    InitializeResult,
-    InitializeRequestHookResult,
-    InitializeResponseHookResult,
-    InitializeTransportErrorHookResult
+    InitializeResult
   > = {
     buildRequest: (request) => ({
       method: "initialize",
@@ -227,37 +201,12 @@ export class MessageHandler {
   /**
    * Generic handler for requests with hook processing
    */
-  private async handleRequestWithHooks<
-    TRequest,
-    TResponse,
-    TRequestResult extends {
-      resultType: string;
-      reason?: string;
-      request?: any;
-      response?: any;
-    },
-    TResponseResult extends {
-      resultType: string;
-      reason?: string;
-      response?: any;
-    },
-    TErrorResult extends {
-      resultType: string;
-      reason?: string;
-      error?: TransportError;
-    },
-  >(
+  private async handleRequestWithHooks<TRequest, TResponse>(
     request: JSONRPCRequest,
     headers: Record<string, string>,
-    config: RequestHandlerConfig<
-      TRequest,
-      TResponse,
-      TRequestResult,
-      TResponseResult,
-      TErrorResult
-    >,
+    config: RequestHandlerConfig<TRequest, TResponse>,
   ): Promise<{
-    message: JSONRPCMessage | any; // Can be HTTP error response
+    message: JSONRPCMessage | HttpErrorResponse;
     headers: Record<string, string>;
     statusCode?: number;
   }> {
@@ -289,11 +238,15 @@ export class MessageHandler {
           config.supportsDirectResponse &&
           requestResult.resultType === "respond"
         ) {
-          return createSuccessResponse(requestResult.response, request.id, {});
+          return createSuccessResponse(
+            requestResult.response as TResponse & Record<string, unknown>,
+            request.id,
+            {},
+          );
         }
 
         if (requestResult.resultType === "continue") {
-          processedRequest = requestResult.request;
+          processedRequest = requestResult.request as TRequest;
         }
       }
 
@@ -319,11 +272,16 @@ export class MessageHandler {
               this.hooks,
               startIndex,
             );
+            if (result.resultType === "abort") {
+              return {
+                resultType: result.resultType,
+                reason: result.reason,
+              };
+            }
             return {
               resultType: result.resultType,
               error: result.error,
-              reason: result.reason,
-            } as TErrorResult;
+            };
           },
         );
       }
@@ -348,7 +306,7 @@ export class MessageHandler {
 
         if (responseResult.resultType === "continue") {
           return createSuccessResponse(
-            responseResult.response,
+            responseResult.response as TResponse & Record<string, unknown>,
             request.id,
             forwardResult.headers,
           );
@@ -357,7 +315,7 @@ export class MessageHandler {
 
       // Return the unmodified result
       return createSuccessResponse(
-        forwardResult.result,
+        forwardResult.result as TResponse & Record<string, unknown>,
         request.id,
         forwardResult.headers,
       );
@@ -406,7 +364,7 @@ export class MessageHandler {
     message: JSONRPCMessage,
     headers: Record<string, string> = {},
   ): Promise<{
-    message: JSONRPCMessage | any; // Can be HTTP error response
+    message: JSONRPCMessage | HttpErrorResponse;
     headers: Record<string, string>;
     statusCode?: number;
   }> {
@@ -480,7 +438,7 @@ export class MessageHandler {
     request: JSONRPCRequest,
     headers: Record<string, string>,
   ): Promise<{
-    message: JSONRPCMessage | any; // Can be HTTP error response
+    message: JSONRPCMessage | HttpErrorResponse;
     headers: Record<string, string>;
     statusCode?: number;
   }> {
@@ -494,7 +452,7 @@ export class MessageHandler {
     request: JSONRPCRequest,
     headers: Record<string, string>,
   ): Promise<{
-    message: JSONRPCMessage | any; // Can be HTTP error response
+    message: JSONRPCMessage | HttpErrorResponse;
     headers: Record<string, string>;
     statusCode?: number;
   }> {
@@ -508,7 +466,7 @@ export class MessageHandler {
     request: JSONRPCRequest,
     headers: Record<string, string>,
   ): Promise<{
-    message: JSONRPCMessage | any; // Can be HTTP error response
+    message: JSONRPCMessage | HttpErrorResponse;
     headers: Record<string, string>;
     statusCode?: number;
   }> {
@@ -594,9 +552,9 @@ export class MessageHandler {
           resolve({
             response: {
               jsonrpc: "2.0",
-              result: null,
+              result: {},
               id: requestId,
-            } as unknown as JSONRPCResponse,
+            } as JSONRPCResponse,
             headers: responseHeaders,
           });
           return;

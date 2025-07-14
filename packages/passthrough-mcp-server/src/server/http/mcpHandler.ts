@@ -15,6 +15,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
 import { messageFromError } from "../../lib/error.js";
+import type { HttpErrorResponse } from "../../lib/hooks/types.js";
 import { logger } from "../../lib/logger.js";
 import {
   formatSSEEvent,
@@ -145,13 +146,13 @@ function clientExpectsSSE(headers: http.IncomingHttpHeaders): boolean {
  */
 function sendResponse(
   res: http.ServerResponse,
-  message: JSONRPCMessage | any,
+  message: JSONRPCMessage | HttpErrorResponse,
   headers: Record<string, string>,
   clientHeaders: http.IncomingHttpHeaders,
   statusCode = 200,
 ): void {
   // Check if this is an HTTP error response (not JSON-RPC)
-  if (message.statusCode && message.body !== undefined && !message.jsonrpc) {
+  if ("statusCode" in message && "body" in message && !("jsonrpc" in message)) {
     // This is an HTTP error, return it as-is
     res.writeHead(message.statusCode, headers);
     res.end(message.body);
