@@ -14,8 +14,8 @@ import {
   type ToolCallResponseHookResult,
   createHookClient,
   createHookClients,
-  processToolCallRequestThroughHooks,
-  processToolCallResponseThroughHooks,
+  processRequestThroughHooks,
+  processResponseThroughHooks,
 } from "@civic/passthrough-mcp-server";
 
 /**
@@ -64,10 +64,11 @@ async function processToolCallWithHooks(
   ]);
 
   // Apply request hooks
-  const requestResult = await processToolCallRequestThroughHooks(
-    toolCall,
-    hooks,
-  );
+  const requestResult = await processRequestThroughHooks<
+    CallToolRequest,
+    CallToolResult,
+    "processToolCallRequest"
+  >(toolCall, hooks, "processToolCallRequest");
 
   if (requestResult.resultType === "abort") {
     console.error("Request rejected:", requestResult.reason);
@@ -88,7 +89,8 @@ async function processToolCallWithHooks(
   // Apply response hooks
   const responseResult = await processResponseThroughHooks<
     CallToolRequest,
-    CallToolResult
+    CallToolResult,
+    "processToolCallResponse"
   >(
     response as CallToolResult,
     requestResult.request,
@@ -124,7 +126,8 @@ class ToolService {
     // Apply request hooks
     const requestResult = await processRequestThroughHooks<
       CallToolRequest,
-      CallToolResult
+      CallToolResult,
+      "processToolCallRequest"
     >(toolCall, this.hooks, "processToolCallRequest");
 
     if (requestResult.resultType === "abort") {
@@ -141,7 +144,8 @@ class ToolService {
     // Apply response hooks
     const responseResult = await processResponseThroughHooks<
       CallToolRequest,
-      CallToolResult
+      CallToolResult,
+      "processToolCallResponse"
     >(
       response as CallToolResult,
       requestResult.request,

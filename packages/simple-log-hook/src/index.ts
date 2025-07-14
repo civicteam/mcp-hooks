@@ -10,13 +10,12 @@ import {
   AbstractHook,
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
-  createHookRouter,
+  startHookServer,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
   CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import { createHTTPServer } from "@trpc/server/adapters/standalone";
 
 /**
  * Minimal hook implementation that logs to console
@@ -54,15 +53,4 @@ const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33006;
 
 // Create and start the server
 const hook = new SimpleLogHook();
-const router = createHookRouter(hook);
-
-const server = createHTTPServer({
-  router,
-  createContext() {
-    return {};
-  },
-});
-
-server.listen(PORT);
-
-console.log(`Simple Log Hook running on port ${PORT}`);
+startHookServer(hook, PORT);

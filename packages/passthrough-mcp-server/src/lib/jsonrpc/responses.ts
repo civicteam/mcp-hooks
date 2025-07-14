@@ -7,7 +7,7 @@ import type {
   JSONRPCResponse,
 } from "@modelcontextprotocol/sdk/types.js";
 
-export type ResponseType = "request" | "response" | "error";
+type ResponseType = "request" | "response" | "error";
 
 /**
  * Create an abort response based on the hook result

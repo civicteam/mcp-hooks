@@ -69,25 +69,34 @@ The interface for implementing hooks:
 
 ```typescript
 interface Hook {
-  name: string;
-  processToolCallRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  get name(): string;
+  processToolCallRequest?(request: CallToolRequest): Promise<ToolCallRequestHookResult>;
   processToolCallResponse?(
     response: CallToolResult,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallResponseHookResult>;
-  processToolsList?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
+  processToolsListRequest?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
   processToolsListResponse?(
     response: ListToolsResult,
     originalRequest: ListToolsRequest
   ): Promise<ListToolsResponseHookResult>;
   processToolCallTransportError?(
-    error: unknown,
+    error: TransportError,
     originalToolCall: CallToolRequest
   ): Promise<ToolCallTransportErrorHookResult>;
   processToolsListTransportError?(
-    error: unknown,
+    error: TransportError,
     originalRequest: ListToolsRequest
   ): Promise<ListToolsTransportErrorHookResult>;
+  processInitializeRequest?(request: InitializeRequest): Promise<InitializeRequestHookResult>;
+  processInitializeResponse?(
+    response: InitializeResult,
+    originalRequest: InitializeRequest
+  ): Promise<InitializeResponseHookResult>;
+  processInitializeTransportError?(
+    error: TransportError,
+    originalRequest: InitializeRequest
+  ): Promise<InitializeTransportErrorHookResult>;
 }
 ```
 
@@ -164,13 +173,16 @@ graph LR
 All types are exported with Zod schemas for runtime validation:
 
 ```typescript
-import { ToolCallSchema, HookResponseSchema } from '@civic/hook-common';
+import { 
+  ToolCallRequestHookResultSchema,
+  ToolCallResponseHookResultSchema 
+} from '@civic/hook-common';
 
-// Validate incoming data
-const validatedToolCall = ToolCallSchema.parse(incomingData);
+// Validate hook request results
+const validatedRequestResult = ToolCallRequestHookResultSchema.parse(hookRequestResult);
 
-// Validate hook responses
-const validatedResponse = HookResponseSchema.parse(hookResponse);
+// Validate hook response results
+const validatedResponseResult = ToolCallResponseHookResultSchema.parse(hookResponseResult);
 ```
 
 ## Examples
@@ -253,6 +265,13 @@ export class ValidationHook extends AbstractHook {
 - `ToolCallResponseHookResult` - Result type for response processing
 - `ListToolsRequestHookResult` - Result type for tools list request processing
 - `ListToolsResponseHookResult` - Result type for tools list response processing
+- `ToolCallTransportErrorHookResult` - Result type for tool call transport error processing
+- `ListToolsTransportErrorHookResult` - Result type for tools list transport error processing
+- `InitializeRequestHookResult` - Result type for initialize request processing
+- `InitializeResponseHookResult` - Result type for initialize response processing
+- `InitializeTransportErrorHookResult` - Result type for initialize transport error processing
+- `TransportError` - Error type for transport-layer errors
+- `CallToolRequest`, `CallToolResult`, `ListToolsRequest`, `ListToolsResult`, `InitializeRequest`, `InitializeResult` - Re-exported from MCP SDK
 
 ### Schemas
 
@@ -260,10 +279,21 @@ export class ValidationHook extends AbstractHook {
 - `ToolCallResponseHookResultSchema` - Zod schema for response hook result validation
 - `ListToolsRequestHookResultSchema` - Zod schema for tools list request result validation
 - `ListToolsResponseHookResultSchema` - Zod schema for tools list response result validation
+- `ToolCallTransportErrorHookResultSchema` - Zod schema for tool call transport error validation
+- `ListToolsTransportErrorHookResultSchema` - Zod schema for tools list transport error validation
+- `InitializeRequestHookResultSchema` - Zod schema for initialize request validation
+- `InitializeResponseHookResultSchema` - Zod schema for initialize response validation
+- `InitializeTransportErrorHookResultSchema` - Zod schema for initialize transport error validation
+- `TransportErrorSchema` - Zod schema for transport error validation
 
 ### Classes
 
 - `AbstractHook` - Abstract base class for implementing hooks with default pass-through implementations
+
+### Utilities
+
+- `createHookRouter` - Creates a tRPC router for hook implementation
+- `createLocalHookClient` - Creates a local client for a hook instance
 
 ## License
 

@@ -16,7 +16,15 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-// Re-export MCP types for convenience
+/**
+ * Re-export MCP types for convenience
+ * 
+ * Why: These are the core MCP protocol types that hooks need to work with.
+ * By re-exporting them from our package, we:
+ * 1. Provide a single import point for consumers
+ * 2. Shield our API from potential breaking changes in the MCP SDK
+ * 3. Could add our own extensions/wrappers in the future without breaking consumers
+ */
 export type {
   CallToolRequest,
   CallToolResult,
@@ -26,7 +34,16 @@ export type {
   InitializeResult,
 };
 
-// Generic error type for transport errors
+/**
+ * Generic error type for transport errors
+ * 
+ * Why: MCP servers communicate over different transports (HTTP, stdio, etc).
+ * When errors occur at the transport layer (e.g., network failures, 5xx errors),
+ * we need a common format to represent them so hooks can:
+ * 1. Inspect error codes to make decisions (e.g., retry on 503, alert on 500)
+ * 2. Transform error messages before they reach the client
+ * 3. Track which transport type caused the error for debugging
+ */
 export const TransportErrorSchema = z.object({
   code: z.number(),
   message: z.string(),
@@ -36,7 +53,14 @@ export const TransportErrorSchema = z.object({
 
 export type TransportError = z.infer<typeof TransportErrorSchema>;
 
-// Abort the request or response, and return to the caller with the abort reason
+/**
+ * Base schema for aborting hook processing
+ * 
+ * Why: Hooks need a way to stop the request/response pipeline entirely.
+ * This is critical for security hooks that need to block dangerous operations,
+ * or validation hooks that detect invalid requests. The abort pattern ensures
+ * no further processing occurs and provides a clear reason to the caller.
+ */
 const HookAbortSchema = z.object({
   resultType: z.literal("abort"),
   reason: z.string(),
@@ -304,44 +328,38 @@ export type GenericTransportErrorHookResult =
   | { resultType: "abort"; reason: string }
   | { resultType: "continue"; error: TransportError };
 
-/**
- * Extract all method names from Hook interface that start with "process"
- */
-export type HookProcessMethodName = Exclude<
-  {
-    [K in keyof Hook]: K extends `process${string}` ? K : never;
-  }[keyof Hook],
-  undefined
->;
-
-export type HookProcessRequestMethodName = Exclude<
-  {
-    [K in HookProcessMethodName]: K extends `${string}Request` ? K : never;
-  }[HookProcessMethodName],
-  undefined
->;
-
-export type HookProcessResponseMethodName = Exclude<
-  {
-    [K in HookProcessMethodName]: K extends `${string}Response` ? K : never;
-  }[HookProcessMethodName],
-  undefined
->;
-
-export type HookProcessTransportErrorMethodName = Exclude<
-  {
-    [K in HookProcessMethodName]: K extends `${string}TransportError`
-      ? K
-      : never;
-  }[HookProcessMethodName],
-  undefined
->;
 
 /**
  * Type helpers to find methods by parameter types
+ * 
+ * These types solve a specific problem: We have a request object (like CallToolRequest)
+ * and we need to find which Hook methods can process it. Instead of hardcoding
+ * "processToolCallRequest", we use TypeScript to figure it out automatically.
+ * 
+ * This ensures that if someone passes a CallToolRequest, they can only specify
+ * method names that actually accept CallToolRequest as a parameter.
  */
 
-// Find request method names that accept a specific request type
+/**
+ * Find all Hook method names that accept a specific request type
+ * 
+ * Example: MethodsWithRequestType<CallToolRequest> will return "processToolCallRequest"
+ * because that's the only method that accepts CallToolRequest as its first parameter.
+ * 
+ * How it works:
+ * 1. [K in keyof Hook]: Loop through all properties of Hook interface
+ * 2. Hook[K] extends ((request: infer R) => unknown) | undefined:
+ *    - Check if the property is a function that takes a request parameter
+ *    - "infer R" captures the actual type of that parameter
+ *    - The "| undefined" handles optional methods
+ * 3. R extends TRequest ? K : never:
+ *    - If the parameter type matches our TRequest, include this method name (K)
+ *    - Otherwise, exclude it (never)
+ * 4. [keyof Hook] at the end: Collect all the method names that passed the test
+ * 5. Exclude<..., undefined>: Remove undefined from the final union type
+ * 
+ * This creates compile-time safety: you literally cannot pass an invalid method name.
+ */
 export type MethodsWithRequestType<TRequest> = Exclude<
   {
     [K in keyof Hook]: Hook[K] extends
@@ -393,54 +411,3 @@ export type MethodsWithTransportErrorType<TRequest> = Exclude<
   undefined
 >;
 
-/**
- * Generic schema creators for hook results
- */
-
-/**
- * Create a request hook result schema with proper types
- */
-export const createRequestHookResultSchema = <
-  TRequest extends z.ZodType,
-  TResponse extends z.ZodType,
->(
-  requestSchema: TRequest,
-  responseSchema: TResponse,
-) =>
-  z.discriminatedUnion("resultType", [
-    HookAbortSchema,
-    z.object({
-      resultType: z.literal("continue"),
-      request: requestSchema,
-    }),
-    z.object({
-      resultType: z.literal("respond"),
-      response: responseSchema,
-    }),
-  ]);
-
-/**
- * Create a response hook result schema with proper types
- */
-export const createResponseHookResultSchema = <TResponse extends z.ZodType>(
-  responseSchema: TResponse,
-) =>
-  z.discriminatedUnion("resultType", [
-    HookAbortSchema,
-    z.object({
-      resultType: z.literal("continue"),
-      response: responseSchema,
-    }),
-  ]);
-
-/**
- * Create a transport error hook result schema
- */
-export const createTransportErrorHookResultSchema = () =>
-  z.discriminatedUnion("resultType", [
-    HookAbortSchema,
-    z.object({
-      resultType: z.literal("continue"),
-      error: TransportErrorSchema,
-    }),
-  ]);

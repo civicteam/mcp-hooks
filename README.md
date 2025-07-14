@@ -154,10 +154,19 @@ Replaces tool descriptions based on configuration. Useful for providing context-
 **@civic/rate-limit-hook**
 Enforces rate limits on tool calls per user. Configurable limits per minute and per hour with clear retry-after responses.
 
+**@civic/alert-hook**
+Monitors transport-layer errors and triggers alerts when server errors occur. Sends webhook notifications when 5xx HTTP errors are detected, useful for operational monitoring.
+
+**@civic/local-tools-hook**
+A programmatic hook that allows adding local tools directly to passthrough MCP servers without requiring a separate MCP server. Perfect for defining custom tools in your application code.
+
 ### Testing Tools
 
 **@civic/fetch-docs**
 A simple MCP server that fetches web pages and converts them to markdown. Included as a testing target for the passthrough server and hooks.
+
+**@civic/whoami-server**
+An MCP server that integrates with Civic Auth to identify authenticated users. Provides a "whoami" tool that returns information about the current user, useful for testing authentication flows.
 
 ## Getting Started
 
@@ -188,7 +197,7 @@ pnpm start
 
 # Terminal 3: Start the passthrough server
 cd packages/passthrough-mcp-server
-export TARGET_SERVER_URL="http://localhost:33005/stream"
+export TARGET_SERVER_URL="http://localhost:33005"
 export HOOKS="http://localhost:33004"
 pnpm start
 ```
@@ -308,7 +317,11 @@ mcp-hooks/
 │   ├── simple-log-hook/          # Example: Minimal hook
 │   ├── explain-hook/             # Example: Transparency hook
 │   ├── custom-description-hook/  # Example: Transform hook
-│   └── fetch-docs/               # Test MCP server
+│   ├── rate-limit-hook/          # Example: Rate limiting hook
+│   ├── alert-hook/               # Example: Error alerting hook
+│   ├── local-tools-hook/         # Example: Programmatic tools hook
+│   ├── fetch-docs/               # Test MCP server
+│   └── whoami-server/            # Test auth server
 ├── test/                         # Test configurations
 └── docs/                         # Additional documentation
 ```

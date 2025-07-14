@@ -10,14 +10,13 @@ import {
   type ListToolsTransportErrorHookResult,
   type ToolCallTransportErrorHookResult,
   type TransportError,
-  createHookRouter,
+  startHookServer,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
   InitializeRequest,
   ListToolsRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import { createHTTPServer } from "@trpc/server/adapters/standalone";
 
 /**
  * Configuration for alert notifications
@@ -152,18 +151,8 @@ const hook = new AlertHook({
   webhookUrl: WEBHOOK_URL,
 });
 
-const router = createHookRouter(hook);
+startHookServer(hook, PORT);
 
-const server = createHTTPServer({
-  router,
-  createContext() {
-    return {};
-  },
-});
-
-server.listen(PORT);
-
-console.log(`Alert Hook running on port ${PORT}`);
 if (WEBHOOK_URL) {
   console.log(`Alerts will be sent to: ${WEBHOOK_URL}`);
 }

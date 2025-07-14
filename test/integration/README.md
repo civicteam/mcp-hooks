@@ -38,9 +38,8 @@ cd test/integration
 pnpm install
 
 # Run all tests
-test:integration
+pnpm test:integration
 ```
-<
 ## Debugging
 
 To debug failing tests:

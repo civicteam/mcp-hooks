@@ -229,10 +229,9 @@ Creates and optionally starts a passthrough MCP proxy server.
   - `name`: Server name
   - `version`: Server version
 - `options.clientInfo` (optional): Client metadata
-- `options.hooks` (optional): Array of hook configurations
-  - `url`: Hook endpoint URL
-  - `name`: Hook name
-- `options.clientFactory` (optional): Custom factory for creating target clients
+- `options.hooks` (optional): Array of hook configurations (can be RemoteHookConfig or Hook instances)
+  - For remote hooks: `{ url: string, name: string }`
+  - For local hooks: Hook instance implementing the Hook interface
 - `options.autoStart` (optional): Whether to start the server immediately (default: true)
 
 **Returns:**
@@ -263,11 +262,26 @@ The package exports several TypeScript types for better type safety:
 
 ```typescript
 import type {
-  ClientConfig,
-  ClientFactory,
-  PassthroughClient,
   PassthroughProxy,
-  PassthroughProxyOptions
+  StdioPassthroughProxy,
+  HttpPassthroughProxy,
+  StdioProxyConfig,
+  HttpProxyConfig,
+  Config,
+  TargetConfig,
+  BaseConfig,
+  HookDefinition,
+  RemoteHookConfig,
+  Hook,
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
+  LocalHookClient,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult
 } from '@civic/passthrough-mcp-server';
 ```
 
@@ -284,11 +298,12 @@ The passthrough server provides a comprehensive API for applying hooks to reques
 
 ### Hook-Related Exports
 
-- `processToolCallRequestThroughHooks` - Process a tool call request through hooks
-- `processToolCallResponseThroughHooks` - Process a tool call response through hooks
-- `processToolsListRequestThroughHooks` - Process a tools list request through hooks
-- `processToolsListResponseThroughHooks` - Process a tools list response through hooks
-- `createLocalHookClient` - Create a local hook client instance
+- `processRequestThroughHooks` - Process requests through a chain of hooks
+- `processResponseThroughHooks` - Process responses through a chain of hooks in reverse order
+- `processTransportErrorThroughHooks` - Process transport errors through hooks
+- `createHookClient` - Create a hook client instance from a hook definition
+- `createHookClients` - Create multiple hook client instances
+- `getHookClients` - Get and cache hook client instances
 - `AbstractHook` - Base class for implementing custom hooks
 - Types: `Hook`, `ToolCallRequestHookResult`, `ToolCallResponseHookResult`, `ListToolsRequestHookResult`, `ListToolsResponseHookResult`
 

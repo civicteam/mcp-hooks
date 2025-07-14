@@ -11,7 +11,7 @@ import type {
   JSONRPCMessage,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
-import type { HttpErrorResponse } from "../../lib/hooks/types.js";
+import type { HttpErrorResponse } from "../../lib/hooks/index.js";
 import { logger } from "../../lib/logger.js";
 import { MessageHandler } from "../messageHandler.js";
 import { establishSSEConnection } from "./sseConnection.js";

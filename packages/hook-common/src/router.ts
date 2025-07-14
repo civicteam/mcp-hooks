@@ -154,7 +154,7 @@ const transportErrorRouter = t.router({
 /**
  * Full router type with all procedures
  */
-export const fullRouter = t.router({
+const fullRouter = t.router({
   ...baseRouter._def.procedures,
   ...toolsListRouter._def.procedures,
   ...transportErrorRouter._def.procedures,

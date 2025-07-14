@@ -15,7 +15,7 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
 import { messageFromError } from "../../lib/error.js";
-import type { HttpErrorResponse } from "../../lib/hooks/types.js";
+import type { HttpErrorResponse } from "../../lib/hooks/index.js";
 import { logger } from "../../lib/logger.js";
 import {
   formatSSEEvent,

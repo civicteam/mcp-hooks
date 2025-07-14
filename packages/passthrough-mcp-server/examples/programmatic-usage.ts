@@ -7,11 +7,11 @@
 
 import {
   AbstractHook,
-  type ToolCall,
+  type CallToolRequest,
+  type CallToolResult,
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
 } from "@civic/hook-common";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { createPassthroughProxy } from "../src/index.js";
 
 async function example1_basicUsage() {
@@ -96,11 +96,11 @@ async function example4_withProgrammaticHooks() {
     }
 
     async processToolCallRequest(
-      toolCall: ToolCall,
+      toolCall: CallToolRequest,
     ): Promise<ToolCallRequestHookResult> {
       console.log(
-        `[${this.name}] Tool request: ${toolCall.name}`,
-        toolCall.arguments,
+        `[${this.name}] Tool request: ${toolCall.params.name}`,
+        toolCall.params.arguments,
       );
       return {
         resultType: "continue",
@@ -110,10 +110,10 @@ async function example4_withProgrammaticHooks() {
 
     async processToolCallResponse(
       response: CallToolResult,
-      originalToolCall: ToolCall,
+      originalToolCall: CallToolRequest,
     ): Promise<ToolCallResponseHookResult> {
       console.log(
-        `[${this.name}] Tool response for ${originalToolCall.name}:`,
+        `[${this.name}] Tool response for ${originalToolCall.params.name}:`,
         response,
       );
       return {
@@ -130,12 +130,12 @@ async function example4_withProgrammaticHooks() {
     }
 
     async processToolCallRequest(
-      toolCall: ToolCall,
+      toolCall: CallToolRequest,
     ): Promise<ToolCallRequestHookResult> {
       // Block dangerous operations
       if (
-        toolCall.name.toLowerCase().includes("delete") ||
-        toolCall.name.toLowerCase().includes("remove")
+        toolCall.params.name.toLowerCase().includes("delete") ||
+        toolCall.params.name.toLowerCase().includes("remove")
       ) {
         return {
           resultType: "abort",
@@ -205,7 +205,7 @@ switch (exampleNumber) {
     example4_withProgrammaticHooks().catch(console.error);
     break;
   case "5":
-    example5_customClientFactory().catch(console.error);
+    example5_stdioProxy().catch(console.error);
     break;
   default:
     console.log("Usage: tsx programmatic-usage.ts [1|2|3|4|5]");
@@ -213,5 +213,5 @@ switch (exampleNumber) {
     console.log("2 - Manual start");
     console.log("3 - With remote hooks");
     console.log("4 - With programmatic hooks");
-    console.log("5 - Custom client factory");
+    console.log("5 - Stdio proxy");
 }
