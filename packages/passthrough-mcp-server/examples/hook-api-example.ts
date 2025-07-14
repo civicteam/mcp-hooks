@@ -14,8 +14,8 @@ import {
   type ToolCallResponseHookResult,
   createHookClient,
   createHookClients,
-  processRequestThroughHooks,
-  processResponseThroughHooks,
+  processToolCallRequestThroughHooks,
+  processToolCallResponseThroughHooks,
 } from "@civic/passthrough-mcp-server";
 
 /**
@@ -64,7 +64,10 @@ async function processToolCallWithHooks(
   ]);
 
   // Apply request hooks
-  const requestResult = await processRequestThroughHooks(toolCall, hooks);
+  const requestResult = await processToolCallRequestThroughHooks(
+    toolCall,
+    hooks,
+  );
 
   if (requestResult.resultType === "abort") {
     console.error("Request rejected:", requestResult.reason);
@@ -83,11 +86,15 @@ async function processToolCallWithHooks(
   const response = await executeToolCall(requestResult.request);
 
   // Apply response hooks
-  const responseResult = await processResponseThroughHooks(
+  const responseResult = await processResponseThroughHooks<
+    CallToolRequest,
+    CallToolResult
+  >(
     response as CallToolResult,
     requestResult.request,
     hooks,
     requestResult.lastProcessedIndex,
+    "processToolCallResponse",
   );
 
   if (responseResult.resultType === "abort") {
@@ -115,10 +122,10 @@ class ToolService {
 
   async execute(toolCall: CallToolRequest): Promise<unknown> {
     // Apply request hooks
-    const requestResult = await processRequestThroughHooks(
-      toolCall,
-      this.hooks,
-    );
+    const requestResult = await processRequestThroughHooks<
+      CallToolRequest,
+      CallToolResult
+    >(toolCall, this.hooks, "processToolCallRequest");
 
     if (requestResult.resultType === "abort") {
       throw new Error(`Request rejected: ${requestResult.reason}`);
@@ -132,11 +139,15 @@ class ToolService {
     const response = await this.executeInternal(requestResult.request);
 
     // Apply response hooks
-    const responseResult = await processResponseThroughHooks(
+    const responseResult = await processResponseThroughHooks<
+      CallToolRequest,
+      CallToolResult
+    >(
       response as CallToolResult,
       requestResult.request,
       this.hooks,
       requestResult.lastProcessedIndex,
+      "processToolCallResponse",
     );
 
     if (responseResult.resultType === "abort") {

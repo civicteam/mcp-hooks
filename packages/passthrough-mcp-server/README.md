@@ -284,8 +284,8 @@ The passthrough server provides a comprehensive API for applying hooks to reques
 
 ### Hook-Related Exports
 
-- `processRequestThroughHooks` - Process a tool call request through hooks
-- `processResponseThroughHooks` - Process a tool call response through hooks
+- `processToolCallRequestThroughHooks` - Process a tool call request through hooks
+- `processToolCallResponseThroughHooks` - Process a tool call response through hooks
 - `processToolsListRequestThroughHooks` - Process a tools list request through hooks
 - `processToolsListResponseThroughHooks` - Process a tools list response through hooks
 - `createLocalHookClient` - Create a local hook client instance

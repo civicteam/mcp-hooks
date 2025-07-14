@@ -167,15 +167,25 @@ export type HookRouter = typeof fullRouter;
  */
 export function createHookRouter(hook: Hook) {
   // biome-ignore lint/suspicious/noExplicitAny: tRPC procedures need flexible typing
-  const procedures: any = {
-    processToolCallRequest: t.procedure
+  const procedures: any = {};
+
+  // Add processToolCallRequest if the hook implements it
+  if (hook.processToolCallRequest) {
+    procedures.processToolCallRequest = t.procedure
       .input(CallToolRequestSchema)
       .output(ToolCallRequestHookResultSchema)
       .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processToolCallRequest) {
+          throw new Error("processToolCallRequest not implemented");
+        }
         return await hook.processToolCallRequest(input);
-      }),
+      });
+  }
 
-    processToolCallResponse: t.procedure
+  // Add processToolCallResponse if the hook implements it
+  if (hook.processToolCallResponse) {
+    procedures.processToolCallResponse = t.procedure
       .input(
         z.object({
           response: z.any(),
@@ -184,14 +194,17 @@ export function createHookRouter(hook: Hook) {
       )
       .output(ToolCallResponseHookResultSchema)
       .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processToolCallResponse) {
+          throw new Error("processToolCallResponse not implemented");
+        }
         return await hook.processToolCallResponse(
           input.response,
           input.originalToolCall,
         );
-      }),
-  };
+      });
+  }
 
-  // Add optional procedures if the hook supports them
   if (hook.processToolsListRequest) {
     procedures.processToolsListRequest = t.procedure
       .input(ListToolsRequestSchema)

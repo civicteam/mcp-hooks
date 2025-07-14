@@ -204,14 +204,14 @@ export interface Hook {
   /**
    * Process an incoming tool call request
    */
-  processToolCallRequest(
-    toolCall: CallToolRequest,
+  processToolCallRequest?(
+    request: CallToolRequest,
   ): Promise<ToolCallRequestHookResult>;
 
   /**
    * Process a tool call response
    */
-  processToolCallResponse(
+  processToolCallResponse?(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult>;
@@ -303,6 +303,95 @@ export type GenericResponseHookResult<TResponse> =
 export type GenericTransportErrorHookResult =
   | { resultType: "abort"; reason: string }
   | { resultType: "continue"; error: TransportError };
+
+/**
+ * Extract all method names from Hook interface that start with "process"
+ */
+export type HookProcessMethodName = Exclude<
+  {
+    [K in keyof Hook]: K extends `process${string}` ? K : never;
+  }[keyof Hook],
+  undefined
+>;
+
+export type HookProcessRequestMethodName = Exclude<
+  {
+    [K in HookProcessMethodName]: K extends `${string}Request` ? K : never;
+  }[HookProcessMethodName],
+  undefined
+>;
+
+export type HookProcessResponseMethodName = Exclude<
+  {
+    [K in HookProcessMethodName]: K extends `${string}Response` ? K : never;
+  }[HookProcessMethodName],
+  undefined
+>;
+
+export type HookProcessTransportErrorMethodName = Exclude<
+  {
+    [K in HookProcessMethodName]: K extends `${string}TransportError`
+      ? K
+      : never;
+  }[HookProcessMethodName],
+  undefined
+>;
+
+/**
+ * Type helpers to find methods by parameter types
+ */
+
+// Find request method names that accept a specific request type
+export type MethodsWithRequestType<TRequest> = Exclude<
+  {
+    [K in keyof Hook]: Hook[K] extends
+      | ((request: infer R) => unknown)
+      | undefined
+      ? R extends TRequest
+        ? K
+        : never
+      : never;
+  }[keyof Hook],
+  undefined
+>;
+
+// Find response method names that accept specific response and request types
+export type MethodsWithResponseType<TResponse, TRequest> = Exclude<
+  {
+    [K in keyof Hook]: Hook[K] extends
+      | ((
+          response: infer R,
+          originalRequest: infer O,
+          ...args: unknown[]
+        ) => unknown)
+      | undefined
+      ? R extends TResponse
+        ? O extends TRequest
+          ? K
+          : never
+        : never
+      : never;
+  }[keyof Hook],
+  undefined
+>;
+
+// Find transport error method names that accept a specific request type
+export type MethodsWithTransportErrorType<TRequest> = Exclude<
+  {
+    [K in keyof Hook]: Hook[K] extends
+      | ((
+          error: TransportError,
+          originalRequest: infer R,
+          ...args: unknown[]
+        ) => unknown)
+      | undefined
+      ? R extends TRequest
+        ? K
+        : never
+      : never;
+  }[keyof Hook],
+  undefined
+>;
 
 /**
  * Generic schema creators for hook results

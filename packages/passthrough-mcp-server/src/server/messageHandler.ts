@@ -10,14 +10,13 @@ import { URL } from "node:url";
 import type {
   CallToolRequest,
   CallToolResult,
-  GenericRequestHookResult,
-  GenericResponseHookResult,
-  GenericTransportErrorHookResult,
   Hook,
   InitializeRequest,
   InitializeResult,
   ListToolsRequest,
-  TransportError,
+  MethodsWithRequestType,
+  MethodsWithResponseType,
+  MethodsWithTransportErrorType,
 } from "@civic/hook-common";
 import type {
   JSONRPCError,
@@ -28,13 +27,9 @@ import type {
 } from "@modelcontextprotocol/sdk/types.js";
 import { getHookClients } from "../hooks/manager.js";
 import {
-  processInitializeTransportErrorThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
-  processToolCallTransportErrorThroughHooks,
-  processToolsListRequestThroughHooks,
-  processToolsListResponseThroughHooks,
-  processToolsListTransportErrorThroughHooks,
+  processTransportErrorThroughHooks,
 } from "../hooks/processor.js";
 import type { Config } from "../lib/config.js";
 import { messageFromError } from "../lib/error.js";
@@ -72,40 +67,19 @@ interface RequestHandlerConfig<TRequest, TResponse> {
   ) => TRequest;
 
   /**
-   * Process request through hooks (optional)
+   * Method name for processing request through hooks (optional)
    */
-  processRequest?: (
-    request: TRequest,
-    hooks: Hook[],
-  ) => Promise<
-    GenericRequestHookResult<TRequest, TResponse> & {
-      lastProcessedIndex: number;
-    }
-  >;
+  requestMethodName?: MethodsWithRequestType<TRequest>;
 
   /**
-   * Process response through hooks (optional)
+   * Method name for processing response through hooks (optional)
    */
-  processResponse?: (
-    response: TResponse,
-    request: TRequest,
-    hooks: Hook[],
-    startIndex: number,
-  ) => Promise<
-    GenericResponseHookResult<TResponse> & { lastProcessedIndex: number }
-  >;
+  responseMethodName?: MethodsWithResponseType<TResponse, TRequest>;
 
   /**
-   * Process transport error through hooks
+   * Method name for processing transport error through hooks
    */
-  processTransportError: (
-    error: TransportError,
-    request: TRequest,
-    hooks: Hook[],
-    startIndex: number,
-  ) => Promise<
-    GenericTransportErrorHookResult & { lastProcessedIndex: number }
-  >;
+  transportErrorMethodName: MethodsWithTransportErrorType<TRequest>;
 
   /**
    * Error message prefix for catch block
@@ -143,9 +117,9 @@ export class MessageHandler {
         },
       };
     },
-    processRequest: processRequestThroughHooks,
-    processResponse: processResponseThroughHooks,
-    processTransportError: processToolCallTransportErrorThroughHooks,
+    requestMethodName: "processToolCallRequest" as const,
+    responseMethodName: "processToolCallResponse",
+    transportErrorMethodName: "processToolCallTransportError",
     errorPrefix: "Error processing tool call",
     supportsDirectResponse: true,
   };
@@ -164,9 +138,9 @@ export class MessageHandler {
         },
       },
     }),
-    processRequest: processToolsListRequestThroughHooks,
-    processResponse: processToolsListResponseThroughHooks,
-    processTransportError: processToolsListTransportErrorThroughHooks,
+    requestMethodName: "processToolsListRequest",
+    responseMethodName: "processToolsListResponse",
+    transportErrorMethodName: "processToolsListTransportError",
     errorPrefix: "Error processing tools list",
     supportsDirectResponse: true,
   };
@@ -180,7 +154,7 @@ export class MessageHandler {
       params: request.params as InitializeRequest["params"],
     }),
     // No request/response hooks for initialize yet
-    processTransportError: processInitializeTransportErrorThroughHooks,
+    transportErrorMethodName: "processInitializeTransportError",
     errorPrefix: "Error processing initialize",
     supportsDirectResponse: false,
   };
@@ -217,11 +191,12 @@ export class MessageHandler {
       let lastProcessedIndex = -1;
 
       // Process through request hooks if configured
-      if (config.processRequest) {
-        const requestResult = await config.processRequest(
-          typedRequest,
-          this.hooks,
-        );
+      if (config.requestMethodName) {
+        const requestResult = await processRequestThroughHooks<
+          TRequest,
+          TResponse,
+          typeof config.requestMethodName
+        >(typedRequest, this.hooks, config.requestMethodName);
         lastProcessedIndex = requestResult.lastProcessedIndex;
 
         if (requestResult.resultType === "abort") {
@@ -266,11 +241,15 @@ export class MessageHandler {
               lastProcessedIndex >= 0
                 ? lastProcessedIndex
                 : this.hooks.length - 1;
-            const result = await config.processTransportError(
+            const result = await processTransportErrorThroughHooks<
+              TRequest,
+              typeof config.transportErrorMethodName
+            >(
               forwardResult.error,
               processedRequest,
               this.hooks,
               startIndex,
+              config.transportErrorMethodName,
             );
             if (result.resultType === "abort") {
               return {
@@ -287,12 +266,17 @@ export class MessageHandler {
       }
 
       // Process response through hooks if configured
-      if (config.processResponse) {
-        const responseResult = await config.processResponse(
+      if (config.responseMethodName) {
+        const responseResult = await processResponseThroughHooks<
+          TRequest,
+          TResponse,
+          typeof config.responseMethodName
+        >(
           forwardResult.result as TResponse,
           processedRequest,
           this.hooks,
           lastProcessedIndex,
+          config.responseMethodName,
         );
 
         if (responseResult.resultType === "abort") {

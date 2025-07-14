@@ -55,8 +55,7 @@ export { AbstractHook } from "@civic/hook-common";
 export {
   processRequestThroughHooks,
   processResponseThroughHooks,
-  processToolsListRequestThroughHooks,
-  processToolsListResponseThroughHooks,
+  processTransportErrorThroughHooks,
 } from "./hooks/processor.js";
 
 // Export hook utilities

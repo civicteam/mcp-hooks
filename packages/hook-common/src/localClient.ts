@@ -35,6 +35,13 @@ export class LocalHookClient implements Hook {
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     try {
+      // Check if hook supports this method
+      if (!this.hook.processToolCallRequest) {
+        return {
+          resultType: "continue",
+          request: toolCall,
+        };
+      }
       return await this.hook.processToolCallRequest(toolCall);
     } catch (error) {
       console.error(`Hook ${this.name} request processing failed:`, error);
@@ -54,6 +61,13 @@ export class LocalHookClient implements Hook {
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     try {
+      // Check if hook supports this method
+      if (!this.hook.processToolCallResponse) {
+        return {
+          resultType: "continue",
+          response: response,
+        };
+      }
       return await this.hook.processToolCallResponse(
         response,
         originalToolCall,

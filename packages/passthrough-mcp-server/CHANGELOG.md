@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better TypeScript support with improved type exports
 
 ### Added
-- Direct export of processor functions (processRequestThroughHooks, etc.)
+- Direct export of processor functions (processToolCallRequestThroughHooks, etc.)
 - Support for local programmatic hooks alongside remote HTTP hooks
 - Export of hook creation utilities for better integration
 
