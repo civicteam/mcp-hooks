@@ -18,7 +18,7 @@ import { z } from "zod";
 
 /**
  * Re-export MCP types for convenience
- * 
+ *
  * Why: These are the core MCP protocol types that hooks need to work with.
  * By re-exporting them from our package, we:
  * 1. Provide a single import point for consumers
@@ -36,7 +36,7 @@ export type {
 
 /**
  * Generic error type for transport errors
- * 
+ *
  * Why: MCP servers communicate over different transports (HTTP, stdio, etc).
  * When errors occur at the transport layer (e.g., network failures, 5xx errors),
  * we need a common format to represent them so hooks can:
@@ -55,7 +55,7 @@ export type TransportError = z.infer<typeof TransportErrorSchema>;
 
 /**
  * Base schema for aborting hook processing
- * 
+ *
  * Why: Hooks need a way to stop the request/response pipeline entirely.
  * This is critical for security hooks that need to block dangerous operations,
  * or validation hooks that detect invalid requests. The abort pattern ensures
@@ -328,24 +328,23 @@ export type GenericTransportErrorHookResult =
   | { resultType: "abort"; reason: string }
   | { resultType: "continue"; error: TransportError };
 
-
 /**
  * Type helpers to find methods by parameter types
- * 
+ *
  * These types solve a specific problem: We have a request object (like CallToolRequest)
  * and we need to find which Hook methods can process it. Instead of hardcoding
  * "processToolCallRequest", we use TypeScript to figure it out automatically.
- * 
+ *
  * This ensures that if someone passes a CallToolRequest, they can only specify
  * method names that actually accept CallToolRequest as a parameter.
  */
 
 /**
  * Find all Hook method names that accept a specific request type
- * 
+ *
  * Example: MethodsWithRequestType<CallToolRequest> will return "processToolCallRequest"
  * because that's the only method that accepts CallToolRequest as its first parameter.
- * 
+ *
  * How it works:
  * 1. [K in keyof Hook]: Loop through all properties of Hook interface
  * 2. Hook[K] extends ((request: infer R) => unknown) | undefined:
@@ -357,7 +356,7 @@ export type GenericTransportErrorHookResult =
  *    - Otherwise, exclude it (never)
  * 4. [keyof Hook] at the end: Collect all the method names that passed the test
  * 5. Exclude<..., undefined>: Remove undefined from the final union type
- * 
+ *
  * This creates compile-time safety: you literally cannot pass an invalid method name.
  */
 export type MethodsWithRequestType<TRequest> = Exclude<
@@ -410,4 +409,3 @@ export type MethodsWithTransportErrorType<TRequest> = Exclude<
   }[keyof Hook],
   undefined
 >;
-

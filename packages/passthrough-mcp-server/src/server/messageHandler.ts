@@ -2,13 +2,13 @@
  * Message Handler Module
  *
  * Central message processing engine for the passthrough MCP server.
- * 
+ *
  * Why this architecture:
  * 1. Transport agnostic - Both HTTP and stdio servers use the same handler
  * 2. Hook integration - Centralized place to apply hooks to all messages
  * 3. Protocol translation - Handles converting between different MCP transports
  * 4. Error normalization - Consistent error handling across transport types
- * 
+ *
  * Why separate from transport servers:
  * - Allows testing message processing logic independently
  * - Makes it easy to add new transport types (WebSocket, gRPC, etc.)
@@ -43,33 +43,37 @@ import {
 } from "../hooks/processor.js";
 import type { Config } from "../lib/config.js";
 import { messageFromError } from "../lib/error.js";
-import { handleTransportError, type ForwardResult, type HttpErrorResponse } from "../lib/hooks/index.js";
+import {
+  type ForwardResult,
+  type HttpErrorResponse,
+  handleTransportError,
+} from "../lib/hooks/index.js";
 import { extractResponseHeaders } from "../lib/http/headers.js";
 import {
   buildRequestOptions,
   makeHttpRequestAsync,
 } from "../lib/http/request.js";
 import {
+  createAbortResponse,
   createErrorResponse,
   createErrorResponseFromTransportError,
+  createSuccessResponse,
   httpErrorToForwardResult,
   isHttpError,
   normalizeResponse,
-  createAbortResponse,
-  createSuccessResponse,
 } from "../lib/jsonrpc/index.js";
 import { logger } from "../lib/logger.js";
 import { SSEParser } from "../lib/sse.js";
 
 /**
  * Configuration for generic request handling with hooks
- * 
+ *
  * Why this pattern:
  * - DRY principle - All request types (tool call, tools list, initialize) follow
  *   the same processing flow, just with different types and hook methods
  * - Type safety - Each config specifies exact types and valid method names
  * - Extensibility - Easy to add new request types without duplicating logic
- * 
+ *
  * Why optional hook methods:
  * - Not all request types support all hook phases
  * - Example: initialize might not have request/response hooks initially
@@ -78,7 +82,7 @@ import { SSEParser } from "../lib/sse.js";
 interface RequestHandlerConfig<TRequest, TResponse> {
   /**
    * Build a typed request from the JSON-RPC request
-   * 
+   *
    * Why: JSON-RPC requests are loosely typed, but hooks expect specific types.
    * This function transforms and enriches the raw request with metadata.
    */
@@ -89,7 +93,7 @@ interface RequestHandlerConfig<TRequest, TResponse> {
 
   /**
    * Method name for processing request through hooks (optional)
-   * 
+   *
    * Why constrained type: Ensures we can only specify methods that actually
    * accept TRequest as their parameter, preventing runtime errors.
    */
@@ -97,7 +101,7 @@ interface RequestHandlerConfig<TRequest, TResponse> {
 
   /**
    * Method name for processing response through hooks (optional)
-   * 
+   *
    * Why both TResponse and TRequest: Response hooks need the original request
    * for context, so the constraint ensures the method accepts both.
    */
@@ -105,7 +109,7 @@ interface RequestHandlerConfig<TRequest, TResponse> {
 
   /**
    * Method name for processing transport error through hooks
-   * 
+   *
    * Why not optional: Every request type should handle transport errors,
    * even if no other hooks are implemented.
    */
@@ -113,7 +117,7 @@ interface RequestHandlerConfig<TRequest, TResponse> {
 
   /**
    * Error message prefix for catch block
-   * 
+   *
    * Why: Provides context-specific error messages for different request types,
    * making debugging easier.
    */
@@ -121,7 +125,7 @@ interface RequestHandlerConfig<TRequest, TResponse> {
 
   /**
    * Whether the handler supports direct responses from hooks
-   * 
+   *
    * Why: Some hooks might want to return cached responses or synthetic data
    * without hitting the target server. Not all request types support this.
    */

@@ -3,7 +3,7 @@
  *
  * This module implements the core hook processing pipeline that allows
  * multiple hooks to inspect, modify, or intercept MCP protocol messages.
- * 
+ *
  * Why this architecture:
  * 1. Hook chains provide a composable way to add cross-cutting concerns
  *    (logging, security, rate limiting) without modifying core logic
@@ -26,13 +26,13 @@ import type {
 
 /**
  * Process a request through a chain of hooks
- * 
+ *
  * Why generic type constraints:
  * - TRequest/TResponse ensure type safety across the pipeline
  * - TMethodName extends MethodsWithRequestType<TRequest> ensures we can only
  *   call hook methods that accept the specific request type we're processing
  * - This prevents runtime errors from calling incompatible methods
- * 
+ *
  * Why lastProcessedIndex:
  * - Response hooks need to run in reverse order (like middleware)
  * - We track which hooks processed the request so we know where to start
@@ -58,7 +58,7 @@ export async function processRequestThroughHooks<
     const hookMethod = hook[methodName];
 
     // Why runtime checks despite TypeScript constraints:
-    // - Hook methods are optional in the interface  
+    // - Hook methods are optional in the interface
     // - A hook might not implement every possible method
     // - TypeScript ensures methodName is valid, but not that every hook has it
     if (!hookMethod || typeof hookMethod !== "function") continue;
@@ -96,19 +96,19 @@ export async function processRequestThroughHooks<
 
 /**
  * Process a response through hooks in reverse order
- * 
+ *
  * Why reverse order:
  * - Follows the middleware pattern (like Express.js or Koa)
  * - Hooks that transform requests should untransform responses
  * - Example: Hook A adds auth header, Hook B encrypts body
  *   Request: A→B→Server, Response: Server→B→A
  * - This ensures proper nesting of transformations
- * 
+ *
  * Why originalRequest parameter:
  * - Response hooks often need context from the original request
  * - Example: A caching hook needs the request URL to store the response
  * - Example: An audit hook needs to log request-response pairs together
- * 
+ *
  * Why startIndex instead of processing all hooks:
  * - Only hooks that processed the request should process the response
  * - If hook 3 of 5 aborted the request, hooks 4-5 never saw it
@@ -166,19 +166,19 @@ export async function processResponseThroughHooks<
 
 /**
  * Process transport errors through hooks in reverse order
- * 
+ *
  * Why handle transport errors separately:
  * - Network failures and server errors need different handling than protocol errors
  * - Transport errors occur outside the normal request/response flow
  * - Examples: Connection timeouts, 5xx errors, DNS failures
- * 
+ *
  * Why hooks might want to process transport errors:
  * - Retry logic: Hook can retry failed requests with backoff
  * - Failover: Switch to backup servers on specific error codes
  * - Error transformation: Convert technical errors to user-friendly messages
  * - Circuit breaking: Stop cascading failures by failing fast
  * - Monitoring: Track error rates and alert on anomalies
- * 
+ *
  * Why reverse order (same as response processing):
  * - Maintains the middleware pattern consistency
  * - Hooks that initiated actions can clean up on errors
