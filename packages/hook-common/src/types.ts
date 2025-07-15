@@ -133,11 +133,11 @@ export const ToolCallTransportErrorHookResultSchema = z.discriminatedUnion(
       resultType: z.literal("continue"),
       error: TransportErrorSchema,
     }),
-      // stop the error handling and replace the error with this response
-      z.object({
-          resultType: z.literal("respond"),
-          response: CallToolResultSchema,
-      }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: CallToolResultSchema,
+    }),
   ],
 );
 
@@ -150,11 +150,11 @@ export const ListToolsTransportErrorHookResultSchema = z.discriminatedUnion(
       resultType: z.literal("continue"),
       error: TransportErrorSchema,
     }),
-      // stop the error handling and replace the error with this response
-      z.object({
-          resultType: z.literal("respond"),
-          response: ListToolsResultSchema,
-      }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListToolsResultSchema,
+    }),
   ],
 );
 
@@ -196,11 +196,11 @@ export const InitializeTransportErrorHookResultSchema = z.discriminatedUnion(
       resultType: z.literal("continue"),
       error: TransportErrorSchema,
     }),
-      // stop the error handling and replace the error with this response
-      z.object({
-          resultType: z.literal("respond"),
-          response: InitializeResultSchema,
-      }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: InitializeResultSchema,
+    }),
   ],
 );
 

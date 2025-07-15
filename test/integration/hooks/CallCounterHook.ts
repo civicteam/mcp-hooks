@@ -24,7 +24,7 @@ export class CallCounterHook extends AbstractHook {
     toolCall: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Get session ID from _meta
-    const sessionId = (toolCall.params as any)._meta?.sessionId || "default";
+    const sessionId = toolCall.params._meta?.sessionId || "default";
 
     // Increment count for this session
     const currentCount = (this.sessionCounts.get(sessionId) || 0) + 1;

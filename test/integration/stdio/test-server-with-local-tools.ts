@@ -8,11 +8,12 @@
 import { LocalToolsHook } from "@civic/local-tools-hook";
 import type { ToolDefinition } from "@civic/local-tools-hook";
 import { createStdioPassthroughProxy } from "@civic/passthrough-mcp-server";
-import { z } from "zod";
+import { type ZodRawShape, z } from "zod";
 
 async function main() {
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33100";
-  const targetTransport = process.env.TARGET_SERVER_TRANSPORT || "httpStream";
+  const targetTransport = (process.env.TARGET_SERVER_TRANSPORT ||
+    "httpStream") as "httpStream" | "sse";
 
   console.error(
     "[Test Server] Starting with target:",
@@ -21,7 +22,7 @@ async function main() {
   );
 
   // Define local tools
-  const localTools: ToolDefinition<any>[] = [];
+  const localTools: ToolDefinition<ZodRawShape>[] = [];
 
   // Add local reverse tool
   localTools.push({
@@ -93,7 +94,7 @@ async function main() {
   const proxy = await createStdioPassthroughProxy({
     target: {
       url: targetUrl,
-      transportType: targetTransport as any,
+      transportType: targetTransport,
     },
     serverInfo: {
       name: "test-passthrough-with-local-tools",
