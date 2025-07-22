@@ -2,23 +2,31 @@
  * Hook Transport Error Handling Utilities
  */
 
-import type { TransportError } from "@civic/hook-common";
-import type { JSONRPCError } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  GenericTransportErrorHookResult,
+  TransportError,
+} from "@civic/hook-common";
+import type {
+  JSONRPCError,
+  JSONRPCResponse,
+} from "@modelcontextprotocol/sdk/types.js";
 import { createAbortResponse } from "../jsonrpc/responses.js";
 import type { HttpErrorResponse } from "./types.js";
 
 /**
  * Handle transport errors through hooks and return appropriate JSON-RPC error
  */
-export async function handleTransportError<
-  T extends { resultType: string; error?: TransportError; reason?: string },
->(
+export async function handleTransportError(
   error: TransportError,
   requestId: string | number,
   headers: Record<string, string>,
-  processError: () => Promise<T>,
+  processError: () => Promise<
+    GenericTransportErrorHookResult<JSONRPCResponse> & {
+      lastProcessedIndex: number;
+    }
+  >,
 ): Promise<{
-  message: JSONRPCError | HttpErrorResponse;
+  message: JSONRPCError | HttpErrorResponse | JSONRPCResponse;
   headers: Record<string, string>;
   statusCode?: number;
 }> {
@@ -35,6 +43,15 @@ export async function handleTransportError<
     return {
       ...abortResponse,
       statusCode: 200, // Abort responses are JSON-RPC errors
+    };
+  }
+
+  if (errorResult.resultType === "respond") {
+    // Hook has handled the error and provided a response
+    return {
+      message: errorResult.response,
+      headers: headers,
+      statusCode: 200,
     };
   }
 

@@ -338,10 +338,12 @@ export type GenericResponseHookResult<TResponse> =
  * Generic type for transport error hook results
  * - abort: Stop processing with a reason
  * - continue: Continue with potentially modified error
+ * - respond: Stop processing and return a successful response
  */
-export type GenericTransportErrorHookResult =
+export type GenericTransportErrorHookResult<TResponse> =
   | { resultType: "abort"; reason: string }
-  | { resultType: "continue"; error: TransportError };
+  | { resultType: "continue"; error: TransportError }
+  | { resultType: "respond"; response: TResponse };
 
 /**
  * Type helpers to find methods by parameter types

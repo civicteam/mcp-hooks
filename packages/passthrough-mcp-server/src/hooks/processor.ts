@@ -184,16 +184,35 @@ export async function processResponseThroughHooks<
  * - Hooks that initiated actions can clean up on errors
  * - Example: A hook that started a transaction can roll it back
  */
+// Helper type to extract the return type of a hook method
+type ExtractHookMethodReturnType<T> = T extends (
+  ...args: unknown[]
+) => Promise<infer R>
+  ? R
+  : never;
+
+// Helper type to extract the response type from a transport error hook result
+type ExtractTransportErrorResponseType<T> = T extends {
+  resultType: "respond";
+  response: infer R;
+}
+  ? R
+  : never;
+
 export async function processTransportErrorThroughHooks<
   TRequest,
   TMethodName extends MethodsWithTransportErrorType<TRequest>,
+  THookResult = ExtractHookMethodReturnType<Hook[TMethodName]>,
+  TResponse = ExtractTransportErrorResponseType<THookResult>,
 >(
   error: TransportError,
   originalRequest: TRequest,
   hooks: Hook[],
   startIndex: number,
   methodName: TMethodName,
-): Promise<GenericTransportErrorHookResult & { lastProcessedIndex: number }> {
+): Promise<
+  GenericTransportErrorHookResult<TResponse> & { lastProcessedIndex: number }
+> {
   let currentError = error;
   let lastProcessedIndex = startIndex;
 
@@ -218,10 +237,15 @@ export async function processTransportErrorThroughHooks<
       // - Sanitize sensitive data from error messages
       // - Add request correlation IDs for debugging
       currentError = hookResult.error;
-    } else {
+    } else if (hookResult.resultType === "abort") {
       // abort - hook is suppressing the error
       // Why: Some errors might be expected and shouldn't propagate
       // Example: 404s for optional resources
+      return { ...hookResult, lastProcessedIndex };
+    } else if (hookResult.resultType === "respond") {
+      // respond - hook has handled the error and provided a response
+      // Why: Hook may have retried the request successfully
+      // Example: Authentication hook retrying after refreshing tokens
       return { ...hookResult, lastProcessedIndex };
     }
   }
