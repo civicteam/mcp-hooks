@@ -15,7 +15,7 @@ describe("createPassthroughProxy type inference", () => {
   it("should return StdioPassthroughProxy when transportType is 'stdio'", async () => {
     const proxy = await createPassthroughProxy({
       transportType: "stdio",
-      target: { url: "http://localhost:3000", transportType: "httpStream" },
+      target: { url: "http://localhost:33355", transportType: "httpStream" },
     });
 
     // TypeScript should know this is StdioPassthroughProxy
@@ -26,7 +26,7 @@ describe("createPassthroughProxy type inference", () => {
   it("should return HttpPassthroughProxy when transportType is 'httpStream'", async () => {
     const proxy = await createPassthroughProxy({
       transportType: "httpStream",
-      port: 3000,
+      port: 33355,
       target: { url: "http://localhost:3001", transportType: "httpStream" },
     });
 

@@ -281,7 +281,7 @@ export class MessageHandler {
               lastProcessedIndex >= 0
                 ? lastProcessedIndex
                 : this.hooks.length - 1;
-            const result = await processTransportErrorThroughHooks<
+            return processTransportErrorThroughHooks<
               TRequest,
               typeof config.transportErrorMethodName
             >(
@@ -291,16 +291,6 @@ export class MessageHandler {
               startIndex,
               config.transportErrorMethodName,
             );
-            if (result.resultType === "abort") {
-              return {
-                resultType: result.resultType,
-                reason: result.reason,
-              };
-            }
-            return {
-              resultType: result.resultType,
-              error: result.error,
-            };
           },
         );
       }
