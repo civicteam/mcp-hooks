@@ -7,11 +7,16 @@
 import type {
   CallToolRequest,
   CallToolResult,
+  InitializeRequest,
+  InitializeResult,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
   Hook,
+  InitializeRequestHookResult,
+  InitializeResponseHookResult,
+  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   ListToolsTransportErrorHookResult,
@@ -196,6 +201,98 @@ export class LocalHookClient implements Hook {
     } catch (hookError) {
       console.error(
         `Hook ${this.name} tools/list transport error processing failed:`,
+        hookError,
+      );
+      // On error, continue with unmodified error
+      return {
+        resultType: "continue",
+        error,
+      };
+    }
+  }
+
+  /**
+   * Process an initialize request through the hook
+   */
+  async processInitializeRequest(
+    request: InitializeRequest,
+  ): Promise<InitializeRequestHookResult> {
+    try {
+      // Check if hook supports initialize request processing
+      if (!this.hook.processInitializeRequest) {
+        return {
+          resultType: "continue",
+          request,
+        };
+      }
+      return await this.hook.processInitializeRequest(request);
+    } catch (error) {
+      console.error(
+        `Hook ${this.name} initialize request processing failed:`,
+        error,
+      );
+      // On error, continue with unmodified request
+      return {
+        resultType: "continue",
+        request,
+      };
+    }
+  }
+
+  /**
+   * Process an initialize response through the hook
+   */
+  async processInitializeResponse(
+    response: InitializeResult,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeResponseHookResult> {
+    try {
+      // Check if hook supports initialize response processing
+      if (!this.hook.processInitializeResponse) {
+        return {
+          resultType: "continue",
+          response,
+        };
+      }
+      return await this.hook.processInitializeResponse(
+        response,
+        originalRequest,
+      );
+    } catch (error) {
+      console.error(
+        `Hook ${this.name} initialize response processing failed:`,
+        error,
+      );
+      // On error, continue with unmodified response
+      return {
+        resultType: "continue",
+        response,
+      };
+    }
+  }
+
+  /**
+   * Process an initialize transport error through the hook
+   */
+  async processInitializeTransportError(
+    error: TransportError,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeTransportErrorHookResult> {
+    try {
+      // Check if hook supports initialize transport error processing
+      if (!this.hook.processInitializeTransportError) {
+        return {
+          resultType: "continue",
+          error,
+        };
+      }
+      return await this.hook.processInitializeTransportError(
+        error,
+        originalRequest,
+      );
+    } catch (hookError) {
+      console.error(
+        `Hook ${this.name} initialize transport error processing failed:`,
         hookError,
       );
       // On error, continue with unmodified error
