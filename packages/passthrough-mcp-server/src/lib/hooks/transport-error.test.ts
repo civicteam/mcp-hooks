@@ -2,7 +2,6 @@ import type {
   GenericTransportErrorHookResult,
   TransportError,
 } from "@civic/hook-common";
-import type { JSONRPCResponse } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it, vi } from "vitest";
 import { handleTransportError } from "./transport-error.js";
 
@@ -46,22 +45,18 @@ describe("handleTransportError", () => {
   });
 
   it("should handle respond result type with successful response", async () => {
-    const mockResponse: JSONRPCResponse = {
-      jsonrpc: "2.0",
-      id: mockRequestId,
-      result: {
-        content: [
-          {
-            type: "text",
-            text: "Success after retry",
-          },
-        ],
-      },
+    const mockResult = {
+      content: [
+        {
+          type: "text",
+          text: "Success after retry",
+        },
+      ],
     };
 
     const processError = vi.fn().mockResolvedValue({
       resultType: "respond",
-      response: mockResponse,
+      response: mockResult,
       lastProcessedIndex: 0,
     } as const);
 
@@ -74,7 +69,11 @@ describe("handleTransportError", () => {
 
     expect(result.statusCode).toBe(200);
     expect(result.headers).toEqual(mockHeaders);
-    expect(result.message).toEqual(mockResponse);
+    expect(result.message).toEqual({
+      jsonrpc: "2.0",
+      id: mockRequestId,
+      result: mockResult,
+    });
   });
 
   it("should handle continue result type with modified error", async () => {
@@ -138,28 +137,24 @@ describe("handleTransportError", () => {
   });
 
   it("should have proper type inference for respond result", async () => {
-    const mockResponse: JSONRPCResponse = {
-      jsonrpc: "2.0",
-      id: mockRequestId,
-      result: {
-        content: [
-          {
-            type: "text",
-            text: "Type safety verified",
-          },
-        ],
-      },
+    const mockResult = {
+      content: [
+        {
+          type: "text",
+          text: "Type safety verified",
+        },
+      ],
     };
 
     // This test verifies that TypeScript properly infers the response type
     // when resultType is "respond". The discriminated union ensures that
     // response is always present when resultType is "respond".
     const processError = vi.fn().mockImplementation(async () => {
-      const result: GenericTransportErrorHookResult<JSONRPCResponse> & {
+      const result: GenericTransportErrorHookResult<any> & {
         lastProcessedIndex: number;
       } = {
         resultType: "respond",
-        response: mockResponse,
+        response: mockResult,
         lastProcessedIndex: 0,
       };
       // TypeScript knows that result.response exists here
@@ -174,7 +169,11 @@ describe("handleTransportError", () => {
       processError,
     );
 
-    expect(result.message).toEqual(mockResponse);
+    expect(result.message).toEqual({
+      jsonrpc: "2.0",
+      id: mockRequestId,
+      result: mockResult,
+    });
   });
 
   it("should use original error when no error is provided in continue result", async () => {
