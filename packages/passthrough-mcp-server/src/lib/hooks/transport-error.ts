@@ -48,8 +48,13 @@ export async function handleTransportError(
 
   if (errorResult.resultType === "respond") {
     // Hook has handled the error and provided a response
+    // Wrap the response in proper JSON-RPC format
     return {
-      message: errorResult.response,
+      message: {
+        jsonrpc: "2.0",
+        id: requestId,
+        result: errorResult.response,
+      } as JSONRPCResponse,
       headers: headers,
       statusCode: 200,
     };
