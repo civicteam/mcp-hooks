@@ -9,8 +9,6 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
     "lint": "biome check .",
     "format": "biome check . --write"
   },
