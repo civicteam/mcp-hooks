@@ -64,3 +64,7 @@ export { createHookClient, createHookClients } from "./hooks/utils.js";
 
 // Export utility functions that users might need
 export { loadConfig } from "./lib/config.js";
+
+// Export HTTP handler creation function
+export { createMCPHandler } from "./server/http/mcpHandler.js";
+export type { MCPHandlerOptions } from "./server/http/mcpHandler.js";
