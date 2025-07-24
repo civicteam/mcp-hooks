@@ -18,15 +18,17 @@
 import type * as http from "node:http";
 import { URL } from "node:url";
 import type {
-  CallToolRequest,
+  CallToolRequestWithContext,
   CallToolResult,
   Hook,
   InitializeRequest,
+  InitializeRequestWithContext,
   InitializeResult,
-  ListToolsRequest,
+  ListToolsRequestWithContext,
   MethodsWithRequestType,
   MethodsWithResponseType,
   MethodsWithTransportErrorType,
+  RequestContext,
 } from "@civic/hook-common";
 import type {
   JSONRPCError,
@@ -65,6 +67,13 @@ import {
 import { logger } from "../lib/logger.js";
 import { SSEParser } from "../lib/sse.js";
 
+// All requests have a context, but are otherwise generic JSONRPC requests
+type AbstractRequest = {
+  requestContext?: RequestContext;
+} & {
+  method: string;
+  params?: Record<string, unknown>;
+};
 /**
  * Configuration for generic request handling with hooks
  *
@@ -79,7 +88,7 @@ import { SSEParser } from "../lib/sse.js";
  * - Example: initialize might not have request/response hooks initially
  * - Allows gradual rollout of hook support for new message types
  */
-interface RequestHandlerConfig<TRequest, TResponse> {
+interface RequestHandlerConfig<TRequest extends AbstractRequest, TResponse> {
   /**
    * Build a typed request from the JSON-RPC request
    *
@@ -137,9 +146,15 @@ export class MessageHandler {
   private readonly targetUrl: string;
   private readonly targetMcpPath: string;
 
+  // Map of method names to their configurations
+  private readonly methodConfigs: Record<
+    string,
+    RequestHandlerConfig<AbstractRequest, unknown>
+  > = {};
+
   // Request handler configurations
   private readonly toolCallConfig: RequestHandlerConfig<
-    CallToolRequest,
+    CallToolRequestWithContext,
     CallToolResult
   > = {
     buildRequest: (request, headers) => {
@@ -155,6 +170,7 @@ export class MessageHandler {
             source: "passthrough-server",
           },
         },
+        requestContext: this.buildRequestContext(headers),
       };
     },
     requestMethodName: "processToolCallRequest" as const,
@@ -165,7 +181,7 @@ export class MessageHandler {
   };
 
   private readonly toolsListConfig: RequestHandlerConfig<
-    ListToolsRequest,
+    ListToolsRequestWithContext,
     ListToolsResult
   > = {
     buildRequest: (request, headers) => ({
@@ -177,6 +193,7 @@ export class MessageHandler {
           source: "passthrough-server",
         },
       },
+      requestContext: this.buildRequestContext(headers),
     }),
     requestMethodName: "processToolsListRequest",
     responseMethodName: "processToolsListResponse",
@@ -186,14 +203,16 @@ export class MessageHandler {
   };
 
   private readonly initializeConfig: RequestHandlerConfig<
-    InitializeRequest,
+    InitializeRequestWithContext,
     InitializeResult
   > = {
-    buildRequest: (request) => ({
+    buildRequest: (request, headers) => ({
       method: "initialize",
       params: request.params as InitializeRequest["params"],
+      requestContext: this.buildRequestContext(headers),
     }),
-    // No request/response hooks for initialize yet
+    requestMethodName: "processInitializeRequest",
+    responseMethodName: "processInitializeResponse",
     transportErrorMethodName: "processInitializeTransportError",
     errorPrefix: "Error processing initialize",
     supportsDirectResponse: false,
@@ -203,6 +222,25 @@ export class MessageHandler {
     this.hooks = getHookClients(config);
     this.targetUrl = config.target.url;
     this.targetMcpPath = config.target.mcpPath || "/mcp";
+
+    // Initialize method configurations
+    this.methodConfigs["tools/call"] = this.toolCallConfig;
+    this.methodConfigs["tools/list"] = this.toolsListConfig;
+    this.methodConfigs.initialize = this.initializeConfig;
+  }
+
+  /**
+   * Build request context from headers and target URL
+   */
+  private buildRequestContext(headers: Record<string, string>): RequestContext {
+    const fullTargetUrl = this.targetUrl + this.targetMcpPath;
+    const targetUrl = new URL(fullTargetUrl);
+
+    return {
+      headers,
+      host: targetUrl.hostname,
+      path: targetUrl.pathname + targetUrl.search,
+    };
   }
 
   /**
@@ -215,7 +253,10 @@ export class MessageHandler {
   /**
    * Generic handler for requests with hook processing
    */
-  private async handleRequestWithHooks<TRequest, TResponse>(
+  private async handleRequestWithHooks<
+    TRequest extends AbstractRequest,
+    TResponse,
+  >(
     request: JSONRPCRequest,
     headers: Record<string, string>,
     config: RequestHandlerConfig<TRequest, TResponse>,
@@ -261,12 +302,23 @@ export class MessageHandler {
         }
 
         if (requestResult.resultType === "continue") {
-          processedRequest = requestResult.request as TRequest;
+          processedRequest = requestResult.request;
         }
+      } else {
+        logger.warn(
+          `[MessageHandler] No request hooks configured for method ${request.method}`,
+        );
       }
 
-      // Forward the request
-      const forwardResult = await this.forwardRequest(request, headers);
+      // Extract request context from processed request
+      const processedContext = processedRequest.requestContext;
+
+      // Forward the request with potentially modified context
+      const forwardResult = await this.forwardRequest(
+        request,
+        headers,
+        processedContext,
+      );
 
       // Handle transport errors
       if (forwardResult.type === "error") {
@@ -398,15 +450,14 @@ export class MessageHandler {
 
       const request = message as JSONRPCRequest;
 
-      // Check if this request needs hook processing
-      if (request.method === "tools/call") {
-        return await this.handleToolCall(request, headers);
-      }
-      if (request.method === "tools/list") {
-        return await this.handleToolsList(request, headers);
-      }
-      if (request.method === "initialize") {
-        return await this.handleInitialize(request, headers);
+      // Check if we have a configuration for this method
+      const methodConfig = this.methodConfigs[request.method];
+      if (methodConfig) {
+        return await this.handleRequestWithHooks(
+          request,
+          headers,
+          methodConfig,
+        );
       }
 
       // Forward all other requests directly
@@ -443,48 +494,6 @@ export class MessageHandler {
         "id" in message ? message.id : null,
       );
     }
-  }
-
-  /**
-   * Handle tools/call requests with hook processing
-   */
-  private async handleToolCall(
-    request: JSONRPCRequest,
-    headers: Record<string, string>,
-  ): Promise<{
-    message: JSONRPCMessage | HttpErrorResponse;
-    headers: Record<string, string>;
-    statusCode?: number;
-  }> {
-    return this.handleRequestWithHooks(request, headers, this.toolCallConfig);
-  }
-
-  /**
-   * Handle tools/list requests with hook processing
-   */
-  private async handleToolsList(
-    request: JSONRPCRequest,
-    headers: Record<string, string>,
-  ): Promise<{
-    message: JSONRPCMessage | HttpErrorResponse;
-    headers: Record<string, string>;
-    statusCode?: number;
-  }> {
-    return this.handleRequestWithHooks(request, headers, this.toolsListConfig);
-  }
-
-  /**
-   * Handle initialize requests with hook processing
-   */
-  private async handleInitialize(
-    request: JSONRPCRequest,
-    headers: Record<string, string>,
-  ): Promise<{
-    message: JSONRPCMessage | HttpErrorResponse;
-    headers: Record<string, string>;
-    statusCode?: number;
-  }> {
-    return this.handleRequestWithHooks(request, headers, this.initializeConfig);
   }
 
   /**
@@ -617,18 +626,50 @@ export class MessageHandler {
   private async forwardRequest(
     request: JSONRPCRequest,
     headers: Record<string, string>,
+    reqContext?: RequestContext,
   ): Promise<ForwardResult> {
-    const fullTargetUrl = this.targetUrl + this.targetMcpPath;
+    // Start with default target URL
+    let fullTargetUrl = this.targetUrl + this.targetMcpPath;
+
+    // Override host and path if provided in req context
+    if (reqContext) {
+      if (reqContext.host || reqContext.path) {
+        const baseUrl = new URL(this.targetUrl);
+        const targetUrl = new URL(fullTargetUrl);
+
+        if (reqContext.host) {
+          targetUrl.hostname = reqContext.host;
+        }
+
+        if (reqContext.path) {
+          targetUrl.pathname = reqContext.path;
+          targetUrl.search = ""; // Clear search params if path is overridden
+        }
+
+        // Keep the protocol from the original URL
+        targetUrl.protocol = baseUrl.protocol;
+
+        fullTargetUrl = targetUrl.toString();
+      }
+    }
+
     const targetUrl = new URL(fullTargetUrl);
     const requestBody = JSON.stringify(request);
+
+    // Merge headers from req context if provided
+    const finalHeaders = reqContext?.headers
+      ? { ...headers, ...reqContext.headers }
+      : headers;
 
     logger.info(
       `[MessageHandler] Forwarding to ${fullTargetUrl}: ${requestBody}`,
     );
-    logger.info(`[MessageHandler] Forward headers: ${JSON.stringify(headers)}`);
+    logger.info(
+      `[MessageHandler] Forward headers: ${JSON.stringify(finalHeaders)}`,
+    );
 
     try {
-      const options = buildRequestOptions(targetUrl, requestBody, headers);
+      const options = buildRequestOptions(targetUrl, requestBody, finalHeaders);
       const response = await makeHttpRequestAsync(
         options,
         targetUrl,

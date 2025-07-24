@@ -2,6 +2,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import type {
   CallToolRequest,
   InitializeRequest,
+  InitializeResult,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -10,6 +11,8 @@ import superjson from "superjson";
 import type { HookRouter } from "./router.js";
 import type {
   Hook,
+  InitializeRequestHookResult,
+  InitializeResponseHookResult,
   InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
@@ -26,6 +29,31 @@ import type {
 export interface RemoteHookConfig {
   url: string;
   name: string;
+}
+
+/**
+ * Helper function to handle hook method errors consistently
+ * @param error The error from the tRPC call
+ * @param hookName The name of the hook for logging
+ * @param methodName The method that failed
+ * @param fallbackResult The result to return when continuing
+ * @returns The fallback result
+ */
+function handleHookError<T>(
+  error: unknown,
+  hookName: string,
+  methodName: string,
+  fallbackResult: T,
+): T {
+  // Check if it's a "not implemented" error
+  if (error instanceof Error && error.message.includes("not implemented")) {
+    // Hook doesn't support this method, continue silently
+    return fallbackResult;
+  }
+
+  // Log other errors
+  console.error(`Hook ${hookName} ${methodName} failed:`, error);
+  return fallbackResult;
 }
 
 /**
@@ -60,12 +88,10 @@ export class RemoteHookClient implements Hook {
     try {
       return await this.client.processToolCallRequest.mutate(toolCall);
     } catch (error) {
-      console.error(`Hook ${this.name} request processing failed:`, error);
-      // On error, continue with unmodified request
-      return {
-        resultType: "continue",
+      return handleHookError(error, this.name, "processToolCallRequest", {
+        resultType: "continue" as const,
         request: toolCall,
-      };
+      });
     }
   }
 
@@ -82,12 +108,10 @@ export class RemoteHookClient implements Hook {
         originalToolCall,
       });
     } catch (error) {
-      console.error(`Hook ${this.name} response processing failed:`, error);
-      // On error, continue with unmodified response
-      return {
-        resultType: "continue",
+      return handleHookError(error, this.name, "processToolCallResponse", {
+        resultType: "continue" as const,
         response,
-      };
+      });
     }
   }
 
@@ -100,23 +124,10 @@ export class RemoteHookClient implements Hook {
     try {
       return await this.client.processToolsListRequest.mutate(request);
     } catch (error) {
-      // Check if it's a "not implemented" error
-      if (error instanceof Error && error.message.includes("not implemented")) {
-        // Hook doesn't support this method, continue with unmodified request
-        return {
-          resultType: "continue",
-          request: request,
-        };
-      }
-      console.error(
-        `Hook ${this.name} tools/list request processing failed:`,
-        error,
-      );
-      // On other errors, continue with unmodified request
-      return {
-        resultType: "continue",
+      return handleHookError(error, this.name, "processToolsListRequest", {
+        resultType: "continue" as const,
         request: request,
-      };
+      });
     }
   }
 
@@ -133,23 +144,10 @@ export class RemoteHookClient implements Hook {
         originalRequest,
       });
     } catch (error) {
-      // Check if it's a "not implemented" error
-      if (error instanceof Error && error.message.includes("not implemented")) {
-        // Hook doesn't support this method, continue with unmodified response
-        return {
-          resultType: "continue",
-          response: response,
-        };
-      }
-      console.error(
-        `Hook ${this.name} tools/list response processing failed:`,
-        error,
-      );
-      // On other errors, continue with unmodified response
-      return {
-        resultType: "continue",
+      return handleHookError(error, this.name, "processToolsListResponse", {
+        resultType: "continue" as const,
         response: response,
-      };
+      });
     }
   }
 
@@ -166,26 +164,10 @@ export class RemoteHookClient implements Hook {
         originalToolCall,
       });
     } catch (clientError) {
-      // Check if it's a "not implemented" error
-      if (
-        clientError instanceof Error &&
-        clientError.message.includes("not implemented")
-      ) {
-        // Hook doesn't support this method, continue (don't handle exception)
-        return {
-          resultType: "continue",
-          body: null,
-        };
-      }
-      console.error(
-        `Hook ${this.name} exception processing failed:`,
-        clientError,
-      );
-      // On other errors, continue (don't handle exception)
-      return {
+      return handleHookError(clientError, this.name, "processToolException", {
         resultType: "continue",
         body: null,
-      };
+      });
     }
   }
 
@@ -202,26 +184,15 @@ export class RemoteHookClient implements Hook {
         originalToolCall,
       });
     } catch (clientError) {
-      // Check if it's a "not implemented" error
-      if (
-        clientError instanceof Error &&
-        clientError.message.includes("not implemented")
-      ) {
-        // Hook doesn't support this method, continue with unmodified error
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      console.error(
-        `Hook ${this.name} tool call transport error processing failed:`,
+      return handleHookError(
         clientError,
+        this.name,
+        "processToolCallTransportError",
+        {
+          resultType: "continue" as const,
+          error,
+        },
       );
-      // On other errors, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
-      };
     }
   }
 
@@ -238,26 +209,15 @@ export class RemoteHookClient implements Hook {
         originalRequest,
       });
     } catch (clientError) {
-      // Check if it's a "not implemented" error
-      if (
-        clientError instanceof Error &&
-        clientError.message.includes("not implemented")
-      ) {
-        // Hook doesn't support this method, continue with unmodified error
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      console.error(
-        `Hook ${this.name} tools/list transport error processing failed:`,
+      return handleHookError(
         clientError,
+        this.name,
+        "processToolsListTransportError",
+        {
+          resultType: "continue" as const,
+          error,
+        },
       );
-      // On other errors, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
-      };
     }
   }
 
@@ -274,26 +234,51 @@ export class RemoteHookClient implements Hook {
         originalRequest,
       });
     } catch (clientError) {
-      // Check if it's a "not implemented" error
-      if (
-        clientError instanceof Error &&
-        clientError.message.includes("not implemented")
-      ) {
-        // Hook doesn't support this method, continue with unmodified error
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      console.error(
-        `Hook ${this.name} initialize transport error processing failed:`,
+      return handleHookError(
         clientError,
+        this.name,
+        "processInitializeTransportError",
+        {
+          resultType: "continue" as const,
+          error,
+        },
       );
-      // On other errors, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
-      };
+    }
+  }
+
+  /**
+   * Process an initialize request through the hook
+   */
+  async processInitializeRequest(
+    request: InitializeRequest,
+  ): Promise<InitializeRequestHookResult> {
+    try {
+      return await this.client.processInitializeRequest.mutate(request);
+    } catch (error) {
+      return handleHookError(error, this.name, "processInitializeRequest", {
+        resultType: "continue" as const,
+        request: request,
+      });
+    }
+  }
+
+  /**
+   * Process an initialize response through the hook
+   */
+  async processInitializeResponse(
+    response: InitializeResult,
+    originalRequest: InitializeRequest,
+  ): Promise<InitializeResponseHookResult> {
+    try {
+      return await this.client.processInitializeResponse.mutate({
+        response,
+        originalRequest,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processInitializeResponse", {
+        resultType: "continue" as const,
+        response: response,
+      });
     }
   }
 }

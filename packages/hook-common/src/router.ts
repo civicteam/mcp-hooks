@@ -1,6 +1,7 @@
 import {
   CallToolRequestSchema,
   InitializeRequestSchema,
+  InitializeResultSchema,
   ListToolsRequestSchema,
   ListToolsResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -8,6 +9,8 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
 import {
+  InitializeRequestHookResultSchema,
+  InitializeResponseHookResultSchema,
   InitializeTransportErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
   ListToolsResponseHookResultSchema,
@@ -152,12 +155,43 @@ const transportErrorRouter = t.router({
 });
 
 /**
+ * Initialize procedures router
+ */
+const initializeRouter = t.router({
+  /**
+   * Process initialize requests
+   */
+  processInitializeRequest: t.procedure
+    .input(InitializeRequestSchema)
+    .output(InitializeRequestHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processInitializeRequest not implemented");
+    }),
+
+  /**
+   * Process initialize responses
+   */
+  processInitializeResponse: t.procedure
+    .input(
+      z.object({
+        response: InitializeResultSchema,
+        originalRequest: InitializeRequestSchema,
+      }),
+    )
+    .output(InitializeResponseHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processInitializeResponse not implemented");
+    }),
+});
+
+/**
  * Full router type with all procedures
  */
 const fullRouter = t.router({
   ...baseRouter._def.procedures,
   ...toolsListRouter._def.procedures,
   ...transportErrorRouter._def.procedures,
+  ...initializeRouter._def.procedures,
 });
 
 export type HookRouter = typeof fullRouter;
@@ -297,6 +331,42 @@ export function createHookRouter(hook: Hook) {
         }
         return await hook.processInitializeTransportError(
           input.error,
+          input.originalRequest,
+        );
+      });
+  }
+
+  // Add processInitializeRequest if the hook implements it
+  if (hook.processInitializeRequest) {
+    procedures.processInitializeRequest = t.procedure
+      .input(InitializeRequestSchema)
+      .output(InitializeRequestHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processInitializeRequest) {
+          throw new Error("processInitializeRequest not implemented");
+        }
+        return await hook.processInitializeRequest(input);
+      });
+  }
+
+  // Add processInitializeResponse if the hook implements it
+  if (hook.processInitializeResponse) {
+    procedures.processInitializeResponse = t.procedure
+      .input(
+        z.object({
+          response: InitializeResultSchema,
+          originalRequest: InitializeRequestSchema,
+        }),
+      )
+      .output(InitializeResponseHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processInitializeResponse) {
+          throw new Error("processInitializeResponse not implemented");
+        }
+        return await hook.processInitializeResponse(
+          input.response,
           input.originalRequest,
         );
       });

@@ -173,7 +173,7 @@ describe("RemoteHookClient", () => {
       const result = await hookClient.processToolCallRequest(toolCall);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Hook test-hook request processing failed:",
+        "Hook test-hook processToolCallRequest failed:",
         error,
       );
       expect(result).toEqual({
@@ -330,7 +330,7 @@ describe("RemoteHookClient", () => {
       );
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Hook test-hook response processing failed:",
+        "Hook test-hook processToolCallResponse failed:",
         error,
       );
       expect(result).toEqual({
