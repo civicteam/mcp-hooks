@@ -289,20 +289,56 @@ export class MessageHandler {
           );
         }
 
-        // Check for direct response if supported
-        if (
+        if (requestResult.resultType === "continue") {
+          processedRequest = requestResult.request;
+        } else if (
           config.supportsDirectResponse &&
           requestResult.resultType === "respond"
         ) {
+          // Process the synthetic response through response hooks
+          logger.info(
+            `[MessageHandler] Respond result, responseMethodName: ${config.responseMethodName}`,
+          );
+          if (config.responseMethodName) {
+            logger.info(
+              `[MessageHandler] Processing synthetic response through hooks, lastProcessedIndex: ${lastProcessedIndex}`,
+            );
+            const responseResult = await processResponseThroughHooks<
+              TRequest,
+              TResponse,
+              typeof config.responseMethodName
+            >(
+              requestResult.response as TResponse,
+              processedRequest,
+              this.hooks,
+              lastProcessedIndex,
+              config.responseMethodName,
+            );
+
+            if (responseResult.resultType === "abort") {
+              return createAbortResponse(
+                "response",
+                responseResult.reason,
+                request.id,
+                {},
+              );
+            }
+
+            if (responseResult.resultType === "continue") {
+              return createSuccessResponse(
+                responseResult.response as TResponse & Record<string, unknown>,
+                request.id,
+                {},
+              );
+            }
+          }
+
+          // No response hooks configured, return the response directly
           return createSuccessResponse(
             requestResult.response as TResponse & Record<string, unknown>,
             request.id,
             {},
           );
-        }
-
-        if (requestResult.resultType === "continue") {
-          processedRequest = requestResult.request;
         }
       } else {
         logger.warn(
