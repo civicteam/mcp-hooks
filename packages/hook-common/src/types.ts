@@ -35,6 +35,57 @@ export type {
 };
 
 /**
+ * Request context for hooks to inspect and modify HTTP request details
+ *
+ * Why: Hooks need to manipulate request metadata beyond just the message body.
+ * This context provides access to:
+ * 1. Headers - for authentication, custom headers, or header filtering
+ * 2. Host - for conditional routing to different servers
+ * 3. Path - for endpoint rewriting or versioning
+ *
+ * All fields are optional to maintain backward compatibility and allow
+ * gradual adoption. Future fields might include cookies, query params, etc.
+ */
+export const RequestContextSchemaRaw = {
+  headers: z.record(z.string()).optional(),
+  host: z.string().optional(),
+  path: z.string().optional(),
+};
+
+export const RequestContextSchema = z.object(RequestContextSchemaRaw);
+
+export type RequestContext = z.infer<typeof RequestContextSchema>;
+
+export const CallToolRequestSchemaWithContext = CallToolRequestSchema.extend({
+  requestContext: RequestContextSchema.optional(),
+});
+export const ListToolsRequestSchemaWithContext = ListToolsRequestSchema.extend({
+  requestContext: RequestContextSchema.optional(),
+});
+export const InitializeRequestSchemaWithContext =
+  InitializeRequestSchema.extend({
+    requestContext: RequestContextSchema.optional(),
+  });
+
+/**
+ * Extended request types that include request context for hooks
+ *
+ * Why: Hooks need access to request metadata (headers, host, path) to make
+ * routing decisions, add authentication, or modify the request destination.
+ * These extended types maintain the original request structure while adding
+ * the optional requestContext field for cleaner separation of concerns.
+ */
+export type CallToolRequestWithContext = CallToolRequest & {
+  requestContext?: RequestContext;
+};
+export type ListToolsRequestWithContext = ListToolsRequest & {
+  requestContext?: RequestContext;
+};
+export type InitializeRequestWithContext = InitializeRequest & {
+  requestContext?: RequestContext;
+};
+
+/**
  * Generic error type for transport errors
  *
  * Why: MCP servers communicate over different transports (HTTP, stdio, etc).
@@ -73,7 +124,7 @@ export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
-      request: CallToolRequestSchema,
+      request: CallToolRequestSchemaWithContext,
     }),
     // stop the request and return to the caller with this response
     z.object({
@@ -102,7 +153,7 @@ export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
-      request: ListToolsRequestSchema,
+      request: ListToolsRequestSchemaWithContext,
     }),
     // stop the request and return to the caller with this response
     z.object({
@@ -165,7 +216,7 @@ export const InitializeRequestHookResultSchema = z.discriminatedUnion(
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
-      request: InitializeRequestSchema,
+      request: InitializeRequestSchemaWithContext,
     }),
     // stop the request and return to the caller with this response
     z.object({
@@ -244,7 +295,7 @@ export interface Hook {
    * Process an incoming tool call request
    */
   processToolCallRequest?(
-    request: CallToolRequest,
+    request: CallToolRequestWithContext,
   ): Promise<ToolCallRequestHookResult>;
 
   /**
@@ -252,14 +303,14 @@ export interface Hook {
    */
   processToolCallResponse?(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalToolCall: CallToolRequestWithContext,
   ): Promise<ToolCallResponseHookResult>;
 
   /**
    * Process a tools/list request (optional)
    */
   processToolsListRequest?(
-    request: ListToolsRequest,
+    request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult>;
 
   /**
@@ -267,7 +318,7 @@ export interface Hook {
    */
   processToolsListResponse?(
     response: ListToolsResult,
-    originalRequest: ListToolsRequest,
+    originalRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsResponseHookResult>;
 
   /**
@@ -275,7 +326,7 @@ export interface Hook {
    */
   processToolCallTransportError?(
     error: TransportError,
-    originalToolCall: CallToolRequest,
+    originalToolCall: CallToolRequestWithContext,
   ): Promise<ToolCallTransportErrorHookResult>;
 
   /**
@@ -283,14 +334,14 @@ export interface Hook {
    */
   processToolsListTransportError?(
     error: TransportError,
-    originalRequest: ListToolsRequest,
+    originalRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsTransportErrorHookResult>;
 
   /**
    * Process an initialize request (optional)
    */
   processInitializeRequest?(
-    request: InitializeRequest,
+    request: InitializeRequestWithContext,
   ): Promise<InitializeRequestHookResult>;
 
   /**
@@ -298,7 +349,7 @@ export interface Hook {
    */
   processInitializeResponse?(
     response: InitializeResult,
-    originalRequest: InitializeRequest,
+    originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeResponseHookResult>;
 
   /**
@@ -306,7 +357,7 @@ export interface Hook {
    */
   processInitializeTransportError?(
     error: TransportError,
-    originalRequest: InitializeRequest,
+    originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeTransportErrorHookResult>;
 }
 

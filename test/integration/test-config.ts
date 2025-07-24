@@ -12,6 +12,10 @@ export const TEST_CONFIG = {
       url: "http://localhost:33100",
       description: "Echo test server for ping testing",
     },
+    apiKeyProtected: {
+      url: "http://localhost:33201",
+      description: "API key protected server",
+    },
   },
   passthroughServers: {
     withoutAuth: {
@@ -33,6 +37,10 @@ export const TEST_CONFIG = {
     programmatic: {
       url: "http://localhost:34101/mcp",
       description: "Passthrough server with programmatic hooks for testing",
+    },
+    withApiKeyHook: {
+      url: "http://localhost:34400/mcp",
+      description: "Passthrough server with API key hook to protected server",
     },
   },
   auth: {

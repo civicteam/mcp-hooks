@@ -1,17 +1,17 @@
 import type {
-  CallToolRequest,
   CallToolResult,
-  InitializeRequest,
   InitializeResult,
-  ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
+  CallToolRequestWithContext,
   Hook,
   InitializeRequestHookResult,
+  InitializeRequestWithContext,
   InitializeResponseHookResult,
   InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
+  ListToolsRequestWithContext,
   ListToolsResponseHookResult,
   ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
@@ -35,7 +35,7 @@ export abstract class AbstractHook implements Hook {
    * Default implementation passes through without modification.
    */
   async processToolCallRequest(
-    toolCall: CallToolRequest,
+    toolCall: CallToolRequestWithContext,
   ): Promise<ToolCallRequestHookResult> {
     return {
       resultType: "continue",
@@ -49,7 +49,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolCallResponse(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalToolCall: CallToolRequestWithContext,
   ): Promise<ToolCallResponseHookResult> {
     return {
       resultType: "continue",
@@ -62,7 +62,7 @@ export abstract class AbstractHook implements Hook {
    * Default implementation passes through without modification.
    */
   async processToolsListRequest?(
-    request: ListToolsRequest,
+    request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult> {
     return {
       resultType: "continue",
@@ -76,7 +76,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolsListResponse?(
     response: ListToolsResult,
-    originalRequest: ListToolsRequest,
+    originalRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsResponseHookResult> {
     return {
       resultType: "continue",
@@ -90,7 +90,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolCallTransportError?(
     error: TransportError,
-    originalToolCall: CallToolRequest,
+    originalToolCall: CallToolRequestWithContext,
   ): Promise<ToolCallTransportErrorHookResult> {
     return {
       resultType: "continue",
@@ -104,7 +104,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolsListTransportError?(
     error: TransportError,
-    originalRequest: ListToolsRequest,
+    originalRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsTransportErrorHookResult> {
     return {
       resultType: "continue",
@@ -117,7 +117,7 @@ export abstract class AbstractHook implements Hook {
    * Default implementation passes through without modification.
    */
   async processInitializeRequest?(
-    request: InitializeRequest,
+    request: InitializeRequestWithContext,
   ): Promise<InitializeRequestHookResult> {
     return {
       resultType: "continue",
@@ -131,7 +131,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processInitializeResponse?(
     response: InitializeResult,
-    originalRequest: InitializeRequest,
+    originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeResponseHookResult> {
     return {
       resultType: "continue",
@@ -145,7 +145,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processInitializeTransportError?(
     error: TransportError,
-    originalRequest: InitializeRequest,
+    originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeTransportErrorHookResult> {
     return {
       resultType: "continue",

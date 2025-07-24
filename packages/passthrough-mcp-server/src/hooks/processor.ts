@@ -53,6 +53,9 @@ export async function processRequestThroughHooks<
   let currentRequest = request;
   let lastProcessedIndex = -1;
 
+  console.log(
+    `[Processor] Processing request through ${hooks.length} hooks for method ${methodName}`,
+  );
   for (let i = 0; i < hooks.length; i++) {
     const hook = hooks[i];
     const hookMethod = hook[methodName];
@@ -61,7 +64,14 @@ export async function processRequestThroughHooks<
     // - Hook methods are optional in the interface
     // - A hook might not implement every possible method
     // - TypeScript ensures methodName is valid, but not that every hook has it
-    if (!hookMethod || typeof hookMethod !== "function") continue;
+    if (!hookMethod || typeof hookMethod !== "function") {
+      console.log(
+        `[Processor] Skipping hook ${hook.name} - no method ${methodName}`,
+      );
+      continue;
+    }
+
+    console.log(`Processing hook ${hook.name} for method ${methodName}`);
 
     // Why use .call():
     // - Ensures 'this' context is properly bound to the hook instance
