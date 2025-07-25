@@ -17,7 +17,7 @@ export {
 // Export types
 export type {
   PassthroughProxy,
-  StdioPassthroughProxy,
+  ServerPassthroughProxy,
   HttpPassthroughProxy,
 } from "./types.js";
 

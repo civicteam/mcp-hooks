@@ -2,7 +2,7 @@
  * Type definitions for passthrough proxy interfaces
  */
 
-import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { TransportProxyServer } from "./server/transport/transportProxyServer.js";
 
 /**
  * Base interface for all passthrough proxy implementations
@@ -21,14 +21,14 @@ export interface PassthroughProxy {
 }
 
 /**
- * Stdio-specific passthrough proxy interface
- * Exposes the transport for advanced use cases
+ * Transport agnostic passthrough proxy interface
+ * Exposes the Protocol implementation for advanced use cases
  */
-export interface StdioPassthroughProxy extends PassthroughProxy {
+export interface ServerPassthroughProxy extends PassthroughProxy {
   /**
-   * The underlying stdio transport
+   * The underlying server
    */
-  transport: StdioServerTransport;
+  server: TransportProxyServer;
 }
 
 /**

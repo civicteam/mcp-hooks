@@ -73,7 +73,7 @@ function validateApiKey(
   next: express.NextFunction,
 ) {
   const apiKey = req.headers["x-api-key"] as string;
-  
+
   if (!apiKey) {
     console.log("Request missing API key");
     res.status(401).json({
@@ -173,7 +173,9 @@ function createExpressApp() {
 }
 
 // Export function to create and start server programmatically
-export async function createApiKeyProtectedServer(port: number = PORT): Promise<{
+export async function createApiKeyProtectedServer(
+  port: number = PORT,
+): Promise<{
   httpServer: Server;
   sessions: Map<
     string,

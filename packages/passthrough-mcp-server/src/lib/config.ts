@@ -8,9 +8,10 @@
 
 import * as process from "node:process";
 import type { Hook } from "@civic/hook-common";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { configureLoggerForStdio, logger } from "./logger.js";
 
-type TransportType = "stdio" | "sse" | "httpStream";
+type TransportType = "stdio" | "sse" | "httpStream" | "custom";
 
 // Base configuration with discriminated union based on transport type
 export type BaseConfig =
@@ -21,6 +22,10 @@ export type BaseConfig =
   | {
       transportType: "sse" | "httpStream";
       port: number;
+    }
+  | {
+      transportType: "custom";
+      transport: Transport;
     };
 
 export interface TargetConfig {
@@ -132,6 +137,10 @@ export function loadConfig(): Config {
         ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
+  } else if (transportType === "custom") {
+    throw new Error(
+      "Custom transport type cannot be configured via environment variables",
+    );
   } else {
     const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34000;
     config = {
