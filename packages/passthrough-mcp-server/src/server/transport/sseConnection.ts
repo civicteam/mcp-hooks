@@ -7,7 +7,7 @@
 
 import type { IncomingMessage } from "node:http";
 import { URL } from "node:url";
-import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { TransportSendOptions } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
 import { makeHttpRequest } from "../../lib/http/index.js";
@@ -21,7 +21,10 @@ export async function establishSSEConnection(
   config: Config,
   sessionId: string,
   authHeaders: Record<string, string>,
-  transport: StdioServerTransport,
+  send: (
+    message: JSONRPCMessage,
+    options?: TransportSendOptions,
+  ) => Promise<void>,
 ): Promise<void> {
   const targetUrl = config.target.url;
   const mcpPath = config.target.mcpPath || "/mcp";
@@ -74,8 +77,8 @@ export async function establishSSEConnection(
                 `[SSEConnection] Received SSE message: ${JSON.stringify(message)}`,
               );
 
-              // Forward the message to the stdio client
-              transport.send(message).catch((error) => {
+              // Forward the message to the transport proxy client
+              send(message).catch((error) => {
                 logger.error(
                   `[SSEConnection] Failed to forward SSE message: ${error}`,
                 );

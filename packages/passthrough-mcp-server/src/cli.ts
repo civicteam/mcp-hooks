@@ -29,11 +29,17 @@ async function main() {
             ...config,
             autoStart: true,
           })
-        : await createHttpPassthroughProxy({
-            ...config,
-            port: config.port || 3000,
-            autoStart: true,
-          });
+        : config.transportType === "custom"
+          ? (() => {
+              throw new Error(
+                "Custom transport type is not supported in CLI mode",
+              );
+            })()
+          : await createHttpPassthroughProxy({
+              ...config,
+              port: config.port || 3000,
+              autoStart: true,
+            });
 
     // Handle graceful shutdown
     const shutdown = async () => {

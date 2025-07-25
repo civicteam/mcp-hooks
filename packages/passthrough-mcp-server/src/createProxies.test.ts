@@ -3,13 +3,10 @@
  * This file verifies that TypeScript correctly infers return types
  */
 
+import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createPassthroughProxy } from "./createProxies.js";
-import type {
-  HttpPassthroughProxy,
-  PassthroughProxy,
-  StdioPassthroughProxy,
-} from "./types.js";
+import type { HttpPassthroughProxy, ServerPassthroughProxy } from "./types.js";
 
 describe("createPassthroughProxy type inference", () => {
   it("should return StdioPassthroughProxy when transportType is 'stdio'", async () => {
@@ -19,8 +16,9 @@ describe("createPassthroughProxy type inference", () => {
     });
 
     // TypeScript should know this is StdioPassthroughProxy
-    expectTypeOf(proxy).toEqualTypeOf<StdioPassthroughProxy>();
-    expect(proxy.transport).toBeDefined();
+    expectTypeOf(proxy).toEqualTypeOf<ServerPassthroughProxy>();
+    expect(proxy.server).toBeDefined();
+    expectTypeOf(proxy.server.transport).toEqualTypeOf<StdioServerTransport>();
   });
 
   it("should return HttpPassthroughProxy when transportType is 'httpStream'", async () => {

@@ -2,22 +2,33 @@
  * Transport-specific factory functions for creating passthrough proxies
  */
 
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Config } from "./lib/config.js";
 import { HttpPassthroughProxyImpl } from "./server/http/httpPassthroughProxy.js";
 import { StdioPassthroughProxyImpl } from "./server/stdio/stdioPassthroughProxy.js";
+import { createTransportProxyServer } from "./server/transport/transportHandler.js";
+import { TransportPassthroughProxyImpl } from "./server/transport/transportPassthroughProxy.js";
 import type {
   HttpPassthroughProxy,
   PassthroughProxy,
-  StdioPassthroughProxy,
+  ServerPassthroughProxy,
 } from "./types.js";
 
-export type StdioProxyConfig = Omit<Config, "transportType" | "port"> & {
+export type StdioProxyConfig = Omit<
+  Config,
+  "transportType" | "port" | "transport"
+> & {
   autoStart?: boolean;
 };
 
-export type HttpProxyConfig = Omit<Config, "transportType"> & {
+export type HttpProxyConfig = Omit<Config, "transportType" | "transport"> & {
   port: number;
   autoStart?: boolean;
+};
+
+export type TransportProxyConfig = Omit<Config, "transportType" | "port"> & {
+  autoStart?: boolean;
+  transport: Transport;
 };
 
 /**
@@ -38,7 +49,7 @@ export type HttpProxyConfig = Omit<Config, "transportType"> & {
  */
 export async function createStdioPassthroughProxy(
   config: StdioProxyConfig,
-): Promise<StdioPassthroughProxy> {
+): Promise<ServerPassthroughProxy> {
   const { autoStart = true, ...proxyConfig } = config;
 
   const fullConfig: Config = {
@@ -94,6 +105,43 @@ export async function createHttpPassthroughProxy(
 }
 
 /**
+ * Create an generic Transport passthrough proxy
+ *
+ * @param config Configuration for the Transport proxy
+ * @returns HttpPassthroughProxy for lifecycle management
+ *
+ * @example
+ * ```typescript
+ * const proxy = await createHttpPassthroughProxy({
+ *   port: 3000,
+ *   target: { url: "http://localhost:3001", transportType: "httpStream" }
+ * });
+ *
+ * // Later, stop the proxy
+ * await proxy.stop();
+ * ```
+ */
+export async function createTransportPassthroughProxy(
+  config: TransportProxyConfig,
+): Promise<ServerPassthroughProxy> {
+  const { autoStart = true, ...proxyConfig } = config;
+
+  const fullConfig = {
+    ...proxyConfig,
+    transportType: "custom" as const,
+  };
+
+  const proxy = new TransportPassthroughProxyImpl(fullConfig);
+  await proxy.initialize();
+
+  if (autoStart) {
+    await proxy.start();
+  }
+
+  return proxy;
+}
+
+/**
  * Create a passthrough proxy with type-specific return based on transport type
  *
  * @param config Configuration including transportType
@@ -101,10 +149,13 @@ export async function createHttpPassthroughProxy(
  */
 export async function createPassthroughProxy(
   config: StdioProxyConfig & { transportType: "stdio" },
-): Promise<StdioPassthroughProxy>;
+): Promise<ServerPassthroughProxy>;
 export async function createPassthroughProxy(
   config: HttpProxyConfig & { transportType: "httpStream" },
 ): Promise<HttpPassthroughProxy>;
+export async function createPassthroughProxy(
+  config: TransportProxyConfig & { transportType: "custom" },
+): Promise<ServerPassthroughProxy>;
 export async function createPassthroughProxy(
   config: Config & { autoStart?: boolean },
 ): Promise<PassthroughProxy> {
@@ -115,6 +166,9 @@ export async function createPassthroughProxy(
   }
   if (transportType === "httpStream") {
     return createHttpPassthroughProxy(config);
+  }
+  if (transportType === "custom") {
+    return createTransportPassthroughProxy(config);
   }
   throw new Error(
     `Unsupported transport type: ${transportType}. Only stdio and httpStream are supported.`,

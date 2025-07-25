@@ -4,14 +4,15 @@
  * Provides a stdio transport that forwards messages to a remote server
  */
 
-import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Config } from "../../lib/config.js";
 import { logger } from "../../lib/logger.js";
-import type { StdioPassthroughProxy } from "../../types.js";
-import { createStdioServer } from "./stdioHandler.js";
+import type { ServerPassthroughProxy } from "../../types.js";
+import { createTransportProxyServer } from "../transport/transportHandler.js";
+import type { TransportProxyServer } from "../transport/transportProxyServer.js";
 
-export class StdioPassthroughProxyImpl implements StdioPassthroughProxy {
-  transport!: StdioServerTransport;
+export class StdioPassthroughProxyImpl implements ServerPassthroughProxy {
+  server!: TransportProxyServer;
   private isStarted = false;
 
   constructor(private config: Config & { transportType: "stdio" }) {}
@@ -20,8 +21,8 @@ export class StdioPassthroughProxyImpl implements StdioPassthroughProxy {
    * Async initialization method to set up the transport and message handler
    */
   async initialize(): Promise<void> {
-    const { transport } = await createStdioServer(this.config);
-    this.transport = transport;
+    const { server } = await createTransportProxyServer(this.config);
+    this.server = server;
   }
 
   async start(): Promise<void> {
@@ -30,7 +31,10 @@ export class StdioPassthroughProxyImpl implements StdioPassthroughProxy {
       return;
     }
 
-    await this.transport.start();
+    // create and connect transport
+    const transport = new StdioServerTransport();
+
+    await this.server.connect(transport);
     this.isStarted = true;
 
     logger.info(
@@ -44,7 +48,7 @@ export class StdioPassthroughProxyImpl implements StdioPassthroughProxy {
       return;
     }
 
-    await this.transport.close();
+    await this.server.close();
     this.isStarted = false;
     logger.info("[StdioPassthrough] Passthrough MCP Server stopped");
   }
