@@ -259,6 +259,119 @@ describe("Hook Processor", () => {
           expect(result.response).toEqual(mockResponse);
         }
       });
+
+      it("should handle direct response from middle hook and only process earlier hooks for response", async () => {
+        const toolCall = createToolCall({
+          name: "test",
+          arguments: { value: "test" },
+        });
+
+        const directResponse: CallToolResult = {
+          content: [{ type: "text", text: "Direct response from hook 2" }],
+        };
+
+        const modifiedResponse: CallToolResult = {
+          content: [{ type: "text", text: "Modified by hook 1" }],
+        };
+
+        const requestCallOrder: string[] = [];
+        const responseCallOrder: string[] = [];
+
+        const hook1: Hook = {
+          get name() {
+            return "hook1";
+          },
+          processToolCallRequest: vi.fn().mockImplementation(async () => {
+            requestCallOrder.push("hook1-request");
+            return {
+              resultType: "continue",
+              request: toolCall,
+            } satisfies ToolCallRequestHookResult;
+          }),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
+            responseCallOrder.push("hook1-response");
+            return {
+              resultType: "continue",
+              response: modifiedResponse,
+            } as ToolCallResponseHookResult;
+          }),
+        };
+
+        const hook2: Hook = {
+          get name() {
+            return "hook2";
+          },
+          processToolCallRequest: vi.fn().mockImplementation(async () => {
+            requestCallOrder.push("hook2-request");
+            return {
+              resultType: "respond",
+              response: directResponse,
+            } satisfies ToolCallRequestHookResult;
+          }),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
+            responseCallOrder.push("hook2-response");
+            return {
+              resultType: "continue",
+              response: directResponse,
+            } as ToolCallResponseHookResult;
+          }),
+        };
+
+        const hook3: Hook = {
+          get name() {
+            return "hook3";
+          },
+          processToolCallRequest: vi.fn().mockImplementation(async () => {
+            requestCallOrder.push("hook3-request");
+            return {
+              resultType: "continue",
+              request: toolCall,
+            } satisfies ToolCallRequestHookResult;
+          }),
+          processToolCallResponse: vi.fn().mockImplementation(async () => {
+            responseCallOrder.push("hook3-response");
+            return {
+              resultType: "continue",
+              response: directResponse,
+            } as ToolCallResponseHookResult;
+          }),
+        };
+
+        // Process request - should stop at hook2
+        const requestResult = await processRequestThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processToolCallRequest"
+        >(toolCall, [hook1, hook2, hook3], "processToolCallRequest");
+
+        expect(requestResult.resultType).toBe("respond");
+        expect(requestResult.lastProcessedIndex).toBe(1); // hook2 is at index 1
+        expect(requestCallOrder).toEqual(["hook1-request", "hook2-request"]);
+        expect(hook3.processToolCallRequest).not.toHaveBeenCalled();
+
+        // Process response - should only process hooks that saw the request (hook2 and hook1)
+        const responseResult = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processToolCallResponse"
+        >(
+          directResponse,
+          toolCall,
+          [hook1, hook2, hook3],
+          requestResult.lastProcessedIndex,
+          "processToolCallResponse",
+        );
+
+        // Verify only hook2 and hook1 processed the response (in reverse order)
+        expect(responseCallOrder).toEqual(["hook2-response", "hook1-response"]);
+        expect(hook3.processToolCallResponse).not.toHaveBeenCalled();
+
+        // Verify hook1 was able to modify the response
+        expect(responseResult.resultType).toBe("continue");
+        if (responseResult.resultType === "continue") {
+          expect(responseResult.response).toEqual(modifiedResponse);
+        }
+      });
     });
 
     describe("with ListToolsRequest", () => {

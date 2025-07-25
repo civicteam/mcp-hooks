@@ -265,6 +265,7 @@ export class MessageHandler {
     headers: Record<string, string>;
     statusCode?: number;
   }> {
+    let processedResponse: (TResponse & Record<string, unknown>) | undefined;
     try {
       // Build the typed request
       const typedRequest = config.buildRequest(request, headers);
@@ -294,11 +295,9 @@ export class MessageHandler {
           config.supportsDirectResponse &&
           requestResult.resultType === "respond"
         ) {
-          return createSuccessResponse(
-            requestResult.response as TResponse & Record<string, unknown>,
-            request.id,
-            {},
-          );
+          // Don't return, but just skip the forwardRequest
+          processedResponse = requestResult.response as TResponse &
+            Record<string, unknown>;
         }
 
         if (requestResult.resultType === "continue") {
@@ -310,41 +309,51 @@ export class MessageHandler {
         );
       }
 
-      // Extract request context from processed request
-      const processedContext = processedRequest.requestContext;
+      // forward headers are needed for response processing
+      let forwardHeaders: Record<string, string> = {};
+      // only forward request if no direct response was returned.
+      if (!processedResponse) {
+        // Extract request context from processed request
+        const processedContext = processedRequest.requestContext;
 
-      // Forward the request with potentially modified context
-      const forwardResult = await this.forwardRequest(
-        request,
-        headers,
-        processedContext,
-      );
-
-      // Handle transport errors
-      if (forwardResult.type === "error") {
-        return handleTransportError(
-          forwardResult.error,
-          request.id,
-          forwardResult.headers,
-          async () => {
-            // Fix: When no request hooks were processed (lastProcessedIndex = -1),
-            // start from the last hook to ensure all hooks are processed
-            const startIndex =
-              lastProcessedIndex >= 0
-                ? lastProcessedIndex
-                : this.hooks.length - 1;
-            return processTransportErrorThroughHooks<
-              TRequest,
-              typeof config.transportErrorMethodName
-            >(
-              forwardResult.error,
-              processedRequest,
-              this.hooks,
-              startIndex,
-              config.transportErrorMethodName,
-            );
-          },
+        // Forward the request with potentially modified context
+        const forwardResult = await this.forwardRequest(
+          request,
+          headers,
+          processedContext,
         );
+
+        forwardHeaders = forwardResult.headers;
+
+        // Handle transport errors
+        if (forwardResult.type === "error") {
+          return handleTransportError(
+            forwardResult.error,
+            request.id,
+            forwardResult.headers,
+            async () => {
+              // Fix: When no request hooks were processed (lastProcessedIndex = -1),
+              // start from the last hook to ensure all hooks are processed
+              const startIndex =
+                lastProcessedIndex >= 0
+                  ? lastProcessedIndex
+                  : this.hooks.length - 1;
+              return processTransportErrorThroughHooks<
+                TRequest,
+                typeof config.transportErrorMethodName
+              >(
+                forwardResult.error,
+                processedRequest,
+                this.hooks,
+                startIndex,
+                config.transportErrorMethodName,
+              );
+            },
+          );
+        }
+
+        processedResponse = forwardResult.result as TResponse &
+          Record<string, unknown>;
       }
 
       // Process response through hooks if configured
@@ -354,7 +363,7 @@ export class MessageHandler {
           TResponse,
           typeof config.responseMethodName
         >(
-          forwardResult.result as TResponse,
+          processedResponse,
           processedRequest,
           this.hooks,
           lastProcessedIndex,
@@ -366,7 +375,7 @@ export class MessageHandler {
             "response",
             responseResult.reason,
             request.id,
-            forwardResult.headers,
+            forwardHeaders,
           );
         }
 
@@ -374,16 +383,16 @@ export class MessageHandler {
           return createSuccessResponse(
             responseResult.response as TResponse & Record<string, unknown>,
             request.id,
-            forwardResult.headers,
+            forwardHeaders,
           );
         }
       }
 
       // Return the unmodified result
       return createSuccessResponse(
-        forwardResult.result as TResponse & Record<string, unknown>,
+        processedResponse as TResponse & Record<string, unknown>,
         request.id,
-        forwardResult.headers,
+        forwardHeaders,
       );
     } catch (error) {
       const errorMsg = messageFromError(error);
