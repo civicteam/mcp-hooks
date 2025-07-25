@@ -6,6 +6,7 @@ import * as http from "node:http";
 import * as https from "node:https";
 import type { URL } from "node:url";
 import { logger } from "../logger.js";
+import {TargetHandler} from "../config.js";
 
 /**
  * Make HTTP request with appropriate module based on protocol
@@ -59,5 +60,18 @@ export async function makeHttpRequestAsync(
 
     req.write(requestBody);
     req.end();
+  });
+}
+
+/**
+ * Async wrapper for targetHandler
+ */
+export async function makeTargetRequestAsync(
+    options: http.RequestOptions,
+    requestBody: string,
+    targetHandler: TargetHandler
+): Promise<http.IncomingMessage> {
+  return new Promise((resolve, reject) => {
+
   });
 }

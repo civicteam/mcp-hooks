@@ -5,18 +5,34 @@
  * to a remote MCP server.
  */
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type {
   JSONRPCError,
   JSONRPCMessage,
+    Request,
+    Notification,
+    Result,
+    ServerRequest,
+    ServerNotification,
+    ServerResult,
 } from "@modelcontextprotocol/sdk/types.js";
+import {Protocol} from "@modelcontextprotocol/sdk/shared/protocol.js";
+import {Transport} from "@modelcontextprotocol/sdk/shared/transport.js";
+
 import type { Config } from "../../lib/config.js";
 import type { HttpErrorResponse } from "../../lib/hooks/index.js";
 import { logger } from "../../lib/logger.js";
 import { MessageHandler } from "../messageHandler.js";
 import { establishSSEConnection } from "./sseConnection.js";
 
-export class ProxyStdioServerTransport extends StdioServerTransport {
+export class ProxyServer<
+    RequestT extends Request = Request,
+    NotificationT extends Notification = Notification,
+    ResultT extends Result = Result,
+> extends Protocol<
+    ServerRequest | RequestT,
+    ServerNotification | NotificationT,
+    ServerResult | ResultT
+> {
   private messageHandler: MessageHandler;
   private authHeaders: Record<string, string> = {};
   private sessionId: string | undefined;
@@ -31,12 +47,17 @@ export class ProxyStdioServerTransport extends StdioServerTransport {
     if (config.authToken) {
       this.authHeaders.authorization = `Bearer ${config.authToken}`;
     }
-
-    // Override onmessage to handle forwarding.
-    // "onmessage" is a property of the StdioServerTransport class, so we need to
-    // override it this way.
-    this.onmessage = this.handleMessage.bind(this);
   }
+
+
+  // Overwrite connect
+  async connect(transport: Transport): Promise<void> {
+    // set an onmessage callback (that will be left in place by the protocol)
+    transport.onmessage = this.handleMessage.bind(this);
+
+    await super.connect(transport)
+  }
+
 
   /**
    * Handle incoming messages by forwarding them to the remote server
@@ -101,10 +122,10 @@ export class ProxyStdioServerTransport extends StdioServerTransport {
           },
           id: "id" in message ? message.id : 0,
         };
-        await this.send(jsonRpcError);
+        await this.transport.send(jsonRpcError);
       } else {
         // Regular JSON-RPC message
-        await this.send(result.message as JSONRPCMessage);
+        await this.transport.send(result.message as JSONRPCMessage);
       }
     }
   }

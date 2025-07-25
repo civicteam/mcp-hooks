@@ -7,12 +7,12 @@
 
 import type { IncomingMessage } from "node:http";
 import { URL } from "node:url";
-import type { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import type { Config } from "../../lib/config.js";
 import { makeHttpRequest } from "../../lib/http/index.js";
 import { logger } from "../../lib/logger.js";
 import { SSEParser } from "../../lib/sse.js";
+import {Transport} from "@modelcontextprotocol/sdk/shared/transport.js";
 
 /**
  * Establish SSE connection to receive server-initiated messages
@@ -21,7 +21,7 @@ export async function establishSSEConnection(
   config: Config,
   sessionId: string,
   authHeaders: Record<string, string>,
-  transport: StdioServerTransport,
+  transport: Transport,
 ): Promise<void> {
   const targetUrl = config.target.url;
   const mcpPath = config.target.mcpPath || "/mcp";
