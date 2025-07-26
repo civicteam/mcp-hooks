@@ -1,0 +1,72 @@
+{
+  "name": "@civic/passthrough-sdk",
+  "version": "0.1.0",
+  "description": "SDK for implementing passthrough servers with transport and protocol classes",
+  "keywords": [
+    "mcp",
+    "passthrough",
+    "sdk",
+    "transport",
+    "protocol"
+  ],
+  "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/passthrough-sdk",
+  "bugs": {
+    "url": "https://github.com/civicteam/mcp-hooks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/civicteam/mcp-hooks.git",
+    "directory": "packages/passthrough-sdk"
+  },
+  "license": "MIT",
+  "author": "Civic Technologies, Inc.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run lint && pnpm run typecheck && CI=1 pnpm run test && pnpm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "content-type": "^1.0.5",
+    "eventsource-parser": "^3.0.3",
+    "raw-body": "^3.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/content-type": "^1.1.9",
+    "@types/node": "^24.1.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
