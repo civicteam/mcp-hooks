@@ -11,7 +11,7 @@
     "@civic/local-tools-hook": "workspace:^",
     "@civic/passthrough-mcp-server": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.15.0",
-    "zod": "^3.25.74"
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
