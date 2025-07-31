@@ -494,11 +494,19 @@ export class StreamableHTTPServerTransport
           };
 
           // After initialization, always include the session ID if we have one
-          if (this.sessionId !== undefined) {
-            headers["mcp-session-id"] = this.sessionId;
-          }
-
-          res.writeHead(200, headers);
+          // Note, we might need to WAIT for the session ID to be set by the client.
+          const wasUndefined = this.sessionId === undefined;
+          this.context?.sessionContext
+            .ensureSessionId()
+            .then(async (sessionId) => {
+              headers["mcp-session-id"] = sessionId;
+              if (wasUndefined && this._onsessioninitialized) {
+                await this._onsessioninitialized(sessionId);
+              }
+            })
+            .finally(() => {
+              res.writeHead(200, headers);
+            });
         }
         // Store the response for this request to send messages back through this connection
         // We need to track by request ID to maintain the connection

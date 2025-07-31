@@ -8,8 +8,9 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { PassthroughServer } from "../server/passthroughServer.js";
+import { StreamableHTTPClientTransport as PassthroughHTTPClientTransport } from "../client/streamableHttp.js";
 import { StreamableHTTPServerTransport as PassthroughHTTPServerTransport } from "../server/streamableHttp.js";
+import { PassthroughContext } from "../shared/passthroughContext.js";
 
 describe("Passthrough Integration Tests", () => {
   let realMcpServer: McpServer;
@@ -17,13 +18,14 @@ describe("Passthrough Integration Tests", () => {
   let realServer: Server;
   let realServerUrl: URL;
 
-  let passthroughServerInstance: PassthroughServer;
+  let passthroughContext: PassthroughContext;
   let passthroughServerTransport: PassthroughHTTPServerTransport;
+  let passthroughClientTransport: PassthroughHTTPClientTransport;
   let passthroughServer: Server;
   let passthroughServerUrl: URL;
 
-  let client: Client;
-  let clientTransport: StreamableHTTPClientTransport;
+  let realClient: Client;
+  let realClientTransport: StreamableHTTPClientTransport;
 
   beforeEach(async () => {
     // 1. Set up the REAL MCP Server
@@ -71,47 +73,21 @@ describe("Passthrough Integration Tests", () => {
       });
     });
 
-    // 2. Set up the PASSTHROUGH Server
-    passthroughServerInstance = new PassthroughServer(
-      async (request) => {
-        // Forward requests to the real MCP server
-        console.log("Passthrough server received request:", request.method);
-
-        // Create a client connection to the real server for forwarding
-        const forwardClient = new Client({
-          name: "passthrough-forwarder",
-          version: "1.0.0",
-        });
-
-        const forwardTransport = new StreamableHTTPClientTransport(
-          realServerUrl,
-        );
-        await forwardClient.connect(forwardTransport);
-
-        try {
-          // Forward the request to the real server
-          const result = await forwardClient.request(request, z.any());
-          await forwardTransport.close();
-          return { result };
-        } catch (error) {
-          await forwardTransport.close();
-          throw error;
-        }
-      },
-      async (notification) => {
-        // Handle notifications (for now, just log them)
-        console.log(
-          "Passthrough server received notification:",
-          notification.method,
-        );
-      },
-    );
+    // 2. Set up the PASSTHROUGH Context with Server and Client transports
+    passthroughContext = new PassthroughContext();
 
     passthroughServerTransport = new PassthroughHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
+      sessionIdGenerator: undefined, // Session is not generated from the Server Transport, but from the Client via PassthroughContext
     });
 
-    await passthroughServerInstance.connect(passthroughServerTransport);
+    passthroughClientTransport = new PassthroughHTTPClientTransport(
+      realServerUrl,
+    );
+
+    await passthroughContext.connect(
+      passthroughServerTransport,
+      passthroughClientTransport,
+    );
 
     passthroughServer = createServer();
     passthroughServer.on("request", async (req, res) => {
@@ -126,32 +102,28 @@ describe("Passthrough Integration Tests", () => {
     });
 
     // 3. Set up the CLIENT (connects to passthrough server)
-    client = new Client({
+    realClient = new Client({
       name: "integration-test-client",
       version: "1.0.0",
     });
 
-    clientTransport = new StreamableHTTPClientTransport(passthroughServerUrl);
+    realClientTransport = new StreamableHTTPClientTransport(
+      passthroughServerUrl,
+    );
   });
 
   afterEach(async () => {
     // Clean up in reverse order
     try {
-      await clientTransport?.close();
+      await realClientTransport?.close();
     } catch (e) {
       console.warn("Error closing client transport:", e);
     }
 
     try {
-      await passthroughServerInstance?.close();
+      await passthroughContext?.close();
     } catch (e) {
-      console.warn("Error closing passthrough server:", e);
-    }
-
-    try {
-      await passthroughServerTransport?.close();
-    } catch (e) {
-      console.warn("Error closing passthrough server transport:", e);
+      console.warn("Error closing passthrough context:", e);
     }
 
     passthroughServer?.close();
@@ -171,24 +143,24 @@ describe("Passthrough Integration Tests", () => {
     realServer?.close();
   });
 
-  it.skip("should successfully initialize through passthrough", async () => {
+  it("should successfully initialize through passthrough", async () => {
     // Connect the client to the passthrough server
-    await client.connect(clientTransport);
+    await realClient.connect(realClientTransport);
 
     // Verify that the client got connected and received server capabilities
-    expect(clientTransport.sessionId).toBeDefined();
+    expect(realClientTransport.sessionId).toBeDefined();
 
     // The connection itself serves as a test of the initialization process
     // If we get here without throwing, initialization worked
-    expect(client).toBeDefined();
+    expect(realClient).toBeDefined();
   });
 
-  it.skip("should successfully list tools through passthrough", async () => {
+  it("should successfully list tools through passthrough", async () => {
     // Connect the client to the passthrough server
-    await client.connect(clientTransport);
+    await realClient.connect(realClientTransport);
 
     // List tools through the passthrough
-    const toolsResult = await client.request(
+    const toolsResult = await realClient.request(
       {
         method: "tools/list",
         params: {},
@@ -205,12 +177,12 @@ describe("Passthrough Integration Tests", () => {
     );
   });
 
-  it.skip("should successfully call a tool through passthrough", async () => {
+  it("should successfully call a tool through passthrough", async () => {
     // Connect the client to the passthrough server
-    await client.connect(clientTransport);
+    await realClient.connect(realClientTransport);
 
     // Call a tool through the passthrough
-    const toolCallResult = await client.request(
+    const toolCallResult = await realClient.request(
       {
         method: "tools/call",
         params: {
