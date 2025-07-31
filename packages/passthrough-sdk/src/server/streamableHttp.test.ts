@@ -14,6 +14,8 @@ import type {
   JSONRPCMessage,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { StreamableHTTPClientTransport } from "../client/streamableHttp.js";
+import { PassthroughContext } from "../shared/passthroughContext.js";
 import {
   type EventId,
   type StreamId,
@@ -86,6 +88,9 @@ async function createTestServer(
     onsessionclosed: config.onsessionclosed,
   });
 
+  // Create a context and set up the transport with it
+  transport.context = new PassthroughContext();
+
   await mcpServer.connect(transport);
 
   const server = createServer(async (req, res) => {
@@ -150,6 +155,9 @@ async function createTestAuthServer(
     onsessioninitialized: config.onsessioninitialized,
     onsessionclosed: config.onsessionclosed,
   });
+
+  // Create a context and set up the transport with it
+  transport.context = new PassthroughContext();
 
   await mcpServer.connect(transport);
 
@@ -2359,6 +2367,9 @@ async function createTestServerWithDnsProtection(config: {
     allowedOrigins: config.allowedOrigins,
     enableDnsRebindingProtection: config.enableDnsRebindingProtection,
   });
+
+  // Create a context and set up the transport with it
+  transport.context = new PassthroughContext();
 
   await mcpServer.connect(transport);
 

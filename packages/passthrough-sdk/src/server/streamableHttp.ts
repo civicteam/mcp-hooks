@@ -21,6 +21,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import contentType from "content-type";
 import getRawBody from "raw-body";
+import type { PassthroughContext } from "../shared/passthroughContext.js";
+import type { ServerPassthroughTransport } from "../shared/passthroughTransport.js";
 
 const MAXIMUM_MESSAGE_SIZE = "4mb";
 
@@ -61,7 +63,9 @@ export type EventId = string;
  * - No Session ID is included in any responses
  * - No session validation is performed
  */
-export class StreamableHTTPServerTransport implements Transport {
+export class StreamableHTTPServerTransport
+  implements ServerPassthroughTransport
+{
   // when sessionId is not set (undefined), it means the transport is in stateless mode
   private sessionIdGenerator: (() => string) | undefined;
   private _started = false;
@@ -78,7 +82,6 @@ export class StreamableHTTPServerTransport implements Transport {
   private _allowedOrigins?: string[];
   private _enableDnsRebindingProtection: boolean;
 
-  sessionId?: string;
   onclose?: () => void;
   onerror?: (error: Error) => void;
   onmessage?: (message: JSONRPCMessage, extra?: MessageExtraInfo) => void;
@@ -93,6 +96,19 @@ export class StreamableHTTPServerTransport implements Transport {
     this._allowedOrigins = options.allowedOrigins;
     this._enableDnsRebindingProtection =
       options.enableDnsRebindingProtection ?? false;
+  }
+
+  type = "server" as const;
+  context?: PassthroughContext | undefined;
+
+  get sessionId(): string | undefined {
+    return this.context?.sessionContext.sessionId;
+  }
+
+  set sessionId(sessionId: string | undefined) {
+    if (this.context) {
+      this.context.sessionContext.sessionId = sessionId;
+    }
   }
 
   /**

@@ -16,11 +16,14 @@ import type {
   JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { StreamableHTTPServerTransport } from "../server/streamableHttp.js";
+import { PassthroughContext } from "../shared/passthroughContext.js";
 import { StreamableHTTPClientTransport } from "./streamableHttp.js";
 
 describe("StreamableHTTPClientTransport", () => {
   let transport: StreamableHTTPClientTransport;
   let mockAuthProvider: OAuthClientProvider;
+  let context: PassthroughContext;
 
   beforeEach(() => {
     mockAuthProvider = {
@@ -45,6 +48,9 @@ describe("StreamableHTTPClientTransport", () => {
       new URL("http://localhost:1234/mcp"),
       { authProvider: mockAuthProvider },
     );
+
+    // Create a context and set up the transport with it
+    transport.context = new PassthroughContext();
     vi.spyOn(global, "fetch");
   });
 

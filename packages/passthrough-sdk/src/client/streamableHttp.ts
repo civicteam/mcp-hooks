@@ -23,6 +23,8 @@ import {
   isJSONRPCResponse,
 } from "@modelcontextprotocol/sdk/types.js";
 import { EventSourceParserStream } from "eventsource-parser/stream";
+import type { PassthroughContext } from "../shared/passthroughContext.js";
+import type { ClientPassthroughTransport } from "../shared/passthroughTransport.js";
 
 // Default reconnection options for StreamableHTTP connections
 const DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOptions =
@@ -38,14 +40,15 @@ const DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOp
  * It will connect to a server using HTTP POST for sending messages and HTTP GET with Server-Sent Events
  * for receiving messages.
  */
-export class StreamableHTTPClientTransport implements Transport {
+export class StreamableHTTPClientTransport
+  implements ClientPassthroughTransport
+{
   private _abortController?: AbortController;
   private _url: URL;
   private _resourceMetadataUrl?: URL;
   private _requestInit?: RequestInit;
   private _authProvider?: OAuthClientProvider;
   private _fetch?: FetchLike;
-  private _sessionId?: string;
   private _reconnectionOptions: StreamableHTTPReconnectionOptions;
   private _protocolVersion?: string;
 
@@ -59,9 +62,22 @@ export class StreamableHTTPClientTransport implements Transport {
     this._requestInit = opts?.requestInit;
     this._authProvider = opts?.authProvider;
     this._fetch = opts?.fetch;
-    this._sessionId = opts?.sessionId;
+    // this._sessionId = opts?.sessionId; // TODO: Remove from StreamableHTTPClientTransportOptions Interface in args
     this._reconnectionOptions =
       opts?.reconnectionOptions ?? DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS;
+  }
+
+  type = "client" as const;
+  context?: PassthroughContext | undefined;
+
+  get sessionId(): string | undefined {
+    return this.context?.sessionContext.sessionId;
+  }
+
+  set sessionId(sessionId: string | undefined) {
+    if (this.context) {
+      this.context.sessionContext.sessionId = sessionId;
+    }
   }
 
   private async _authThenStart(): Promise<void> {
@@ -97,8 +113,8 @@ export class StreamableHTTPClientTransport implements Transport {
       }
     }
 
-    if (this._sessionId) {
-      headers["mcp-session-id"] = this._sessionId;
+    if (this.sessionId) {
+      headers["mcp-session-id"] = this.sessionId;
     }
     if (this._protocolVersion) {
       headers["mcp-protocol-version"] = this._protocolVersion;
@@ -379,7 +395,7 @@ export class StreamableHTTPClientTransport implements Transport {
       // Handle session ID received during initialization
       const sessionId = response.headers.get("mcp-session-id");
       if (sessionId) {
-        this._sessionId = sessionId;
+        this.sessionId = sessionId;
       }
 
       if (!response.ok) {
@@ -458,10 +474,6 @@ export class StreamableHTTPClientTransport implements Transport {
     }
   }
 
-  get sessionId(): string | undefined {
-    return this._sessionId;
-  }
-
   /**
    * Terminates the current session by sending a DELETE request to the server.
    *
@@ -474,7 +486,7 @@ export class StreamableHTTPClientTransport implements Transport {
    * the server does not allow clients to terminate sessions.
    */
   async terminateSession(): Promise<void> {
-    if (!this._sessionId) {
+    if (!this.sessionId) {
       return; // No session to terminate
     }
 
@@ -499,7 +511,7 @@ export class StreamableHTTPClientTransport implements Transport {
         );
       }
 
-      this._sessionId = undefined;
+      this.sessionId = undefined;
     } catch (error) {
       this.onerror?.(error as Error);
       throw error;
