@@ -2,13 +2,7 @@
   "name": "@civic/passthrough-sdk",
   "version": "0.1.0",
   "description": "SDK for implementing passthrough servers with transport and protocol classes",
-  "keywords": [
-    "mcp",
-    "passthrough",
-    "sdk",
-    "transport",
-    "protocol"
-  ],
+  "keywords": ["mcp", "passthrough", "sdk", "transport", "protocol"],
   "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/passthrough-sdk",
   "bugs": {
     "url": "https://github.com/civicteam/mcp-hooks/issues"
@@ -30,12 +24,7 @@
       "import": "./dist/index.js"
     }
   },
-  "files": [
-    "dist/",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
+  "files": ["dist/", "README.md", "LICENSE", "CHANGELOG.md"],
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
