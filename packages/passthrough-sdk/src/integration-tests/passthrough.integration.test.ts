@@ -201,4 +201,51 @@ describe("Passthrough Integration Tests", () => {
       { type: "text", text: "Hello, Passthrough Test!" },
     ]);
   });
+
+  it("should properly handle session termination via DELETE", async () => {
+    // Connect the client to the passthrough server
+    await realClient.connect(realClientTransport);
+
+    // Verify the client is connected and has a session ID
+    expect(realClientTransport.sessionId).toBeDefined();
+
+    // Make a request to ensure the connection is fully established
+    const toolsResult = await realClient.request(
+      {
+        method: "tools/list",
+        params: {},
+      },
+      ListToolsResultSchema,
+    );
+    expect(toolsResult.tools).toBeDefined();
+
+    // Set up listeners to track when transports close
+    let serverTransportClosed = false;
+    let clientTransportClosed = false;
+
+    const originalServerOnclose = passthroughServerTransport.onclose;
+    const originalClientOnclose = passthroughClientTransport.onclose;
+
+    passthroughServerTransport.onclose = () => {
+      serverTransportClosed = true;
+      console.log("Server transport onclose triggered");
+      originalServerOnclose?.();
+    };
+
+    passthroughClientTransport.onclose = () => {
+      clientTransportClosed = true;
+      console.log("Client transport onclose triggered");
+      originalClientOnclose?.();
+    };
+
+    // Terminate the session - this should send a DELETE request
+    await realClientTransport.terminateSession();
+
+    // Give a moment for the cascade to complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Verify that the cascade closing happened
+    expect(serverTransportClosed).toBe(true);
+    expect(clientTransportClosed).toBe(true);
+  });
 });

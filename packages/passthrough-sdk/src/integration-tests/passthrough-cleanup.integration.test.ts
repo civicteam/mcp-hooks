@@ -11,7 +11,7 @@ describe("Passthrough Cleanup Integration Tests", () => {
   function createRealTransports() {
     // Create real server transport (no need to connect to actual HTTP server)
     const serverTransport = new StreamableHTTPServerTransport({
-      // No session ID generator needed for cleanup tests
+      sessionIdGenerator: undefined,
     });
 
     // Create real client transport (no need to connect to actual server)
@@ -23,7 +23,10 @@ describe("Passthrough Cleanup Integration Tests", () => {
   }
 
   // Helper function to set up onclose callback tracking
-  function setupOncloseTracking(serverTransport: any, clientTransport: any) {
+  function setupOncloseTracking(
+    serverTransport: StreamableHTTPServerTransport,
+    clientTransport: StreamableHTTPClientTransport,
+  ) {
     let serverTransportClosed = false;
     let clientTransportClosed = false;
 
@@ -33,13 +36,13 @@ describe("Passthrough Cleanup Integration Tests", () => {
     serverTransport.onclose = () => {
       serverTransportClosed = true;
       console.log("Server transport onclose triggered");
-      if (originalServerOnclose) originalServerOnclose();
+      originalServerOnclose?.();
     };
 
     clientTransport.onclose = () => {
       clientTransportClosed = true;
       console.log("Client transport onclose triggered");
-      if (originalClientOnclose) originalClientOnclose();
+      originalClientOnclose?.();
     };
 
     return {
