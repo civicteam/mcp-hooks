@@ -447,6 +447,8 @@ export class StreamableHTTPServerTransport
           );
           return;
         }
+
+        // We forward the initialization request to the server
         this.sessionId = this.sessionIdGenerator?.();
         this._initialized = true;
 

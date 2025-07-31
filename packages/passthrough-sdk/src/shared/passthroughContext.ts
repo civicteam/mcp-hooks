@@ -28,6 +28,13 @@ export class PassthroughContext {
   private _passthroughServer: PassthroughServer;
   private _passthroughClient: PassthroughClient;
 
+  /**
+   * Callback for when the connection is closed for any reason.
+   *
+   * This is invoked when close() is called as well.
+   */
+  onclose?: () => void;
+
   constructor() {
     this._sessionContext = new PassthroughSessionContext();
     this._passthroughServer = new PassthroughServer(
@@ -38,6 +45,9 @@ export class PassthroughContext {
       this._onClientRequest.bind(this),
       this._onClientNotification.bind(this),
     );
+
+    this._passthroughServer.onclose = this._onServerClose.bind(this);
+    this._passthroughClient.onclose = this._onClientClose.bind(this);
   }
 
   private _onServerRequest(request: Request): Promise<ServerResult> {
@@ -68,6 +78,14 @@ export class PassthroughContext {
    */
   get sessionContext(): PassthroughSessionContext {
     return this._sessionContext;
+  }
+
+  private _onServerClose(): void {
+    this._passthroughClient.close();
+  }
+
+  private _onClientClose(): void {
+    this._passthroughServer.close();
   }
 
   /**
