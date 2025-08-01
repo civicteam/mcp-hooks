@@ -7,6 +7,11 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type ClientResult,
   ClientResultSchema,
+  type InitializeRequest,
+  InitializeRequestSchema,
+  InitializeResult,
+  type ListToolsRequest,
+  ListToolsRequestSchema,
   type Notification,
   type Request,
   type ServerResult,
@@ -14,14 +19,12 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { PassthroughClient } from "../client/passthroughClient.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
-import { PassthroughSessionContext } from "./passthroughSessionContext.js";
 
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
  */
 export class PassthroughContext {
-  private _sessionContext: PassthroughSessionContext;
   private _passthroughServer: PassthroughServer;
   private _passthroughClient: PassthroughClient;
 
@@ -40,7 +43,6 @@ export class PassthroughContext {
   onerror?: (error: Error) => void;
 
   constructor() {
-    this._sessionContext = new PassthroughSessionContext();
     this._passthroughServer = new PassthroughServer(
       this._onServerRequest.bind(this),
       this._onServerNotification.bind(this),
@@ -50,12 +52,36 @@ export class PassthroughContext {
       this._onClientNotification.bind(this),
     );
 
+    // Special Handler for Client Initialization and ToolList
+    this._passthroughServer.setRequestHandler(
+      InitializeRequestSchema,
+      this._onServerInitializeRequest.bind(this),
+    );
+    this._passthroughServer.setRequestHandler(
+      ListToolsRequestSchema,
+      this._onServerListToolsRequest.bind(this),
+    );
+
     this._passthroughServer.onclose = this._onServerClose.bind(this);
     this._passthroughClient.onclose = this._onClientClose.bind(this);
   }
 
   private _onerror(error: Error): void {
     this.onerror?.(error);
+  }
+
+  private _onServerInitializeRequest(
+    request: InitializeRequest,
+  ): Promise<ServerResult> {
+    // for now, just directly pass through
+    return this._passthroughClient.request(request, ServerResultSchema);
+  }
+
+  private _onServerListToolsRequest(
+    request: ListToolsRequest,
+  ): Promise<ServerResult> {
+    // for now, just directly pass through
+    return this._passthroughClient.request(request, ServerResultSchema);
   }
 
   private _onServerRequest(request: Request): Promise<ServerResult> {
@@ -76,13 +102,6 @@ export class PassthroughContext {
   private _onClientNotification(notification: Notification) {
     // for now, directly pass through
     return this._passthroughServer.notification(notification);
-  }
-
-  /**
-   * Get the session context
-   */
-  get sessionContext(): PassthroughSessionContext {
-    return this._sessionContext;
   }
 
   private _onServerClose(): void {

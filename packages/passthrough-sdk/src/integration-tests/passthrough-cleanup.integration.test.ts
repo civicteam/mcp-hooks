@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, it } from "vitest";
-import { StreamableHTTPClientTransport } from "../legacy/client/streamableHttp.js";
-import { StreamableHTTPServerTransport } from "../legacy/server/streamableHttp.js";
 import { PassthroughContext } from "../shared/passthroughContext.js";
 
 describe("Passthrough Cleanup Integration Tests", () => {
@@ -11,7 +12,7 @@ describe("Passthrough Cleanup Integration Tests", () => {
   function createRealTransports() {
     // Create real server transport (no need to connect to actual HTTP server)
     const serverTransport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
+      sessionIdGenerator: () => randomUUID(),
     });
 
     // Create real client transport (no need to connect to actual server)

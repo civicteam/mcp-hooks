@@ -1,2 +1,61 @@
-// Client exports
-export { StreamableHTTPClientTransport } from "./legacy/client/streamableHttp.js";
+/**
+ * Passthrough MCP Server Library
+ *
+ * This module exports the public API for programmatically creating
+ * and controlling passthrough MCP servers.
+ *
+ * For CLI usage, see cli.ts
+ */
+
+// Export transport-specific factory functions
+export {
+  createStdioPassthroughProxy,
+  createHttpPassthroughProxy,
+  createPassthroughProxy,
+} from "./proxy/createProxies.js";
+
+// Export types
+export type { PassthroughProxy } from "./proxy/types.js";
+
+export type {
+  StdioProxyConfig,
+  HttpProxyConfig,
+} from "./proxy/createProxies.js";
+
+// Export config types
+export type {
+  Config,
+  TargetConfig,
+  BaseConfig,
+  HookDefinition,
+  RemoteHookConfig,
+} from "./proxy/config.js";
+
+// Export hook-related types and interfaces
+export type {
+  Hook,
+  CallToolRequest,
+  CallToolResult,
+  ListToolsRequest,
+  ListToolsResult,
+  LocalHookClient,
+  ToolCallRequestHookResult,
+  ToolCallResponseHookResult,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
+} from "@civic/hook-common";
+
+export { AbstractHook } from "@civic/hook-common";
+
+// Export hook processor functions
+export {
+  processRequestThroughHooks,
+  processResponseThroughHooks,
+} from "./hook/processor.js";
+
+// Export hook utilities
+export { getHookClients } from "./hook/manager.js";
+export { createHookClient, createHookClients } from "./hook/utils.js";
+
+// Export utility functions that users might need
+export { loadConfig } from "./proxy/config.js";
