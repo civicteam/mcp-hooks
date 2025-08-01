@@ -14,8 +14,8 @@ import type {
   JSONRPCMessage,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { PassthroughContext } from "../../shared/passthroughContext.js";
 import { StreamableHTTPClientTransport } from "../client/streamableHttp.js";
-import { PassthroughContext } from "../shared/passthroughContext.js";
 import {
   type EventId,
   type StreamId,

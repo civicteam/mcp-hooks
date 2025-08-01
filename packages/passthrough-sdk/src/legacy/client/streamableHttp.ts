@@ -23,8 +23,8 @@ import {
   isJSONRPCResponse,
 } from "@modelcontextprotocol/sdk/types.js";
 import { EventSourceParserStream } from "eventsource-parser/stream";
-import type { PassthroughContext } from "../shared/passthroughContext.js";
-import type { ClientPassthroughTransport } from "../shared/passthroughTransport.js";
+import type { PassthroughContext } from "../../shared/passthroughContext.js";
+import type { ClientPassthroughTransport } from "../passthroughTransport.js";
 
 // Default reconnection options for StreamableHTTP connections
 const DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOptions =

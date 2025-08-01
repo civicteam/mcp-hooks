@@ -1,5 +1,5 @@
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { PassthroughContext } from "./passthroughContext.js";
+import type { PassthroughContext } from "../shared/passthroughContext.js";
 
 export interface PassthroughTransport extends Transport {
   /**

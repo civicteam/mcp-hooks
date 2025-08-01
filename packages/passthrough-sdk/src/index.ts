@@ -1,2 +1,2 @@
 // Client exports
-export { StreamableHTTPClientTransport } from "./client/streamableHttp.js";
+export { StreamableHTTPClientTransport } from "./legacy/client/streamableHttp.js";

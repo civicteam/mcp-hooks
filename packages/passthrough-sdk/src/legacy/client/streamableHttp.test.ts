@@ -16,8 +16,7 @@ import type {
   JSONRPCRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { StreamableHTTPServerTransport } from "../server/streamableHttp.js";
-import { PassthroughContext } from "../shared/passthroughContext.js";
+import { PassthroughContext } from "../../shared/passthroughContext.js";
 import { StreamableHTTPClientTransport } from "./streamableHttp.js";
 
 describe("StreamableHTTPClientTransport", () => {

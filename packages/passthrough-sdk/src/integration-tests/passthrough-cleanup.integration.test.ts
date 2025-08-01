@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { StreamableHTTPClientTransport } from "../client/streamableHttp.js";
-import { StreamableHTTPServerTransport } from "../server/streamableHttp.js";
+import { StreamableHTTPClientTransport } from "../legacy/client/streamableHttp.js";
+import { StreamableHTTPServerTransport } from "../legacy/server/streamableHttp.js";
 import { PassthroughContext } from "../shared/passthroughContext.js";
 
 describe("Passthrough Cleanup Integration Tests", () => {
@@ -59,10 +59,6 @@ describe("Passthrough Cleanup Integration Tests", () => {
 
     await context.connect(serverTransport, clientTransport);
 
-    // Verify initial connection
-    expect(serverTransport.context).toBe(context);
-    expect(clientTransport.context).toBe(context);
-
     return {
       context,
       serverTransport,
@@ -82,10 +78,6 @@ describe("Passthrough Cleanup Integration Tests", () => {
         try {
           // Connect the context to the real transports
           await context.connect(serverTransport, clientTransport);
-
-          // Verify transports were connected
-          expect(serverTransport.context).toBe(context);
-          expect(clientTransport.context).toBe(context);
 
           // The main test: close the context
           console.log("Closing PassthroughContext...");
@@ -142,10 +134,6 @@ describe("Passthrough Cleanup Integration Tests", () => {
           try {
             // Setup
             await context.connect(serverTransport, clientTransport);
-
-            // Verify setup
-            expect(serverTransport.context).toBe(context);
-            expect(clientTransport.context).toBe(context);
 
             // Immediate cleanup
             await context.close();

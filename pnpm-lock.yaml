@@ -279,6 +279,9 @@ importers:
 
   packages/passthrough-sdk:
     dependencies:
+      '@civic/hook-common':
+        specifier: workspace:^
+        version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.0
         version: 1.17.0

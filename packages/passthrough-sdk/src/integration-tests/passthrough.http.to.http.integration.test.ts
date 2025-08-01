@@ -8,8 +8,8 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { StreamableHTTPClientTransport as PassthroughHTTPClientTransport } from "../client/streamableHttp.js";
-import { StreamableHTTPServerTransport as PassthroughHTTPServerTransport } from "../server/streamableHttp.js";
+// import { StreamableHTTPClientTransport as PassthroughHTTPClientTransport } from "../client/streamableHttp.js";
+// import { StreamableHTTPServerTransport as PassthroughHTTPServerTransport } from "../server/streamableHttp.js";
 import { PassthroughContext } from "../shared/passthroughContext.js";
 
 describe("Passthrough Integration Tests", () => {
@@ -19,8 +19,8 @@ describe("Passthrough Integration Tests", () => {
   let realServerUrl: URL;
 
   let passthroughContext: PassthroughContext;
-  let passthroughServerTransport: PassthroughHTTPServerTransport;
-  let passthroughClientTransport: PassthroughHTTPClientTransport;
+  let passthroughServerTransport: StreamableHTTPServerTransport;
+  let passthroughClientTransport: StreamableHTTPClientTransport;
   let passthroughServer: Server;
   let passthroughServerUrl: URL;
 
@@ -76,11 +76,11 @@ describe("Passthrough Integration Tests", () => {
     // 2. Set up the PASSTHROUGH Context with Server and Client transports
     passthroughContext = new PassthroughContext();
 
-    passthroughServerTransport = new PassthroughHTTPServerTransport({
-      sessionIdGenerator: undefined, // Session is not generated from the Server Transport, but from the Client via PassthroughContext
+    passthroughServerTransport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(), // Session is not generated from the Server Transport, but from the Client via PassthroughContext
     });
 
-    passthroughClientTransport = new PassthroughHTTPClientTransport(
+    passthroughClientTransport = new StreamableHTTPClientTransport(
       realServerUrl,
     );
 
@@ -247,5 +247,27 @@ describe("Passthrough Integration Tests", () => {
     // Verify that the cascade closing happened
     expect(serverTransportClosed).toBe(true);
     expect(clientTransportClosed).toBe(true);
+  });
+
+  it("should forward client and server-side pings correctly", async () => {
+    // Connect the client to the passthrough server
+    await realClient.connect(realClientTransport);
+
+    // Test 1: Client sends ping (should reach the server)
+    const serverReply = await realClient.ping();
+
+    // Verify server received the ping
+    expect(serverReply).toStrictEqual({});
+
+    // Test 2: Server sends ping (should reach the client)
+    // We need to get the session ID to send a ping back
+    const sessionId = realClientTransport.sessionId;
+    expect(sessionId).toBeDefined();
+
+    // Send a ping from the server side through the transport
+    const clientReply = await realMcpServer.server.ping();
+
+    // Verify client received the ping
+    expect(clientReply).toStrictEqual({});
   });
 });

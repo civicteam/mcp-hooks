@@ -21,8 +21,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import contentType from "content-type";
 import getRawBody from "raw-body";
-import type { PassthroughContext } from "../shared/passthroughContext.js";
-import type { ServerPassthroughTransport } from "../shared/passthroughTransport.js";
+import type { PassthroughContext } from "../../shared/passthroughContext.js";
+import type { ServerPassthroughTransport } from "../passthroughTransport.js";
 
 const MAXIMUM_MESSAGE_SIZE = "4mb";
 

@@ -3,6 +3,7 @@
  * in the passthrough proxy.
  */
 
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type ClientResult,
   ClientResultSchema,
@@ -14,10 +15,6 @@ import {
 import { PassthroughClient } from "../client/passthroughClient.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
 import { PassthroughSessionContext } from "./passthroughSessionContext.js";
-import type {
-  ClientPassthroughTransport,
-  ServerPassthroughTransport,
-} from "./passthroughTransport.js";
 
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
@@ -35,6 +32,13 @@ export class PassthroughContext {
    */
   onclose?: () => void;
 
+  /**
+   * Callback for when an error occurs.
+   *
+   * Note that errors are not necessarily fatal; they are used for reporting any kind of exceptional condition out of band.
+   */
+  onerror?: (error: Error) => void;
+
   constructor() {
     this._sessionContext = new PassthroughSessionContext();
     this._passthroughServer = new PassthroughServer(
@@ -50,6 +54,10 @@ export class PassthroughContext {
     this._passthroughClient.onclose = this._onClientClose.bind(this);
   }
 
+  private _onerror(error: Error): void {
+    this.onerror?.(error);
+  }
+
   private _onServerRequest(request: Request): Promise<ServerResult> {
     // for now, just directly pass through
     return this._passthroughClient.request(request, ServerResultSchema);
@@ -57,19 +65,16 @@ export class PassthroughContext {
 
   private _onServerNotification(notification: Notification) {
     // for now, just directly pass through
-
     return this._passthroughClient.notification(notification);
   }
 
   private _onClientRequest(request: Request): Promise<ClientResult> {
     // for now, directly pass through
-
     return this._passthroughServer.request(request, ClientResultSchema);
   }
 
   private _onClientNotification(notification: Notification) {
     // for now, directly pass through
-
     return this._passthroughServer.notification(notification);
   }
 
@@ -81,11 +86,25 @@ export class PassthroughContext {
   }
 
   private _onServerClose(): void {
-    this._passthroughClient.close();
+    // Starting with Promise.resolve() puts any synchronous errors into the monad as well.
+    Promise.resolve()
+      .then(() => this._passthroughClient.close())
+      .catch((error) =>
+        this._onerror(
+          new Error(`Error trying to close the Passthrough Client: ${error}`),
+        ),
+      );
   }
 
   private _onClientClose(): void {
-    this._passthroughServer.close();
+    // Starting with Promise.resolve() puts any synchronous errors into the monad as well.
+    Promise.resolve()
+      .then(() => this._passthroughServer.close())
+      .catch((error) =>
+        this._onerror(
+          new Error(`Error trying to close the Passthrough Server: ${error}`),
+        ),
+      );
   }
 
   /**
@@ -94,13 +113,9 @@ export class PassthroughContext {
    * The Protocol object assumes ownership of the Transport, replacing any callbacks that have already been set, and expects that it is the only user of the Transport instance going forward.
    */
   async connect(
-    serverTransport: ServerPassthroughTransport,
-    clientTransport: ClientPassthroughTransport,
+    serverTransport: Transport,
+    clientTransport: Transport,
   ): Promise<void> {
-    // Set the context reference on both transports
-    serverTransport.context = this;
-    clientTransport.context = this;
-
     await this._passthroughServer.connect(serverTransport);
     await this._passthroughClient.connect(clientTransport);
   }
