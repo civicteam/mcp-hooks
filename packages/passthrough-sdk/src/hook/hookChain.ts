@@ -1,4 +1,6 @@
 import type { Hook } from "@civic/hook-common";
+import type { HookDefinition } from "../proxy/config.js";
+import { getHookClients } from "./manager.js";
 
 /**
  * A wrapper around Hook that maintains references to both next and previous hooks in the chain
@@ -83,13 +85,13 @@ export class HookChain {
   private _tail: LinkedListHook | null;
   private _length: number;
 
-  constructor(hooks: Hook[] = []) {
+  constructor(hooks: HookDefinition[] = []) {
     this._head = null;
     this._tail = null;
     this._length = 0;
 
     if (hooks.length > 0) {
-      this._buildLinkedList(hooks);
+      this._buildLinkedList(getHookClients(hooks));
     }
   }
 

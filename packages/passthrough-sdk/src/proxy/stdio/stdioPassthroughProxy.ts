@@ -27,6 +27,13 @@ export class StdioPassthroughProxy implements PassthroughProxy {
     this.targetMcpPath = config.target.mcpPath || "/mcp";
     this.clientTransport = new StreamableHTTPClientTransport(
       new URL(this.targetUrl + this.targetMcpPath),
+      {
+        requestInit: {
+          headers: config.authToken
+            ? { Authorization: `Bearer ${config.authToken}` }
+            : undefined,
+        },
+      },
     );
     this.proxyContext = new PassthroughContext();
   }
