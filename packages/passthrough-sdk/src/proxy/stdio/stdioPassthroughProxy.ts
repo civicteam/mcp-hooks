@@ -35,7 +35,7 @@ export class StdioPassthroughProxy implements PassthroughProxy {
         },
       },
     );
-    this.proxyContext = new PassthroughContext();
+    this.proxyContext = new PassthroughContext(config.hooks);
   }
 
   /**

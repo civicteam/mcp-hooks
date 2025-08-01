@@ -3,6 +3,7 @@
  * in the passthrough proxy.
  */
 
+import { MethodsWithRequestType } from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type ClientResult,
@@ -12,14 +13,20 @@ import {
   InitializeResult,
   type ListToolsRequest,
   ListToolsRequestSchema,
+  McpError,
   type Notification,
   type Request,
   type ServerResult,
   ServerResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { PassthroughClient } from "../client/passthroughClient.js";
+import { HookChain } from "../hook/hookChain.js";
+import {
+  processRequestThroughHooks,
+  processResponseThroughHooks,
+} from "../hook/processor.js";
+import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
-
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -27,6 +34,7 @@ import { PassthroughServer } from "../server/passthroughServer.js";
 export class PassthroughContext {
   private _passthroughServer: PassthroughServer;
   private _passthroughClient: PassthroughClient;
+  private _hookChain: HookChain;
 
   /**
    * Callback for when the connection is closed for any reason.
@@ -42,7 +50,9 @@ export class PassthroughContext {
    */
   onerror?: (error: Error) => void;
 
-  constructor() {
+  constructor(hooks?: HookDefinition[]) {
+    this._hookChain = new HookChain(hooks);
+
     this._passthroughServer = new PassthroughServer(
       this._onServerRequest.bind(this),
       this._onServerNotification.bind(this),
@@ -70,36 +80,87 @@ export class PassthroughContext {
     this.onerror?.(error);
   }
 
-  private _onServerInitializeRequest(
+  private async processServerRequest(
+    request: Request,
+    hookRequestMethodName: string,
+    hookResponseMethodName: string,
+  ): Promise<ServerResult> {
+    // pass request through chain
+    const requestResult = await processRequestThroughHooks(
+      request,
+      this._hookChain.head,
+      hookRequestMethodName,
+    );
+
+    if (requestResult.resultType === "respond") {
+      return requestResult.response as ServerResult;
+    }
+
+    if (requestResult.resultType === "abort") {
+      throw new McpError(-32001, "Request rejected by hook");
+    }
+
+    // for now, just directly pass through
+    const response = await this._passthroughClient.request(
+      requestResult.request,
+      ServerResultSchema,
+    );
+
+    // pass response through chain
+    const responseResult = await processResponseThroughHooks(
+      response,
+      request,
+      requestResult.lastProcessedHook,
+      hookResponseMethodName,
+    );
+
+    if (responseResult.resultType === "abort") {
+      throw new McpError(-32603, "Response rejected by hook");
+    }
+
+    return responseResult.response;
+  }
+
+  private async _onServerInitializeRequest(
     request: InitializeRequest,
   ): Promise<ServerResult> {
-    // for now, just directly pass through
-    return this._passthroughClient.request(request, ServerResultSchema);
+    return this.processServerRequest(
+      request,
+      "processInitializeRequest",
+      "processInitializeResponse",
+    );
   }
 
-  private _onServerListToolsRequest(
+  private async _onServerListToolsRequest(
     request: ListToolsRequest,
   ): Promise<ServerResult> {
-    // for now, just directly pass through
-    return this._passthroughClient.request(request, ServerResultSchema);
+    return this.processServerRequest(
+      request,
+      "processToolsListRequest",
+      "processToolsListResponse",
+    );
   }
 
-  private _onServerRequest(request: Request): Promise<ServerResult> {
-    // for now, just directly pass through
-    return this._passthroughClient.request(request, ServerResultSchema);
+  private async _onServerRequest(request: Request): Promise<ServerResult> {
+    // pass request through chain
+    return this.processServerRequest(
+      request,
+      "processToolCallRequest",
+      "processToolCallResponse",
+    );
   }
 
-  private _onServerNotification(notification: Notification) {
+  private async _onServerNotification(notification: Notification) {
     // for now, just directly pass through
     return this._passthroughClient.notification(notification);
   }
 
-  private _onClientRequest(request: Request): Promise<ClientResult> {
+  private async _onClientRequest(request: Request): Promise<ClientResult> {
     // for now, directly pass through
     return this._passthroughServer.request(request, ClientResultSchema);
   }
 
-  private _onClientNotification(notification: Notification) {
+  private async _onClientNotification(notification: Notification) {
     // for now, directly pass through
     return this._passthroughServer.notification(notification);
   }

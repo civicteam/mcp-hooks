@@ -46,7 +46,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         },
       },
     );
-    this.proxyContext = new PassthroughContext();
+    this.proxyContext = new PassthroughContext(config.hooks);
   }
 
   async initialize(): Promise<void> {
