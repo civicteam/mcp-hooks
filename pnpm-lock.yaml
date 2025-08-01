@@ -31,8 +31,8 @@ importers:
         version: 16.6.1
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.9
@@ -84,8 +84,8 @@ importers:
         version: 8.16.3
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.9
@@ -105,8 +105,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.4.3(typescript@5.8.3)
@@ -127,8 +127,8 @@ importers:
         specifier: workspace:*
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.4.3(typescript@5.8.3)
@@ -178,8 +178,8 @@ importers:
         version: 11.4.3(typescript@5.8.3)
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.9
@@ -193,8 +193,8 @@ importers:
   packages/hook-common:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@trpc/client':
         specifier: ^11.1.2
         version: 11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)
@@ -234,8 +234,8 @@ importers:
         version: 3.24.6(zod@3.25.76)
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.9
@@ -258,8 +258,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -283,8 +283,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.17.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       content-type:
         specifier: ^1.0.5
         version: 1.0.5
@@ -339,8 +339,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.4.3(typescript@5.8.3)
@@ -359,10 +359,10 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.2-alpha.0
-        version: 0.2.2(@modelcontextprotocol/sdk@1.17.0)(express@4.21.2)
+        version: 0.2.2(@modelcontextprotocol/sdk@1.17.1)(express@4.21.2)
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -390,7 +390,7 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.1
-        version: 0.2.2(@modelcontextprotocol/sdk@1.17.0)(express@5.1.0)
+        version: 0.2.2(@modelcontextprotocol/sdk@1.17.1)(express@5.1.0)
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
@@ -398,8 +398,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       zod:
         specifier: ^3.25.74
         version: 3.25.76
@@ -423,8 +423,8 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -436,8 +436,8 @@ importers:
   test/integration/servers/api-key-protected:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.0.8
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -467,8 +467,8 @@ importers:
   test/integration/servers/broken-server:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -483,8 +483,8 @@ importers:
   test/integration/servers/echo:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -511,8 +511,8 @@ importers:
   test/integration/servers/local-stdio:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.15.0
-        version: 1.17.0
+        specifier: ^1.17.1
+        version: 1.17.1
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -1101,8 +1101,8 @@ packages:
   '@mixmark-io/domino@2.2.0':
     resolution: {integrity: sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw==}
 
-  '@modelcontextprotocol/sdk@1.17.0':
-    resolution: {integrity: sha512-qFfbWFA7r1Sd8D697L7GkTd36yqDuTkvz0KfOGkgXR8EUhQn3/EDNIR/qUdQNMT8IjmasBvHWuXeisxtXTQT2g==}
+  '@modelcontextprotocol/sdk@1.17.1':
+    resolution: {integrity: sha512-CPle1OQehbWqd25La9Ack5B07StKIxh4+Bf19qnpZKJC1oI22Y0czZHbifjw1UoczIfKBwBDAp/dFxvHG13B5A==}
     engines: {node: '>=18'}
 
   '@pkgjs/parseargs@0.11.0':
@@ -2715,17 +2715,17 @@ snapshots:
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
-  '@civic/auth-mcp@0.2.2(@modelcontextprotocol/sdk@1.17.0)(express@4.21.2)':
+  '@civic/auth-mcp@0.2.2(@modelcontextprotocol/sdk@1.17.1)(express@4.21.2)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.17.0
+      '@modelcontextprotocol/sdk': 1.17.1
       escape-html: 1.0.3
       jose: 6.0.11
     optionalDependencies:
       express: 4.21.2
 
-  '@civic/auth-mcp@0.2.2(@modelcontextprotocol/sdk@1.17.0)(express@5.1.0)':
+  '@civic/auth-mcp@0.2.2(@modelcontextprotocol/sdk@1.17.1)(express@5.1.0)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.17.0
+      '@modelcontextprotocol/sdk': 1.17.1
       escape-html: 1.0.3
       jose: 6.0.11
     optionalDependencies:
@@ -2980,7 +2980,7 @@ snapshots:
 
   '@mixmark-io/domino@2.2.0': {}
 
-  '@modelcontextprotocol/sdk@1.17.0':
+  '@modelcontextprotocol/sdk@1.17.1':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5
@@ -3749,7 +3749,7 @@ snapshots:
 
   fastmcp@1.27.7:
     dependencies:
-      '@modelcontextprotocol/sdk': 1.17.0
+      '@modelcontextprotocol/sdk': 1.17.1
       '@standard-schema/spec': 1.0.0
       execa: 9.6.0
       file-type: 20.5.0
@@ -3973,7 +3973,7 @@ snapshots:
 
   mcp-proxy@2.14.3:
     dependencies:
-      '@modelcontextprotocol/sdk': 1.17.0
+      '@modelcontextprotocol/sdk': 1.17.1
       eventsource: 4.0.0
       yargs: 17.7.2
     transitivePeerDependencies:
