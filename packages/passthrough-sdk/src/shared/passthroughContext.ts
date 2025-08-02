@@ -92,19 +92,22 @@ export class PassthroughContext {
       hookRequestMethodName,
     );
 
-    if (requestResult.resultType === "respond") {
-      return requestResult.response as ServerResult;
-    }
+    let response: ServerResult | undefined = undefined;
 
     if (requestResult.resultType === "abort") {
       throw new McpError(-32001, "Request rejected by hook");
     }
 
-    // for now, just directly pass through
-    const response = await this._passthroughClient.request(
-      requestResult.request,
-      ServerResultSchema,
-    );
+    if (requestResult.resultType === "respond") {
+      response = requestResult.response as ServerResult;
+    } else {
+      // (requestResult.resultType === "continue")
+      // for now, just directly pass through
+      response = await this._passthroughClient.request(
+        requestResult.request,
+        ServerResultSchema,
+      );
+    }
 
     // pass response through chain
     const responseResult = await processResponseThroughHooks(
