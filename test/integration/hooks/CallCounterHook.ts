@@ -4,7 +4,7 @@ import {
   type CallToolResult,
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
-} from "@civic/passthrough-mcp-server";
+} from "@civic/passthrough-sdk";
 
 type CallToolRequestWithHookData = CallToolRequest & {
   _hookData?: { sessionCount: number };

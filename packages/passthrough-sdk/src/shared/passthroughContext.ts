@@ -27,6 +27,7 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
+import { createAbortException } from "./mcpErrorUtils.js";
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -95,7 +96,7 @@ export class PassthroughContext {
     let response: ServerResult | undefined = undefined;
 
     if (requestResult.resultType === "abort") {
-      throw new McpError(-32001, "Request rejected by hook");
+      throw createAbortException("request", requestResult.reason);
     }
 
     if (requestResult.resultType === "respond") {
@@ -118,7 +119,7 @@ export class PassthroughContext {
     );
 
     if (responseResult.resultType === "abort") {
-      throw new McpError(-32603, "Response rejected by hook");
+      throw createAbortException("response", responseResult.reason);
     }
 
     return responseResult.response;

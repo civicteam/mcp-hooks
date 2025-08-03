@@ -394,9 +394,9 @@ importers:
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
-      '@civic/passthrough-mcp-server':
+      '@civic/passthrough-sdk':
         specifier: workspace:*
-        version: link:../../packages/passthrough-mcp-server
+        version: link:../../packages/passthrough-sdk
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.1
         version: 1.17.1
@@ -419,9 +419,9 @@ importers:
 
   test/integration/hooks:
     dependencies:
-      '@civic/passthrough-mcp-server':
+      '@civic/passthrough-sdk':
         specifier: workspace:*
-        version: link:../../../packages/passthrough-mcp-server
+        version: link:../../../packages/passthrough-sdk
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.1
         version: 1.17.1
@@ -523,9 +523,9 @@ importers:
 
   test/integration/servers/programmatic-passthrough:
     dependencies:
-      '@civic/passthrough-mcp-server':
+      '@civic/passthrough-sdk':
         specifier: workspace:*
-        version: link:../../../../packages/passthrough-mcp-server
+        version: link:../../../../packages/passthrough-sdk
       '@test/integration-hooks':
         specifier: workspace:*
         version: link:../../hooks

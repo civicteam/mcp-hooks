@@ -56,7 +56,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         targetUrl: this.config.target.url,
         mcpEndpoint: "/mcp",
       },
-      this.serverTransport.handleRequest,
+      this.serverTransport.handleRequest.bind(this.serverTransport),
     );
   }
 
