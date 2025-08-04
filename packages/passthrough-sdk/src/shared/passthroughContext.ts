@@ -97,11 +97,41 @@ export class PassthroughContext {
     this.onerror?.(error);
   }
 
+  private addMetaToRequest(request: Request): Request {
+    return {
+      ...request,
+      params: {
+        ...request.params,
+        _meta: {
+          ...request.params?._meta,
+          sessionId: this.passthroughServerTransport?.sessionId,
+          timestamp: new Date().toISOString(),
+          source: "passthrough-server",
+        }
+      }
+    }
+  }
+
+  private addMetaToResult(result: ServerResult): ServerResult {
+    return {
+      ...result,
+      _meta: {
+        ...result._meta,
+        sessionId: this.passthroughClientTransport?.sessionId,
+        timestamp: new Date().toISOString(),
+        source: "passthrough-server",
+      }
+    }
+  }
+
   private async processServerRequest(
     request: Request,
     hookRequestMethodName: string,
     hookResponseMethodName: string,
   ): Promise<ServerResult> {
+    // Annotate request
+    request = this.addMetaToRequest(request);
+
     // pass request through chain
     const requestResult = await processRequestThroughHooks(
       request,
@@ -124,6 +154,8 @@ export class PassthroughContext {
         ServerResultSchema,
       );
     }
+
+    response = this.addMetaToResult(response);
 
     // pass response through chain
     const responseResult = await processResponseThroughHooks(

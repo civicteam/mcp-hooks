@@ -269,8 +269,9 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     expect(response).toBeTruthy();
     expect(isJSONRPCResponse(response)).toBeTruthy();
 
-    // For a ping, the result should be an empty object {}
-    expect((response as JSONRPCResponse).result).toEqual({});
+    // For a ping, the result should be an empty object {} (ignoring _meta)
+    const { _meta, ...resultWithoutMeta } = (response as JSONRPCResponse).result as any;
+    expect(resultWithoutMeta).toEqual({});
   });
 
   it("should successfully call a tool through stdio-to-http passthrough", async () => {

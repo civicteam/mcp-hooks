@@ -156,6 +156,7 @@ function createExpressApp() {
 
       // Handle the request
       console.log(`Handling request for session ${sessionId}`);
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
       await session.transport.handleRequest(req, res, req.body);
 
       // Clean up on response close

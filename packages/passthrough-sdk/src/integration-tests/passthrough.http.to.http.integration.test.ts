@@ -256,8 +256,9 @@ describe("Passthrough Integration Tests", () => {
     // Test 1: Client sends ping (should reach the server)
     const serverReply = await realClient.ping();
 
-    // Verify server received the ping
-    expect(serverReply).toStrictEqual({});
+    // Verify server received the ping (ignoring _meta)
+    const { _meta, ...serverReplyWithoutMeta } = serverReply as any;
+    expect(serverReplyWithoutMeta).toStrictEqual({});
 
     // Test 2: Server sends ping (should reach the client)
     // We need to get the session ID to send a ping back
