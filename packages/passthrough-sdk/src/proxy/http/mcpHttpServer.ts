@@ -24,13 +24,9 @@ export interface ProxyOptions {
  * - /mcp -> MCP handler
  * - Everything else -> proxy to target
  */
-export function createAuthProxyServer(
+export function createMcpHttpServer(
   options: ProxyOptions,
-  mcpHandler: (
-    req: IncomingMessage & { auth?: AuthInfo },
-    res: ServerResponse,
-    parsedBody?: unknown,
-  ) => Promise<void>,
+  mcpHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
 ): http.Server {
   const targetUrl = new URL(options.targetUrl);
   const mcpEndpoint = options.mcpEndpoint || "/mcp";

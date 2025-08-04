@@ -37,6 +37,22 @@ export class PassthroughContext {
   private _passthroughClient: PassthroughClient;
   private _hookChain: HookChain;
 
+  get passthroughServer(): PassthroughServer {
+    return this._passthroughServer;
+  }
+
+  get passthroughClient(): PassthroughClient {
+    return this._passthroughClient;
+  }
+
+  get passthroughServerTransport(): Transport | undefined {
+    return this._passthroughServer.transport;
+  }
+
+  get passthroughClientTransport(): Transport | undefined {
+    return this._passthroughClient.transport;
+  }
+
   /**
    * Callback for when the connection is closed for any reason.
    *
@@ -103,7 +119,6 @@ export class PassthroughContext {
       response = requestResult.response as ServerResult;
     } else {
       // (requestResult.resultType === "continue")
-      // for now, just directly pass through
       response = await this._passthroughClient.request(
         requestResult.request,
         ServerResultSchema,
