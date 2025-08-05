@@ -1,15 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { type Server, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { Readable, Writable } from "node:stream";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {
-  ReadBuffer,
-  serializeMessage,
-} from "@modelcontextprotocol/sdk/shared/stdio.js";
 import {
   DEFAULT_NEGOTIATED_PROTOCOL_VERSION,
   type InitializeResult,
@@ -27,6 +22,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { PassthroughContext } from "../shared/passthroughContext.js";
+import { StdioTestHelper } from "./helpers/StdioTestHelper.js";
 
 describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
   let realMcpServer: McpServer;
@@ -38,13 +34,8 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
   let passthroughServerTransport: StdioServerTransport;
   let passthroughClientTransport: StreamableHTTPClientTransport;
 
-  // Stdio streams for the passthrough server
-  let serverStdin: Readable;
-  let serverStdout: Writable;
-  let clientOutputBuffer: ReadBuffer;
-
-  // Streams for direct stdio communication
-  let messageId = 1;
+  // Test helper for stdio communication
+  let stdioHelper: StdioTestHelper;
 
   // Track if initialized notification was received
   let initializedReceived = false;
@@ -54,7 +45,7 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
   async function initializeMcpConnection(): Promise<InitializeResult> {
     const initRequest: JSONRPCMessage = {
       jsonrpc: "2.0",
-      id: messageId++,
+      id: stdioHelper.getNextMessageId(),
       method: "initialize",
       params: {
         protocolVersion: DEFAULT_NEGOTIATED_PROTOCOL_VERSION,
@@ -66,14 +57,9 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
       },
     };
 
-    // Push the message to the stdin stream
-    serverStdin.push(serializeMessage(initRequest));
-
-    // Wait for processing
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    // Read the response from the output buffer
-    const response = clientOutputBuffer.readMessage();
+    // Send and wait for response
+    const response = await stdioHelper.sendAndWaitForResponse(initRequest);
+    expect(response).toBeTruthy();
     expect(isJSONRPCResponse(response)).toBeTruthy();
 
     // Validate the result matches InitializeResultSchema
@@ -96,7 +82,7 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     expect(parseNotificationParams.success).toBe(true);
 
     // Send the notification
-    serverStdin.push(serializeMessage(initializedNotification));
+    stdioHelper.sendMessage(initializedNotification);
 
     // Wait a moment for the notification to be processed
     await new Promise((resolve) => setTimeout(resolve, 25));
@@ -161,23 +147,12 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // 2. Set up the PASSTHROUGH Context with Stdio Server and HTTP Client transports
     passthroughContext = new PassthroughContext();
 
-    // Create streams like the official tests
-    serverStdin = new Readable({
-      // We'll use input.push() instead.
-      read: () => {},
-    });
-
-    clientOutputBuffer = new ReadBuffer();
-    serverStdout = new Writable({
-      write(chunk, _encoding, callback) {
-        clientOutputBuffer.append(chunk);
-        callback();
-      },
-    });
+    // Create stdio test helper
+    stdioHelper = new StdioTestHelper();
 
     passthroughServerTransport = new StdioServerTransport(
-      serverStdin,
-      serverStdout,
+      stdioHelper.getStdin(),
+      stdioHelper.getStdout(),
     );
 
     passthroughClientTransport = new StreamableHTTPClientTransport(
@@ -220,17 +195,14 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Send tools/list request
     const toolsRequest: JSONRPCMessage = {
       jsonrpc: "2.0",
-      id: messageId++,
+      id: stdioHelper.getNextMessageId(),
       method: "tools/list",
       params: {},
     };
 
-    serverStdin.push(serializeMessage(toolsRequest));
-
-    // Wait for response
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const response = clientOutputBuffer.readMessage();
-
+    // Send and wait for response
+    const response = await stdioHelper.sendAndWaitForResponse(toolsRequest);
+    expect(response).toBeTruthy();
     expect(isJSONRPCResponse(response)).toBeTruthy();
 
     // Validate the result matches ListToolsResultSchema
@@ -255,17 +227,13 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Send ping request
     const pingRequest: JSONRPCMessage = {
       jsonrpc: "2.0",
-      id: messageId++,
+      id: stdioHelper.getNextMessageId(),
       method: "ping",
       params: {},
     };
 
-    serverStdin.push(serializeMessage(pingRequest));
-
-    // Wait for response
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const response = clientOutputBuffer.readMessage();
-
+    // Send and wait for response
+    const response = await stdioHelper.sendAndWaitForResponse(pingRequest);
     expect(response).toBeTruthy();
     expect(isJSONRPCResponse(response)).toBeTruthy();
 
@@ -282,7 +250,7 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Send tools/call request
     const toolCallRequest: JSONRPCMessage = {
       jsonrpc: "2.0",
-      id: messageId++,
+      id: stdioHelper.getNextMessageId(),
       method: "tools/call",
       params: {
         name: "greet",
@@ -292,12 +260,8 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
       },
     };
 
-    serverStdin.push(serializeMessage(toolCallRequest));
-
-    // Wait for response
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const response = clientOutputBuffer.readMessage();
-
+    // Send and wait for response
+    const response = await stdioHelper.sendAndWaitForResponse(toolCallRequest);
     expect(response).toBeTruthy();
     expect(isJSONRPCResponse(response)).toBeTruthy();
 
@@ -322,11 +286,8 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Start the server ping and wait for it to complete
     const serverPingPromise = realMcpServer.server.ping();
 
-    // Wait a moment for the ping to be sent through the passthrough
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Check if we received a ping request in our output buffer
-    const pingMessage = clientOutputBuffer.readMessage();
+    // Wait for the ping request to be sent through the passthrough
+    const pingMessage = await stdioHelper.waitForMessage();
 
     // The server ping should appear as a request (not response) in our stream
     expect(isJSONRPCRequest(pingMessage)).toBeTruthy();
@@ -343,7 +304,7 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     };
 
     // Send the ping response back through the passthrough
-    serverStdin.push(serializeMessage(pingResponse));
+    stdioHelper.sendMessage(pingResponse);
 
     // Wait for the response to be processed
     await new Promise((resolve) => setTimeout(resolve, 50));
