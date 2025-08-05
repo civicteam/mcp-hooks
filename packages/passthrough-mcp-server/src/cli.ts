@@ -13,6 +13,7 @@ import {
   createHttpPassthroughProxy,
   createStdioPassthroughProxy,
 } from "./proxy/createProxies.js";
+import type { PassthroughProxy } from "./proxy/types.js";
 
 /**
  * Main function to start the passthrough MCP server
@@ -23,17 +24,26 @@ async function main() {
     const config = loadConfig();
 
     // Create and start the passthrough proxy based on transport type
-    const proxy =
-      config.transportType === "stdio"
-        ? await createStdioPassthroughProxy({
-            ...config,
-            autoStart: true,
-          })
-        : await createHttpPassthroughProxy({
-            ...config,
-            port: config.port || 3000,
-            autoStart: true,
-          });
+    let proxy: PassthroughProxy;
+    if (config.sourceTransportType === "stdio") {
+      proxy = await createStdioPassthroughProxy({
+        ...config,
+        autoStart: true,
+      });
+    } else if (
+      config.sourceTransportType === "httpStream" ||
+      config.sourceTransportType === "sse"
+    ) {
+      proxy = await createHttpPassthroughProxy({
+        ...config,
+        port: config.port || 3000,
+        autoStart: true,
+      });
+    } else {
+      throw new Error(
+        `Source Transport Type ${config.sourceTransportType} not supported`,
+      );
+    }
 
     // Handle graceful shutdown
     const shutdown = async () => {

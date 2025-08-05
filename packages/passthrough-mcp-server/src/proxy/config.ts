@@ -8,23 +8,30 @@
 
 import * as process from "node:process";
 import type { Hook } from "@civic/hook-common";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { configureLoggerForStdio, logger } from "../logger/logger.js";
 
-type TransportType = "stdio" | "sse" | "httpStream";
+type TransportType = "httpStream" | "sse" | "custom";
+type SourceTransportType = "stdio" | "httpStream" | "sse" | "custom";
 
 // Base configuration with discriminated union based on transport type
 export type BaseConfig =
   | {
-      transportType: "stdio";
+      sourceTransportType: "stdio";
       // Port is not required for stdio
     }
   | {
-      transportType: "sse" | "httpStream";
+      sourceTransportType: "httpStream" | "sse";
       port: number;
+    }
+  | {
+      sourceTransportType: "custom";
+      sourceTransport: Transport;
     };
 
 export interface TargetConfig {
-  transportType: "sse" | "httpStream";
+  transportType: TransportType;
+  transport?: Transport;
   url: string;
   mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
 }
@@ -45,7 +52,7 @@ export type Config = BaseConfig & {
 /**
  * Parse server transport type from command line arguments
  */
-export function parseServerTransport(args: string[]): TransportType {
+export function parseServerTransport(args: string[]): SourceTransportType {
   if (args.includes("--stdio")) return "stdio";
   if (args.includes("--sse")) return "sse";
   return "httpStream";
@@ -97,10 +104,10 @@ export function createHookConfigs(urls: string[]): RemoteHookConfig[] {
  */
 export function loadConfig(): Config {
   // Server configuration
-  const transportType = parseServerTransport(process.argv);
+  const sourceTransportType = parseServerTransport(process.argv);
 
   // Configure logger for stdio mode to avoid interfering with stdout
-  if (transportType === "stdio") {
+  if (sourceTransportType === "stdio") {
     configureLoggerForStdio();
   }
 
@@ -115,19 +122,22 @@ export function loadConfig(): Config {
   // Build config based on transport type
   let config: Config;
 
-  if (transportType === "stdio") {
+  if (sourceTransportType === "stdio") {
     config = {
-      transportType: "stdio",
+      sourceTransportType: "stdio",
       target: {
         url: targetUrl,
         transportType: targetTransport,
         ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
-  } else {
+  } else if (
+    sourceTransportType === "httpStream" ||
+    sourceTransportType === "sse"
+  ) {
     const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34000;
     config = {
-      transportType,
+      sourceTransportType,
       port,
       target: {
         url: targetUrl,
@@ -135,6 +145,10 @@ export function loadConfig(): Config {
         ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
+  } else {
+    throw new Error(
+      `Source Transport Type ${sourceTransportType} not supported`,
+    );
   }
 
   // Add hooks config if URLs are provided

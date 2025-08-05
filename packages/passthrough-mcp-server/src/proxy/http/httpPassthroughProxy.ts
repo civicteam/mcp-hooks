@@ -33,7 +33,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
   private targetUrl: string;
   private targetMcpPath: string;
 
-  constructor(private config: Config & { transportType: "httpStream" }) {
+  constructor(private config: Config & { sourceTransportType: "httpStream" }) {
     this.sessionManager = new McpSessionManager();
     this.targetUrl = config.target.url;
     this.targetMcpPath = config.target.mcpPath || "/mcp";
@@ -260,7 +260,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     this.isStarted = true;
 
     logger.info(
-      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.transportType} transport on port ${port}, connecting to target at ${this.config.target.url}`,
+      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${this.config.target.url}`,
     );
   }
 

@@ -21,7 +21,7 @@ export class StdioPassthroughProxy implements PassthroughProxy {
   private serverTransport: StdioServerTransport;
   private clientTransport: StreamableHTTPClientTransport;
 
-  constructor(private config: Config & { transportType: "stdio" }) {
+  constructor(private config: Config & { sourceTransportType: "stdio" }) {
     this.serverTransport = new StdioServerTransport();
     this.targetUrl = config.target.url;
     this.targetMcpPath = config.target.mcpPath || "/mcp";

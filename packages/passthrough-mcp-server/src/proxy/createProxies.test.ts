@@ -9,9 +9,9 @@ import type { HttpPassthroughProxy } from "./http/httpPassthroughProxy";
 import type { StdioPassthroughProxy } from "./stdio/stdioPassthroughProxy";
 
 describe("createPassthroughProxy type inference", () => {
-  it("should return StdioPassthroughProxy when transportType is 'stdio'", async () => {
+  it("should return StdioPassthroughProxy when sourceTransportType is 'stdio'", async () => {
     const proxy = await createPassthroughProxy({
-      transportType: "stdio",
+      sourceTransportType: "stdio",
       target: { url: "http://localhost:33355", transportType: "httpStream" },
     });
 
@@ -19,9 +19,9 @@ describe("createPassthroughProxy type inference", () => {
     expectTypeOf(proxy).toEqualTypeOf<StdioPassthroughProxy>();
   });
 
-  it("should return HttpPassthroughProxy when transportType is 'httpStream'", async () => {
+  it("should return HttpPassthroughProxy when sourceTransportType is 'httpStream'", async () => {
     const proxy = await createPassthroughProxy({
-      transportType: "httpStream",
+      sourceTransportType: "httpStream",
       port: 33355,
       target: { url: "http://localhost:3001", transportType: "httpStream" },
     });
