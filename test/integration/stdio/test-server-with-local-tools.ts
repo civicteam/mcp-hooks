@@ -7,7 +7,7 @@
 
 import { LocalToolsHook } from "@civic/local-tools-hook";
 import type { ToolDefinition } from "@civic/local-tools-hook";
-import { createStdioPassthroughProxy } from "@civic/passthrough-sdk";
+import { createStdioPassthroughProxy } from "@civic/passthrough-mcp-server";
 import { type ZodRawShape, z } from "zod";
 
 async function main() {

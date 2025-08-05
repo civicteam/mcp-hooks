@@ -9,7 +9,7 @@ import type {
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 
-const scriptPath = join(__dirname, "../../../packages/passthrough-sdk");
+const scriptPath = join(__dirname, "../../../packages/passthrough-mcp-server");
 
 export type StdioTestServerType =
   | "DEFAULT"

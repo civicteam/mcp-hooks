@@ -112,15 +112,15 @@ echo -e "\n${YELLOW}Starting passthrough servers...${NC}"
 
 # Passthrough to non-auth target
 start_server "Passthrough to non-auth (port 34000)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream PORT=34000 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream PORT=34000 npx tsx src/cli.ts"
 
 # Passthrough to auth target  
 start_server "Passthrough to auth (port 34008)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33008 PORT=34008 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33008 PORT=34008 npx tsx src/cli.ts"
 
 # Passthrough to echo server
 start_server "Passthrough to echo (port 34100)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33100 PORT=34100 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33100 PORT=34100 npx tsx src/cli.ts"
 
 # Programmatic passthrough to echo server (for hook testing)
 start_server "Programmatic passthrough to echo (port 34101)" \
@@ -128,7 +128,7 @@ start_server "Programmatic passthrough to echo (port 34101)" \
 
 # Passthrough to fetchDocs with explain hook
 start_server "Passthrough with hooks to fetchDocs (port 34200)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream HOOKS=http://localhost:33007 PORT=34200 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33000 TARGET_SERVER_MCP_PATH=/stream HOOKS=http://localhost:33007 PORT=34200 npx tsx src/cli.ts"
 
 # Broken server (always returns 500)
 start_server "Broken server (port 33200)" \
@@ -140,7 +140,7 @@ start_server "Alert hook server (port 33009)" \
 
 # Passthrough to broken server with alert hook
 start_server "Passthrough with alert hook to broken server (port 34300)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33200 HOOKS=http://localhost:33009 PORT=34300 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33200 HOOKS=http://localhost:33009 PORT=34300 npx tsx src/cli.ts"
 
 # API Key Protected server
 start_server "API Key Protected server (port 33201)" \
@@ -152,7 +152,7 @@ start_server "API Key hook server (port 33010)" \
 
 # Passthrough to API Key Protected server with API Key hook
 start_server "Passthrough with API Key hook to protected server (port 34400)" \
-    "cd packages/passthrough-sdk && TARGET_SERVER_URL=http://localhost:33201 HOOKS=http://localhost:33010 PORT=34400 npx tsx src/cli.ts"
+    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33201 HOOKS=http://localhost:33010 PORT=34400 npx tsx src/cli.ts"
 
 echo -e "\n${GREEN}All servers started successfully!${NC}"
 

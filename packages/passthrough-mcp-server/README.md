@@ -1,4 +1,4 @@
-# @civic/passthrough-sdk
+# @civic/passthrough-mcp-server
 
 SDK for implementing Model Context Protocol (MCP) passthrough servers with flexible transport and protocol handling.
 
@@ -9,7 +9,7 @@ The passthrough SDK provides a framework for building MCP servers that act as in
 ## Installation
 
 ```bash
-pnpm add @civic/passthrough-sdk
+pnpm add @civic/passthrough-mcp-server
 ```
 
 ## Features
@@ -47,7 +47,7 @@ Built on the MCP SDK transport abstraction, supporting:
 ### Basic Passthrough Server
 
 ```typescript
-import { PassthroughContext } from '@civic/passthrough-sdk';
+import { PassthroughContext } from '@civic/passthrough-mcp-server';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
@@ -71,7 +71,7 @@ await context.connect(serverTransport, clientTransport);
 ### HTTP-to-HTTP Passthrough
 
 ```typescript
-import { PassthroughContext } from '@civic/passthrough-sdk';
+import { PassthroughContext } from '@civic/passthrough-mcp-server';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
@@ -93,7 +93,7 @@ await context.connect(serverTransport, clientTransport);
 ### Session Management
 
 ```typescript
-import { PassthroughContext } from '@civic/passthrough-sdk';
+import { PassthroughContext } from '@civic/passthrough-mcp-server';
 
 const context = new PassthroughContext();
 

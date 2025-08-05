@@ -6,7 +6,7 @@
  * instead of remote HTTP hooks.
  */
 
-import { createPassthroughProxy } from "@civic/passthrough-sdk";
+import { createPassthroughProxy } from "@civic/passthrough-mcp-server";
 import { CallCounterHook } from "@test/integration-hooks/CallCounterHook";
 import { ReadSessionIdHook } from "@test/integration-hooks/ReadSessionIdHook";
 

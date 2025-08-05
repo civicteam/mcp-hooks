@@ -9,7 +9,7 @@
   "dependencies": {
     "@civic/auth-mcp": "^0.2.1",
     "@civic/local-tools-hook": "workspace:^",
-    "@civic/passthrough-sdk": "workspace:*",
+    "@civic/passthrough-mcp-server": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.17.1",
     "zod": "^3.25.74"
   },

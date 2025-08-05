@@ -4,7 +4,7 @@ import {
   type CallToolResult,
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
-} from "@civic/passthrough-sdk";
+} from "@civic/passthrough-mcp-server";
 
 type CallToolRequestWithHookData = CallToolRequest & {
   params: CallToolRequest['params'] & {

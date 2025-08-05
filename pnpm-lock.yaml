@@ -260,31 +260,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.1
         version: 1.17.1
-    devDependencies:
-      '@types/node':
-        specifier: ^20.10.0
-        version: 20.19.9
-      '@vitest/coverage-v8':
-        specifier: ^2.1.8
-        version: 2.1.9(vitest@2.1.9(@types/node@20.19.9))
-      tsx:
-        specifier: ^4.20.3
-        version: 4.20.3
-      typescript:
-        specifier: ^5.2.2
-        version: 5.8.3
-      vitest:
-        specifier: ^2.1.8
-        version: 2.1.9(@types/node@20.19.9)
-
-  packages/passthrough-sdk:
-    dependencies:
-      '@civic/hook-common':
-        specifier: workspace:^
-        version: link:../hook-common
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.17.1
-        version: 1.17.1
       content-type:
         specifier: ^1.0.5
         version: 1.0.5
@@ -316,6 +291,31 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.1.0)(tsx@4.20.3)
+
+  packages/passthrough-mcp-server-legacy:
+    dependencies:
+      '@civic/hook-common':
+        specifier: workspace:^
+        version: link:../hook-common
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.17.1
+        version: 1.17.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.19.9
+      '@vitest/coverage-v8':
+        specifier: ^2.1.8
+        version: 2.1.9(vitest@2.1.9(@types/node@20.19.9))
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
+      typescript:
+        specifier: ^5.2.2
+        version: 5.8.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@20.19.9)
 
   packages/rate-limit-hook:
     dependencies:
@@ -397,9 +397,9 @@ importers:
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
-      '@civic/passthrough-sdk':
+      '@civic/passthrough-mcp-server':
         specifier: workspace:*
-        version: link:../../packages/passthrough-sdk
+        version: link:../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.1
         version: 1.17.1
@@ -422,9 +422,9 @@ importers:
 
   test/integration/hooks:
     dependencies:
-      '@civic/passthrough-sdk':
+      '@civic/passthrough-mcp-server':
         specifier: workspace:*
-        version: link:../../../packages/passthrough-sdk
+        version: link:../../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.1
         version: 1.17.1
@@ -526,9 +526,9 @@ importers:
 
   test/integration/servers/programmatic-passthrough:
     dependencies:
-      '@civic/passthrough-sdk':
+      '@civic/passthrough-mcp-server':
         specifier: workspace:*
-        version: link:../../../../packages/passthrough-sdk
+        version: link:../../../../packages/passthrough-mcp-server
       '@test/integration-hooks':
         specifier: workspace:*
         version: link:../../hooks

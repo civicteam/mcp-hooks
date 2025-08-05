@@ -9,7 +9,7 @@
     "./ReadSessionIdHook": "./ReadSessionIdHook.ts"
   },
   "dependencies": {
-    "@civic/passthrough-sdk": "workspace:*",
+    "@civic/passthrough-mcp-server": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.17.1"
   },
   "devDependencies": {

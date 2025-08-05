@@ -4,7 +4,7 @@ import {
   type CallToolResult,
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
-} from "@civic/passthrough-sdk";
+} from "@civic/passthrough-mcp-server";
 
 /**
  * Hook that reads the session ID from metadata and adds it to the response
