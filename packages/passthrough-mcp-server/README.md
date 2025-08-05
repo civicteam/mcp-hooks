@@ -1,44 +1,68 @@
-# Passthrough MCP Server
+# @civic/passthrough-mcp-server
 
-A Model Context Protocol (MCP) server that passes all requests through to another MCP server with support for tRPC-based hook middleware for validating and modifying tool calls.
+A Model Context Protocol (MCP) server that acts as a passthrough proxy with protocol-level hook middleware support for validating and modifying tool calls.
 
 ## Features
 
-- Acts as a proxy server between MCP clients and another MCP server
-- Configurable to connect to different backend MCP servers
-- Supports various transport methods for MCP (HTTP SSE, HTTP Stream, Stdio)
-- tRPC-based hook system for request/response interception and modification
+- **Bidirectional Protocol Handling**: Seamlessly routes messages between clients and upstream servers
+- **Protocol-Level Hook System**: tRPC-based hook system for request/response interception and modification at the MCP protocol level
+- **Session Isolation**: Each client connection gets its own isolated session context
+- **Transport Abstraction**: Support for multiple transport types (HTTP streaming, stdio, custom)
+- **Graceful Shutdown**: Proper cleanup and cascading transport closure
+- **Type Safety**: Full TypeScript support with comprehensive type definitions
+- **Extensible Architecture**: Easy to extend with custom transports and hooks
 - **MCP Authorization spec compliant**: Properly handles authentication and authorization
-- **401 passthrough**: For httpStream and SSE transports, passes through 401 responses from target servers
-- **Non-MCP request proxying**: Routes non-MCP requests directly to the target server
-- **Authorization header forwarding**: Passes authorization headers from incoming requests to the target server
-- Comprehensive test coverage with modular, testable architecture
+- **Comprehensive test coverage** with modular, testable architecture
 
-## Usage
+## Installation
 
-### Installation
+### As a Standalone Server
 
 ```bash
+git clone <repository>
+cd packages/passthrough-mcp-server
 pnpm install
-```
-
-### Build
-
-```bash
 pnpm build
 ```
 
-### Test
+### As a Library
 
 ```bash
-# Run tests
-pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
+npm install @civic/passthrough-mcp-server
 ```
 
-### Run
+## Core Components
+
+### PassthroughContext
+
+Manages the lifecycle and coordination between server and client protocol instances. This is the main entry point for creating passthrough connections.
+
+### PassthroughServer & PassthroughClient
+
+Server and client protocol implementations that handle MCP message routing. The PassthroughServer manages incoming requests from clients, while the PassthroughClient forwards those requests to upstream servers.
+
+### PassthroughSessionContext
+
+Provides isolated session management for each client connection, ensuring proper resource cleanup and session isolation.
+
+### Hook Chain System
+
+Protocol-level hook processing that allows for:
+- Request validation and modification before reaching the target server
+- Response transformation after receiving from the target server
+- Tool call filtering and security checks
+- Audit logging and monitoring
+
+### Transport Layer
+
+Built on the MCP SDK transport abstraction, supporting:
+- HTTP streaming via RequestContextAwareStreamableHTTPClientTransport
+- stdio (standard input/output) via StdioServerTransport
+- Custom transport implementations via the Transport interface
+
+## Usage
+
+### Standalone Server
 
 ```bash
 # Start the server with default HTTP Stream transport
@@ -83,113 +107,106 @@ Each hook can:
 
 This is useful for implementing validation, security checks, audit logging, or transformations.
 
-### Authorization Support
-
-The passthrough server is fully compliant with the MCP authorization specification:
-
-#### 401 Passthrough
-For `httpStream` and `sse` transports, the server checks if the target MCP server returns a 401 response. If it does, the 401 response is passed through directly to the client, allowing proper authentication flows.
-
-#### Request Routing
-- **MCP requests** (on `/mcp` endpoint): Handled by the MCP protocol handler
-- **Non-MCP requests** (all other paths): Proxied directly to the target server
-
-This allows the passthrough server to work seamlessly with MCP servers that implement OAuth or other authentication mechanisms.
-
-#### Authorization Header Forwarding
-Any authorization headers present in incoming requests are automatically forwarded to the target server, ensuring that authentication credentials are properly passed through the proxy chain.
-
 ## Programmatic Usage
 
-The passthrough MCP server can be used programmatically in your Node.js applications, allowing you to embed a passthrough proxy within your own systems.
+The passthrough MCP server can be used programmatically in your Node.js applications.
 
-### Installation for Library Use
-
-```bash
-npm install @civic/passthrough-mcp-server
-```
-
-### Basic Programmatic Usage
+### Basic Passthrough Server
 
 ```typescript
-import { createPassthroughProxy } from '@civic/passthrough-mcp-server';
+import { PassthroughContext, RequestContextAwareStreamableHTTPClientTransport } from '@civic/passthrough-mcp-server';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-// Create and start the proxy
-const proxy = await createPassthroughProxy({
-  transportType: "httpStream",
-  port: 34000,
-  target: {
-    url: "http://localhost:33000",
-    transportType: "httpStream"
-  },
-  serverInfo: {
-    name: "my-passthrough-server",
-    version: "1.0.0"
-  }
+// Create context for managing server/client coordination
+const context = new PassthroughContext();
+
+// Set up server transport (receives client connections)
+const serverTransport = new StdioServerTransport();
+
+// Set up client transport (connects to upstream server)
+const clientTransport = new RequestContextAwareStreamableHTTPClientTransport(
+  new URL('http://upstream-server.example.com')
+);
+
+// Connect both transports to start passthrough
+await context.connect(serverTransport, clientTransport);
+
+// The passthrough will now route messages between clients and upstream server
+```
+
+### HTTP-to-HTTP Passthrough
+
+```typescript
+import { PassthroughContext, RequestContextAwareStreamableHTTPClientTransport } from '@civic/passthrough-mcp-server';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+
+const context = new PassthroughContext();
+
+// Server transport listens for HTTP client connections
+const serverTransport = new StreamableHTTPServerTransport({
+  sessionIdGenerator: () => crypto.randomUUID()
 });
 
-// Later, stop the proxy
-await proxy.stop();
+// Client transport connects to upstream HTTP server
+const clientTransport = new RequestContextAwareStreamableHTTPClientTransport(
+  new URL('http://upstream-server.example.com')
+);
+
+await context.connect(serverTransport, clientTransport);
 ```
 
-### Advanced Programmatic Features
-
-#### Manual Start
+### With Hook Middleware
 
 ```typescript
-const proxy = await createPassthroughProxy({
-  transportType: "httpStream",
-  port: 34000,
-  target: {
-    url: "http://localhost:33000",
-    transportType: "httpStream"
-  },
-  autoStart: false
-});
+import { PassthroughContext } from '@civic/passthrough-mcp-server';
+// ... other imports
 
-// Perform additional setup...
+const context = new PassthroughContext();
 
-// Start when ready
-await proxy.start();
-```
-
-#### Custom Client Factory
-
-You can provide a custom client factory to control how connections to the target server are created:
-
-```typescript
-import type { ClientFactory, PassthroughClient } from '@civic/passthrough-mcp-server';
-
-const customClientFactory: ClientFactory = // your factory implementation here;
-
-const proxy = await createPassthroughProxy({
-  transportType: "httpStream",
-  port: 34000,
-  target: {
-    url: "http://localhost:33000",
-    transportType: "httpStream"
-  },
-  clientFactory: customClientFactory
-});
-```
-
-#### With Hooks in Code
-
-Configure hooks programmatically with both remote and local hooks:
-
-```typescript
-import { LocalToolsHook } from '@civic/local-tools-hook';
-
-// Create a local hook instance
-const localToolsHook = new LocalToolsHook([
-  {
-    name: "getCurrentTime",
-    description: "Get the current time",
-    inputSchema: { type: "object", properties: {} },
-    handler: async () => ({ content: [{ type: "text", text: new Date().toISOString() }] })
-  }
+// Configure hook chain
+const hookChain = new HookChain([
+  { url: "http://localhost:33004", name: "audit-hook" },
+  { url: "http://localhost:33005", name: "security-hook" }
 ]);
 
+// Set up transports and connect with hooks
+await context.connect(serverTransport, clientTransport, { hookChain });
+```
+
+### Session Management
+
+```typescript
+import { PassthroughContext } from '@civic/passthrough-mcp-server';
+
+const context = new PassthroughContext();
+
+// Set up callbacks for connection lifecycle
+context.onclose = () => {
+  console.log('Passthrough connection closed');
+};
+
+context.onerror = (error) => {
+  console.error('Passthrough error:', error);
+};
+
+// Sessions are automatically managed by the context
+await context.connect(serverTransport, clientTransport);
+
+// Clean up when done
+await context.close();
+```
+
+### Advanced Configuration (Legacy API Compatible)
+
+For backward compatibility, the package also exports legacy-style configuration functions:
+
+```typescript
+import { createPassthroughProxy, loadConfig } from '@civic/passthrough-mcp-server';
+
+// Load configuration from environment
+const config = loadConfig();
+
+// Create proxy with environment-based config
 const proxy = await createPassthroughProxy({
   transportType: "httpStream",
   port: 34000,
@@ -198,140 +215,58 @@ const proxy = await createPassthroughProxy({
     transportType: "httpStream"
   },
   hooks: [
-    // Remote hooks
-    {
-      url: "http://localhost:8080/trpc",
-      name: "audit-hook"
-    },
-    {
-      url: "http://localhost:8081/trpc",
-      name: "security-hook"
-    },
-    // Local hook instance
-    localToolsHook
+    { url: "http://localhost:33004", name: "audit-hook" }
   ]
 });
-```
 
-### API Reference
-
-#### `createPassthroughProxy(options)`
-
-Creates and optionally starts a passthrough MCP proxy server.
-
-**Parameters:**
-- `options.transportType` (required): Transport type for the server ("httpStream", "sse", "stdio")
-- `options.port` (required for non-stdio transports): Port number for the server
-- `options.target` (required): Target server configuration
-  - `url`: URL of the target MCP server
-  - `transportType`: Transport type ("httpStream", "sse")
-- `options.serverInfo` (optional): Server metadata
-  - `name`: Server name
-  - `version`: Server version
-- `options.clientInfo` (optional): Client metadata
-- `options.hooks` (optional): Array of hook configurations (can be RemoteHookConfig or Hook instances)
-  - For remote hooks: `{ url: string, name: string }`
-  - For local hooks: Hook instance implementing the Hook interface
-- `options.autoStart` (optional): Whether to start the server immediately (default: true)
-
-**Returns:**
-A `PassthroughProxy` object with:
-- `server`: The underlying HTTP server instance
-- `start()`: Method to start the server (if not auto-started)
-- `stop()`: Method to stop the server
-
-### Loading Configuration from Environment
-
-When using programmatically, you can still leverage environment variables:
-
-```typescript
-import { loadConfig, createPassthroughProxy } from '@civic/passthrough-mcp-server';
-
-// Load configuration from environment
-const config = loadConfig();
-
-// Create proxy with environment-based config
-const proxy = await createPassthroughProxy({
-  ...config
-});
-```
-
-### Type Exports
-
-The package exports several TypeScript types for better type safety:
-
-```typescript
-import type {
-  PassthroughProxy,
-  StdioPassthroughProxy,
-  HttpPassthroughProxy,
-  StdioProxyConfig,
-  HttpProxyConfig,
-  Config,
-  TargetConfig,
-  BaseConfig,
-  HookDefinition,
-  RemoteHookConfig,
-  Hook,
-  CallToolRequest,
-  CallToolResult,
-  ListToolsRequest,
-  ListToolsResult,
-  LocalHookClient,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
-  ListToolsRequestHookResult,
-  ListToolsResponseHookResult
-} from '@civic/passthrough-mcp-server';
+// Later, stop the proxy
+await proxy.stop();
 ```
 
 ## Hook API
 
-The passthrough server provides a comprehensive API for applying hooks to requests and responses, making it easy to integrate hook functionality into other services like the MCP Hub.
+The passthrough server provides a comprehensive API for applying hooks to requests and responses, making it easy to integrate hook functionality into other services.
 
 ### Key Features
 
-- **Hook processing functions**: Direct exports from the processor module for applying hooks
-- **Hook creation utilities**: `createLocalHookClient` for creating local hook instances
-- **Type exports**: All necessary types from `@civic/hook-common` are re-exported for convenience
+- **Protocol-level hook processing**: Direct exports from the processor module for applying hooks at the MCP protocol level
+- **Hook creation utilities**: Functions for creating and managing hook clients
+- **Type exports**: All necessary types are re-exported for convenience
 - **AbstractHook base class**: Simplifies creating custom local hooks
 
 ### Hook-Related Exports
 
-- `processRequestThroughHooks` - Process requests through a chain of hooks
-- `processResponseThroughHooks` - Process responses through a chain of hooks in reverse order
-- `processTransportErrorThroughHooks` - Process transport errors through hooks
+- `processToolCallRequestThroughHooks` - Process tool call requests through a chain of hooks
+- `processToolCallResponseThroughHooks` - Process tool call responses through hooks in reverse order
+- `processListToolsRequestThroughHooks` - Process list tools requests through hooks
+- `processListToolsResponseThroughHooks` - Process list tools responses through hooks
 - `createHookClient` - Create a hook client instance from a hook definition
 - `createHookClients` - Create multiple hook client instances
-- `getHookClients` - Get and cache hook client instances
 - `AbstractHook` - Base class for implementing custom hooks
-- Types: `Hook`, `ToolCallRequestHookResult`, `ToolCallResponseHookResult`, `ListToolsRequestHookResult`, `ListToolsResponseHookResult`
 
-### Examples
+## Authorization Support
 
-See the `examples/` directory for additional working examples of programmatic usage.
+The passthrough server is fully compliant with the MCP authorization specification:
 
-## Implementation
+### 401 Passthrough
+For `httpStream` and `sse` transports, the server checks if the target MCP server returns a 401 response. If it does, the 401 response is passed through directly to the client, allowing proper authentication flows.
 
-This server uses:
-- **@modelcontextprotocol/sdk**: Direct MCP SDK usage for both server and client implementation
-- **tRPC**: For communication with hook servers
-- **Custom HTTP proxy**: For routing and authorization compliance
+### Request Routing
+- **MCP requests** (on `/mcp` endpoint): Handled by the MCP protocol handler
+- **Non-MCP requests** (all other paths): Proxied directly to the target server
 
-### Architecture
+### Authorization Header Forwarding
+Any authorization headers present in incoming requests are automatically forwarded to the target server, ensuring that authentication credentials are properly passed through the proxy chain.
 
-The codebase is organized into small, focused modules with single responsibilities:
+## Architecture
 
-- **hooks/manager.ts** - Manages hook client instances and caching
-- **hooks/processor.ts** - Processes tool calls through hook chains
-- **server/authProxy.ts** - HTTP proxy server for routing MCP and non-MCP requests
-- **server/mcpHandler.ts** - MCP protocol handler with 401 passthrough support
-- **server/mcpServerAuth.ts** - Creates MCP servers with authorization context
-- **server/toolHandler.ts** - Handles individual tool calls with hook processing
-- **utils/session.ts** - Session management and client connections with auth support
-- **utils/config.ts** - Configuration parsing and validation
+The passthrough SDK follows a layered architecture:
 
-Each module has accompanying unit tests located alongside the source files for easy maintenance and testing.
+1. **Transport Layer**: Built on MCP SDK transports (HTTP, stdio, etc.)
+2. **Protocol Layer**: PassthroughServer and PassthroughClient handle message routing
+3. **Hook Layer**: HookChain processes requests/responses through middleware
+4. **Session Layer**: PassthroughSessionContext manages session lifecycle
+5. **Context Layer**: PassthroughContext coordinates all components
 
 ## Creating Custom Hooks
 
@@ -341,9 +276,46 @@ To create a custom hook:
 2. Extend the `AbstractHook` class and implement the `name` getter
 3. Override the hook methods you need (processToolCallRequest, processToolCallResponse, etc.)
 4. For remote hooks: Create a tRPC server using `createHTTPServer` and `createHookRouter`
-5. For local hooks: Pass the hook instance directly to the passthrough proxy configuration
+5. For local hooks: Pass the hook instance directly to the hook chain
 
-See the audit-hook and guardrail-hook packages for remote hook examples, and local-tools-hook for a local hook example.
+See the audit-hook and guardrail-hook packages for remote hook examples.
+
+## Requirements
+
+- Node.js >= 18.0.0
+- TypeScript >= 5.0.0 (for development)
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build the SDK
+pnpm build
+
+# Run tests
+pnpm test
+
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
+```
+
+## Testing
+
+The SDK includes comprehensive test coverage:
+- Unit tests for individual components
+- Integration tests for end-to-end scenarios
+- Hook chain processing tests
+- Cleanup and error handling tests
+
+Run tests with:
+```bash
+pnpm test
+```
 
 ## Example Setup
 
@@ -371,3 +343,11 @@ Now clients can connect to the passthrough server on port 34000, and all request
 1. Logged by the audit hook
 2. Validated by the guardrail hook
 3. Forwarded to the target server
+
+## Contributing
+
+Contributions are welcome! Please see the main repository's contributing guidelines.
+
+## License
+
+MIT License - see the LICENSE file in the root of the repository.

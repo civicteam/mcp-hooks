@@ -96,10 +96,6 @@ async function main() {
       url: targetUrl,
       transportType: targetTransport,
     },
-    serverInfo: {
-      name: "test-passthrough-with-local-tools",
-      version: "1.0.0",
-    },
     hooks: [localToolsHook],
   });
 

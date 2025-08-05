@@ -7,7 +7,11 @@ import {
 } from "@civic/passthrough-mcp-server";
 
 type CallToolRequestWithHookData = CallToolRequest & {
-  _hookData?: { sessionCount: number };
+  params: CallToolRequest['params'] & {
+    _meta?: CallToolRequest['params']['_meta'] & {
+      _hookData?: { sessionCount: number };
+    };
+  };
 };
 
 /**
@@ -26,6 +30,8 @@ export class CallCounterHook extends AbstractHook {
     // Get session ID from _meta
     const sessionId = toolCall.params._meta?.sessionId || "default";
 
+    console.log(`[CallCounterHook] Session ${sessionId}: ${toolCall.params.name}`)
+
     // Increment count for this session
     const currentCount = (this.sessionCounts.get(sessionId) || 0) + 1;
     this.sessionCounts.set(sessionId, currentCount);
@@ -35,14 +41,14 @@ export class CallCounterHook extends AbstractHook {
     );
 
     // Store the count in the tool call for use in processResponse
-    const modifiedToolCall: CallToolRequestWithHookData = {
-      ...toolCall,
+    toolCall.params._meta = {
+      ...toolCall.params._meta,
       _hookData: { sessionCount: currentCount },
-    };
+    }
 
     return {
       resultType: "continue",
-      request: modifiedToolCall as CallToolRequest,
+      request: toolCall,
     };
   }
 
@@ -51,9 +57,8 @@ export class CallCounterHook extends AbstractHook {
     originalToolCall: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     // Get the session count from the modified tool call
-    const sessionCount =
-      (originalToolCall as CallToolRequestWithHookData)._hookData
-        ?.sessionCount || 0;
+    const sessionCount: number =
+        (originalToolCall as CallToolRequestWithHookData).params._meta?._hookData.sessionCount || 0;
 
     // Add request count to the response
     const modifiedResponse: CallToolResult = {

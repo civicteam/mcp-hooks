@@ -1,6 +1,6 @@
 {
   "name": "@civic/passthrough-mcp-server",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "A Model Context Protocol (MCP) server that acts as a passthrough proxy with hook middleware support",
   "keywords": [
     "mcp",
@@ -63,13 +63,18 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.15.0"
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "content-type": "^1.0.5",
+    "eventsource-parser": "^3.0.3",
+    "raw-body": "^3.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@types/content-type": "^1.1.9",
+    "@types/node": "^24.1.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.20.3",
-    "typescript": "^5.2.2",
-    "vitest": "^2.1.8"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

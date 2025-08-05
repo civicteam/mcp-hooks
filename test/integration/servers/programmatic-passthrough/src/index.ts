@@ -23,17 +23,13 @@ async function main() {
 
   // Create passthrough proxy with programmatic hooks
   const proxy = await createPassthroughProxy({
-    transportType: "httpStream",
+    sourceTransportType: "httpStream",
     port,
     target: {
       url: targetUrl,
       transportType: "httpStream",
     },
     hooks: [counterHook, sessionIdHook],
-    serverInfo: {
-      name: "programmatic-passthrough-test",
-      version: "1.0.0",
-    },
   });
 
   console.log(`Programmatic passthrough server is running on port ${port}`);

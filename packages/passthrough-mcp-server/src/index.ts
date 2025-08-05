@@ -12,19 +12,15 @@ export {
   createStdioPassthroughProxy,
   createHttpPassthroughProxy,
   createPassthroughProxy,
-} from "./createProxies.js";
+} from "./proxy/createProxies.js";
 
 // Export types
-export type {
-  PassthroughProxy,
-  StdioPassthroughProxy,
-  HttpPassthroughProxy,
-} from "./types.js";
+export type { PassthroughProxy } from "./proxy/types.js";
 
 export type {
   StdioProxyConfig,
   HttpProxyConfig,
-} from "./createProxies.js";
+} from "./proxy/createProxies.js";
 
 // Export config types
 export type {
@@ -33,7 +29,7 @@ export type {
   BaseConfig,
   HookDefinition,
   RemoteHookConfig,
-} from "./lib/config.js";
+} from "./proxy/config.js";
 
 // Export hook-related types and interfaces
 export type {
@@ -55,12 +51,17 @@ export { AbstractHook } from "@civic/hook-common";
 export {
   processRequestThroughHooks,
   processResponseThroughHooks,
-  processTransportErrorThroughHooks,
-} from "./hooks/processor.js";
+} from "./hook/processor.js";
 
 // Export hook utilities
-export { getHookClients } from "./hooks/manager.js";
-export { createHookClient, createHookClients } from "./hooks/utils.js";
+export { getHookClients } from "./hook/manager.js";
+export { createHookClient, createHookClients } from "./hook/utils.js";
 
 // Export utility functions that users might need
-export { loadConfig } from "./lib/config.js";
+export { loadConfig } from "./proxy/config.js";
+
+// Export custom transports
+export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";
+
+// Export core passthrough classes
+export { PassthroughContext } from "./shared/passthroughContext.js";
