@@ -39,14 +39,6 @@ export type HookDefinition = RemoteHookConfig | Hook;
 export type Config = BaseConfig & {
   target: TargetConfig;
   hooks?: HookDefinition[];
-  serverInfo?: {
-    name: string;
-    version: `${number}.${number}.${number}`;
-  };
-  clientInfo?: {
-    name: string;
-    version: string;
-  };
   authToken?: string; // Optional auth token for stdio transport
 };
 

@@ -25,10 +25,6 @@ async function example1_basicUsage() {
       url: "http://localhost:33000",
       transportType: "httpStream",
     },
-    serverInfo: {
-      name: "my-passthrough-server",
-      version: "1.0.0",
-    },
   });
 
   console.log("Passthrough proxy is running!");
