@@ -43,7 +43,7 @@ const DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOp
  * It will connect to a server using HTTP POST for sending messages and HTTP GET with Server-Sent Events
  * for receiving messages.
  */
-export class ExtendedStreamableHTTPClientTransport extends StreamableHTTPClientTransport {
+export class RequestContextAwareStreamableHTTPClientTransport extends StreamableHTTPClientTransport {
   override async send(
     message: JSONRPCMessage | JSONRPCMessage[],
     options?: {

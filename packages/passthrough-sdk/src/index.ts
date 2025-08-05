@@ -59,3 +59,6 @@ export { createHookClient, createHookClients } from "./hook/utils.js";
 
 // Export utility functions that users might need
 export { loadConfig } from "./proxy/config.js";
+
+// Export custom transports
+export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";

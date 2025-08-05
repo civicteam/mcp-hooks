@@ -18,7 +18,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
-import { ExtendedStreamableHTTPClientTransport } from "../../transports/extendedStreamableHTTPClientTransport.js";
+import { RequestContextAwareStreamableHTTPClientTransport } from "../../transports/requestContextAwareStreamableHTTPClientTransport.js";
 import type { Config } from "../config.js";
 import type { PassthroughProxy } from "../types.js";
 import { createMcpHttpServer } from "./mcpHttpServer.js";
@@ -94,7 +94,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         // Forward all headers except MCP-reserved ones
         const headers = buildClientHeaders(req.headers, this.config.authToken);
 
-        const clientTransport = new ExtendedStreamableHTTPClientTransport(
+        const clientTransport = new RequestContextAwareStreamableHTTPClientTransport(
           new URL(this.targetUrl + this.targetMcpPath),
           {
             requestInit: {
