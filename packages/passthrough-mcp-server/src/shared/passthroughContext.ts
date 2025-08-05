@@ -37,14 +37,6 @@ export class PassthroughContext {
   private _passthroughClient: PassthroughClient;
   private _hookChain: HookChain;
 
-  get passthroughServer(): PassthroughServer {
-    return this._passthroughServer;
-  }
-
-  get passthroughClient(): PassthroughClient {
-    return this._passthroughClient;
-  }
-
   get passthroughServerTransport(): Transport | undefined {
     return this._passthroughServer.transport;
   }

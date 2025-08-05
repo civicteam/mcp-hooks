@@ -62,3 +62,6 @@ export { loadConfig } from "./proxy/config.js";
 
 // Export custom transports
 export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";
+
+// Export core passthrough classes
+export { PassthroughContext } from "./shared/passthroughContext.js";
