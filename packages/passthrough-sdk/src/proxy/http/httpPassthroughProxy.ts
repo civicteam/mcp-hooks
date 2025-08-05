@@ -94,14 +94,15 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         // Forward all headers except MCP-reserved ones
         const headers = buildClientHeaders(req.headers, this.config.authToken);
 
-        const clientTransport = new RequestContextAwareStreamableHTTPClientTransport(
-          new URL(this.targetUrl + this.targetMcpPath),
-          {
-            requestInit: {
-              headers,
+        const clientTransport =
+          new RequestContextAwareStreamableHTTPClientTransport(
+            new URL(this.targetUrl + this.targetMcpPath),
+            {
+              requestInit: {
+                headers,
+              },
             },
-          },
-        );
+          );
 
         serverTransport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),

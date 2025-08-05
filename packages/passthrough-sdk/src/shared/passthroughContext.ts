@@ -107,9 +107,9 @@ export class PassthroughContext {
           sessionId: this.passthroughServerTransport?.sessionId,
           timestamp: new Date().toISOString(),
           source: "passthrough-server",
-        }
-      }
-    }
+        },
+      },
+    };
   }
 
   private addMetaToResult(result: ServerResult): ServerResult {
@@ -120,8 +120,8 @@ export class PassthroughContext {
         sessionId: this.passthroughClientTransport?.sessionId,
         timestamp: new Date().toISOString(),
         source: "passthrough-server",
-      }
-    }
+      },
+    };
   }
 
   private async processServerRequest(
@@ -130,11 +130,11 @@ export class PassthroughContext {
     hookResponseMethodName: string,
   ): Promise<ServerResult> {
     // Annotate request
-    request = this.addMetaToRequest(request);
+    const annotatedRequest = this.addMetaToRequest(request);
 
     // pass request through chain
     const requestResult = await processRequestThroughHooks(
-      request,
+      annotatedRequest,
       this._hookChain.head,
       hookRequestMethodName,
     );
@@ -155,12 +155,12 @@ export class PassthroughContext {
       );
     }
 
-    response = this.addMetaToResult(response);
+    const annotatedResponse = this.addMetaToResult(response);
 
     // pass response through chain
     const responseResult = await processResponseThroughHooks(
-      response,
-      request,
+      annotatedResponse,
+      annotatedRequest,
       requestResult.lastProcessedHook,
       hookResponseMethodName,
     );
