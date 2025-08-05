@@ -1,16 +1,26 @@
 {
-  "name": "@civic/passthrough-sdk",
-  "version": "0.1.0",
-  "description": "SDK for implementing passthrough servers with transport and protocol classes",
-  "keywords": ["mcp", "passthrough", "sdk", "transport", "protocol"],
-  "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/passthrough-sdk",
+  "name": "@civic/passthrough-mcp-server",
+  "version": "0.6.3",
+  "description": "A Model Context Protocol (MCP) server that acts as a passthrough proxy with hook middleware support",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "proxy",
+    "passthrough",
+    "middleware",
+    "hooks",
+    "trpc",
+    "ai",
+    "llm"
+  ],
+  "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/passthrough-mcp-server",
   "bugs": {
     "url": "https://github.com/civicteam/mcp-hooks/issues"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/civicteam/mcp-hooks.git",
-    "directory": "packages/passthrough-sdk"
+    "directory": "packages/passthrough-mcp-server"
   },
   "license": "MIT",
   "author": "Civic Technologies, Inc.",
@@ -24,14 +34,21 @@
       "import": "./dist/index.js"
     }
   },
+  "bin": {
+    "passthrough-mcp-server": "./dist/cli.js"
+  },
   "files": ["dist/", "README.md", "LICENSE", "CHANGELOG.md"],
   "scripts": {
-    "dev": "tsc --watch",
+    "dev": "tsx watch src/cli.ts",
+    "dev:stdio": "tsx watch src/cli.ts -- --stdio",
     "build": "tsc",
+    "postbuild": "chmod +x dist/cli.js",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
+    "start": "node dist/cli.js",
+    "start:stdio": "node dist/cli.js --stdio",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepack": "pnpm run build",
