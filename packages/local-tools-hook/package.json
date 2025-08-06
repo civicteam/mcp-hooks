@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "zod": "^3.25.76",
+    "zod": "^4.0.15",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
