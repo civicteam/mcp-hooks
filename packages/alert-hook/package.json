@@ -16,8 +16,8 @@
     "export-logs": "tsx scripts/export-logs.ts"
   },
   "dependencies": {
-    "@trpc/server": "^11.1.2",
-    "dotenv": "^16.3.1",
+    "@trpc/server": "^11.4.4",
+    "dotenv": "^17.2.1",
     "@civic/hook-common": "workspace:^"
   },
   "devDependencies": {
