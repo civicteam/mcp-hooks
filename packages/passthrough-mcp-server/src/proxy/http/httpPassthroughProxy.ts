@@ -19,6 +19,7 @@ import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
 import { RequestContextAwareStreamableHTTPClientTransport } from "../../transports/requestContextAwareStreamableHTTPClientTransport.js";
 import type { Config } from "../config.js";
+import { createClientTransport } from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
 import { createMcpHttpServer } from "./mcpHttpServer.js";
 import { McpSessionManager } from "./mcpSessionManager.js";
@@ -29,13 +30,8 @@ export class HttpPassthroughProxy implements PassthroughProxy {
   private isStarted = false;
   private sessionManager: McpSessionManager;
 
-  private readonly targetUrl: string;
-  private readonly targetMcpPath: string;
-
   constructor(private config: Config & { sourceTransportType: "httpStream" }) {
     this.sessionManager = new McpSessionManager();
-    this.targetUrl = config.target.url;
-    this.targetMcpPath = config.target.mcpPath || "/mcp";
   }
 
   protected async handleRequest(
@@ -89,15 +85,11 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         // Forward all headers except MCP-reserved ones
         const headers = buildClientHeaders(req.headers, this.config.authToken);
 
-        const clientTransport =
-          new RequestContextAwareStreamableHTTPClientTransport(
-            new URL(this.targetUrl + this.targetMcpPath),
-            {
-              requestInit: {
-                headers,
-              },
-            },
-          );
+        const clientTransport = createClientTransport(
+          this.config.target,
+          this.config.authToken,
+          headers, // Pass custom headers
+        );
 
         serverTransport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
@@ -223,8 +215,8 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     // Create HTTP proxy server
     this.httpServer = createMcpHttpServer(
       {
-        targetUrl: this.targetUrl,
-        mcpPath: this.targetMcpPath,
+        targetUrl: this.config.target.url,
+        mcpPath: this.config.target.mcpPath || "/mcp",
       },
       this.handleRequest.bind(this),
     );
