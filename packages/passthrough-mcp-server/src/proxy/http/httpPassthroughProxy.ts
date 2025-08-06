@@ -13,7 +13,6 @@ import type {
 
 import { randomUUID } from "node:crypto";
 import { URL } from "node:url";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../../logger/logger.js";
@@ -30,8 +29,8 @@ export class HttpPassthroughProxy implements PassthroughProxy {
   private isStarted = false;
   private sessionManager: McpSessionManager;
 
-  private targetUrl: string;
-  private targetMcpPath: string;
+  private readonly targetUrl: string;
+  private readonly targetMcpPath: string;
 
   constructor(private config: Config & { sourceTransportType: "httpStream" }) {
     this.sessionManager = new McpSessionManager();
@@ -231,8 +230,8 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     // Create HTTP proxy server
     this.httpServer = createMcpHttpServer(
       {
-        targetUrl: this.config.target.url,
-        mcpEndpoint: "/mcp",
+        targetUrl: this.targetUrl,
+        mcpPath: this.targetMcpPath,
       },
       this.handleRequest.bind(this),
     );

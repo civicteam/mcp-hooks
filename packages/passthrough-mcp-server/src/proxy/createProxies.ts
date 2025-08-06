@@ -44,7 +44,7 @@ export async function createStdioPassthroughProxy(
 ): Promise<StdioPassthroughProxy> {
   // Configure logger for stdio mode to avoid interfering with stdout
   configureLoggerForStdio();
-  
+
   const { autoStart = true, ...proxyConfig } = config;
 
   const fullConfig: Config = {

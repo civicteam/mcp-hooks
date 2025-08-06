@@ -9,7 +9,7 @@
 import * as process from "node:process";
 import type { Hook } from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { configureLoggerForStdio, logger } from "../logger/logger.js";
+import { logger } from "../logger/logger.js";
 
 type TransportType = "httpStream" | "sse" | "custom";
 type SourceTransportType = "stdio" | "httpStream" | "sse" | "custom";
