@@ -23,10 +23,10 @@ export function createClientTransport(
   customHeaders?: Record<string, string>,
 ): Transport {
   if (targetConfig.transportType === "custom") {
-    if (!targetConfig.transport) {
-      throw new Error("Custom transport is not defined");
+    if (!targetConfig.transportFactory) {
+      throw new Error("Custom transport factory is not defined");
     }
-    return targetConfig.transport;
+    return targetConfig.transportFactory();
   }
 
   if (targetConfig.transportType === "httpStream") {

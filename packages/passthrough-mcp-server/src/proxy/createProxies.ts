@@ -123,7 +123,7 @@ export async function createPassthroughProxy(
     return createHttpPassthroughProxy(config);
   }
   if (sourceTransportType === "custom") {
-    throw new Error("Custom Transport not supported yet.");
+    throw new Error("Custom sourceTransport not supported yet.");
   }
   throw new Error(
     `Unsupported transport type: ${sourceTransportType}. Only stdio and httpStream are supported.`,

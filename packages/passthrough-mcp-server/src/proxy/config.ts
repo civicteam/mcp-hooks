@@ -31,7 +31,7 @@ export type BaseConfig =
 
 export interface TargetConfig {
   transportType: TransportType;
-  transport?: Transport;
+  transportFactory?: () => Transport;
   url: string;
   mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
 }

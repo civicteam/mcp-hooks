@@ -21,12 +21,10 @@ export class StdioPassthroughProxy implements PassthroughProxy {
 
   constructor(private config: Config & { sourceTransportType: "stdio" }) {
     this.serverTransport = new StdioServerTransport();
-
     this.clientTransport = createClientTransport(
-      config.target,
-      config.authToken,
+      this.config.target,
+      this.config.authToken,
     );
-
     this.proxyContext = new PassthroughContext(config.hooks);
   }
 
