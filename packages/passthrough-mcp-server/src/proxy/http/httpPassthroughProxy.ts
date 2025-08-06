@@ -19,7 +19,11 @@ import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
 import { RequestContextAwareStreamableHTTPClientTransport } from "../../transports/requestContextAwareStreamableHTTPClientTransport.js";
 import type { Config } from "../config.js";
-import { createClientTransport } from "../transportFactory.js";
+import {
+  createClientTransport,
+  getTargetMcpPath,
+  getTargetUrl,
+} from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
 import { createMcpHttpServer } from "./mcpHttpServer.js";
 import { McpSessionManager } from "./mcpSessionManager.js";
@@ -215,8 +219,8 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     // Create HTTP proxy server
     this.httpServer = createMcpHttpServer(
       {
-        targetUrl: this.config.target.url,
-        mcpPath: this.config.target.mcpPath || "/mcp",
+        targetUrl: getTargetUrl(this.config.target),
+        mcpPath: getTargetMcpPath(this.config.target),
       },
       this.handleRequest.bind(this),
     );
@@ -244,7 +248,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     this.isStarted = true;
 
     logger.info(
-      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${this.config.target.url}`,
+      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${getTargetUrl(this.config.target)}`,
     );
   }
 

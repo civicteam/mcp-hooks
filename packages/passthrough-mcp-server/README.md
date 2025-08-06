@@ -196,6 +196,50 @@ await context.connect(serverTransport, clientTransport);
 await context.close();
 ```
 
+### Target Configuration
+
+The `TargetConfig` interface uses discriminated unions for type safety, ensuring only valid properties are available for each transport type:
+
+#### HTTP Stream or SSE Transport
+```typescript
+{
+  transportType: "httpStream" | "sse";
+  url: string;                    // Target server URL
+  mcpPath?: string;              // MCP endpoint path (defaults to "/mcp")
+}
+```
+
+#### Custom Transport Factory
+```typescript
+{
+  transportType: "custom";
+  transportFactory: () => Transport;  // Factory function returning custom transport
+}
+```
+
+#### Example Usage
+```typescript
+// HTTP/SSE transport configuration
+const httpConfig = {
+  target: {
+    transportType: "httpStream" as const,
+    url: "http://localhost:33000",
+    mcpPath: "/api/mcp"  // Custom endpoint path
+  }
+};
+
+// Custom transport configuration
+const customConfig = {
+  target: {
+    transportType: "custom" as const,
+    transportFactory: () => new MyCustomTransport({
+      endpoint: "ws://localhost:8080",
+      protocols: ["mcp"]
+    })
+  }
+};
+```
+
 ### Advanced Configuration (Legacy API Compatible)
 
 For backward compatibility, the package also exports legacy-style configuration functions:
@@ -211,8 +255,9 @@ const proxy = await createPassthroughProxy({
   transportType: "httpStream",
   port: 34000,
   target: {
+    transportType: "httpStream",
     url: "http://localhost:33000",
-    transportType: "httpStream"
+    mcpPath: "/mcp" // Optional, defaults to /mcp
   },
   hooks: [
     { url: "http://localhost:33004", name: "audit-hook" }

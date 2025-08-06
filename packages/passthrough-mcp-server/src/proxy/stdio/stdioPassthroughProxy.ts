@@ -9,7 +9,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
 import type { Config } from "../config.js";
-import { createClientTransport } from "../transportFactory.js";
+import { createClientTransport, getTargetUrl } from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
 
 export class StdioPassthroughProxy implements PassthroughProxy {
@@ -46,7 +46,7 @@ export class StdioPassthroughProxy implements PassthroughProxy {
     this.isStarted = true;
 
     logger.info(
-      `[StdioPassthrough] Passthrough MCP Server running with stdio transport, connecting to target at ${this.config.target.url}`,
+      `[StdioPassthrough] Passthrough MCP Server running with stdio transport, connecting to target at ${getTargetUrl(this.config.target)}`,
     );
   }
 

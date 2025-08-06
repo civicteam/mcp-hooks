@@ -11,7 +11,6 @@ import type { Hook } from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { logger } from "../logger/logger.js";
 
-type TransportType = "httpStream" | "sse" | "custom";
 type SourceTransportType = "stdio" | "httpStream" | "sse" | "custom";
 
 // Base configuration with discriminated union based on transport type
@@ -29,12 +28,16 @@ export type BaseConfig =
       sourceTransport: Transport;
     };
 
-export interface TargetConfig {
-  transportType: TransportType;
-  transportFactory?: () => Transport;
-  url: string;
-  mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
-}
+export type TargetConfig =
+  | {
+      transportType: "httpStream" | "sse";
+      url: string;
+      mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
+    }
+  | {
+      transportType: "custom";
+      transportFactory: () => Transport;
+    };
 
 export interface RemoteHookConfig {
   url: string;
