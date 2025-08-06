@@ -17,6 +17,7 @@ import {
   processRequestThroughHooks,
   processResponseThroughHooks,
 } from "@civic/passthrough-mcp-server";
+import { logger } from "../src/logger/logger.js";
 
 /**
  * Example: Create a validation hook using AbstractHook
@@ -71,7 +72,7 @@ async function processToolCallWithHooks(
   >(toolCall, hooks, "processToolCallRequest");
 
   if (requestResult.resultType === "abort") {
-    console.error("Request rejected:", requestResult.reason);
+    logger.error(`Request rejected: ${requestResult.reason}`);
     return {
       error: requestResult.reason,
       status: "rejected",
@@ -100,7 +101,7 @@ async function processToolCallWithHooks(
   );
 
   if (responseResult.resultType === "abort") {
-    console.error("Response rejected:", responseResult.reason);
+    logger.error(`Response rejected: ${responseResult.reason}`);
     return {
       error: responseResult.reason,
       status: "rejected",
@@ -163,7 +164,7 @@ class ToolService {
 
   private async executeInternal(toolCall: CallToolRequest): Promise<unknown> {
     // Your actual tool execution logic here
-    console.log(`Executing tool: ${toolCall.params.name}`);
+    logger.info(`Executing tool: ${toolCall.params.name}`);
     return {
       content: [
         {
@@ -177,7 +178,7 @@ class ToolService {
 
 // Helper function to simulate tool execution
 async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
-  console.log(`Executing tool: ${toolCall.params.name}`);
+  logger.info(`Executing tool: ${toolCall.params.name}`);
 
   // Simulate different tool responses
   switch (toolCall.params.name) {
@@ -226,7 +227,7 @@ async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
 // Example usage
 async function main() {
   // Example 1: Direct usage
-  console.log("=== Example 1: Direct Usage ===");
+  logger.info("=== Example 1: Direct Usage ===");
   const searchCall: CallToolRequest = {
     method: "tools/call",
     params: {
@@ -236,10 +237,10 @@ async function main() {
   };
 
   const result1 = await processToolCallWithHooks(searchCall);
-  console.log("Search result:", result1);
+  logger.info(`Search result: ${JSON.stringify(result1)}`);
 
   // Example 2: Forbidden tool
-  console.log("\n=== Example 2: Forbidden Tool ===");
+  logger.info("\n=== Example 2: Forbidden Tool ===");
   const forbiddenCall: CallToolRequest = {
     method: "tools/call",
     params: {
@@ -249,10 +250,10 @@ async function main() {
   };
 
   const result2 = await processToolCallWithHooks(forbiddenCall);
-  console.log("Forbidden result:", result2);
+  logger.info(`Forbidden result: ${JSON.stringify(result2)}`);
 
   // Example 3: Using the service class
-  console.log("\n=== Example 3: Service Class Usage ===");
+  logger.info("\n=== Example 3: Service Class Usage ===");
   const service = new ToolService([
     new ValidationHook(),
     // Add more hooks as needed
@@ -266,13 +267,13 @@ async function main() {
         arguments: { expression: "2 + 2" },
       },
     });
-    console.log("Calculation result:", result3);
+    logger.info(`Calculation result: ${JSON.stringify(result3)}`);
   } catch (error) {
-    console.error("Service error:", error);
+    logger.error(`Service error: ${error}`);
   }
 }
 
 // Run the example
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch((err) => logger.error(String(err)));
 }
