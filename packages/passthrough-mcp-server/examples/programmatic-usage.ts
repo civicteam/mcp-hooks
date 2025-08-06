@@ -114,7 +114,7 @@ async function example4_withProgrammaticHooks() {
       );
       return {
         resultType: "continue",
-        response: response,
+        response,
       };
     }
   }
@@ -169,7 +169,9 @@ async function example4_withProgrammaticHooks() {
 }
 
 async function example5_stdioProxy() {
-  console.log("\nExample 5: Stdio Proxy");
+  // Note: When using stdio transport, all logging is sent to stderr
+  // to avoid interfering with the stdio protocol communication
+  console.error("\nExample 5: Stdio Proxy");
 
   // Example of stdio proxy (useful for direct command-line integration)
   const proxy = await createPassthroughProxy({
@@ -180,8 +182,9 @@ async function example5_stdioProxy() {
     },
   });
 
-  console.log("Stdio proxy is running!");
-  console.log("The proxy will forward stdio input/output to the HTTP target");
+  // These messages are sent to stderr when using stdio transport
+  console.error("Stdio proxy is running!");
+  console.error("The proxy will forward stdio input/output to the HTTP target");
 }
 
 // Run examples based on command line argument

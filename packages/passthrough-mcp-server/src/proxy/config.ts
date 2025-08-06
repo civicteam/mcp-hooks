@@ -106,11 +106,6 @@ export function loadConfig(): Config {
   // Server configuration
   const sourceTransportType = parseServerTransport(process.argv);
 
-  // Configure logger for stdio mode to avoid interfering with stdout
-  if (sourceTransportType === "stdio") {
-    configureLoggerForStdio();
-  }
-
   // Target configuration
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33000";
   const targetTransport = parseClientTransport(process.env);
