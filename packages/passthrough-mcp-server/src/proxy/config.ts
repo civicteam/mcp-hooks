@@ -9,9 +9,8 @@
 import * as process from "node:process";
 import type { Hook } from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { configureLoggerForStdio, logger } from "../logger/logger.js";
+import { logger } from "../logger/logger.js";
 
-type TransportType = "httpStream" | "sse" | "custom";
 type SourceTransportType = "stdio" | "httpStream" | "sse" | "custom";
 
 // Base configuration with discriminated union based on transport type
@@ -29,12 +28,16 @@ export type BaseConfig =
       sourceTransport: Transport;
     };
 
-export interface TargetConfig {
-  transportType: TransportType;
-  transport?: Transport;
-  url: string;
-  mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
-}
+export type TargetConfig =
+  | {
+      transportType: "httpStream" | "sse";
+      url: string;
+      mcpPath?: string; // Path to MCP endpoint on target server, defaults to /mcp
+    }
+  | {
+      transportType: "custom";
+      transportFactory: () => Transport;
+    };
 
 export interface RemoteHookConfig {
   url: string;
@@ -105,11 +108,6 @@ export function createHookConfigs(urls: string[]): RemoteHookConfig[] {
 export function loadConfig(): Config {
   // Server configuration
   const sourceTransportType = parseServerTransport(process.argv);
-
-  // Configure logger for stdio mode to avoid interfering with stdout
-  if (sourceTransportType === "stdio") {
-    configureLoggerForStdio();
-  }
 
   // Target configuration
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33000";

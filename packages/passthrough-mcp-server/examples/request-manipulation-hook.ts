@@ -20,6 +20,7 @@ import {
   type ToolCallRequestHookResult,
   type ToolCallResponseHookResult,
 } from "@civic/hook-common";
+import { logger } from "../src/logger/logger.js";
 
 /**
  * Example 1: Authentication Header Hook
@@ -101,7 +102,7 @@ export class ConditionalRoutingHook extends AbstractHook {
     const targetHost = this.routingRules[toolName];
 
     if (targetHost) {
-      console.log(`Routing tool ${toolName} to ${targetHost}`);
+      logger.info(`Routing tool ${toolName} to ${targetHost}`);
       return {
         resultType: "continue",
         request,
@@ -146,7 +147,7 @@ export class PathRewritingHook extends AbstractHook {
     for (const mapping of this.pathMappings) {
       if (mapping.from.test(modifiedPath)) {
         modifiedPath = modifiedPath.replace(mapping.from, mapping.to);
-        console.log(
+        logger.info(
           `Rewriting path from ${request.req.path} to ${modifiedPath}`,
         );
         break;
@@ -273,8 +274,8 @@ export class CombinedManipulationHook extends AbstractHook {
 
 // Example usage
 async function main() {
-  console.log("Request Manipulation Hook Examples");
-  console.log("=================================");
+  logger.info("Request Manipulation Hook Examples");
+  logger.info("=================================");
 
   // Example 1: Authentication
   const authHook = new AuthenticationHeaderHook("sk-test-12345");
@@ -292,7 +293,7 @@ async function main() {
   };
 
   const authResult = await authHook.processToolCallRequest(authRequest);
-  console.log("\nAuth Hook Result:", JSON.stringify(authResult, null, 2));
+  logger.info(`\nAuth Hook Result: ${JSON.stringify(authResult, null, 2)}`);
 
   // Example 2: Conditional Routing
   const routingHook = new ConditionalRoutingHook({
@@ -316,7 +317,9 @@ async function main() {
 
   const routingResult =
     await routingHook.processToolCallRequest(routingRequest);
-  console.log("\nRouting Hook Result:", JSON.stringify(routingResult, null, 2));
+  logger.info(
+    `\nRouting Hook Result: ${JSON.stringify(routingResult, null, 2)}`,
+  );
 
   // Example 3: Path Rewriting
   const pathHook = new PathRewritingHook([
@@ -338,7 +341,7 @@ async function main() {
   };
 
   const pathResult = await pathHook.processToolCallRequest(pathRequest);
-  console.log("\nPath Hook Result:", JSON.stringify(pathResult, null, 2));
+  logger.info(`\nPath Hook Result: ${JSON.stringify(pathResult, null, 2)}`);
 
   // Example 4: Header Filtering
   const filterHook = new HeaderFilteringHook([
@@ -366,10 +369,10 @@ async function main() {
   };
 
   const filterResult = await filterHook.processToolCallRequest(filterRequest);
-  console.log("\nFilter Hook Result:", JSON.stringify(filterResult, null, 2));
+  logger.info(`\nFilter Hook Result: ${JSON.stringify(filterResult, null, 2)}`);
 }
 
 // Run examples if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch((err) => logger.error(String(err)));
 }

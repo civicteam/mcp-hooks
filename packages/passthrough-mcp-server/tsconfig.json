@@ -16,6 +16,7 @@
     "**/*.test.ts",
     "**/*.test.js",
     "test/**/*",
-    "examples/**/*"
+    "examples/**/*",
+    "src/integration-tests/**/*"
   ]
 }

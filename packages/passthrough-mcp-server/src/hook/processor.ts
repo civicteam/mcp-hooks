@@ -23,6 +23,7 @@ import type {
   MethodsWithTransportErrorType,
   TransportError,
 } from "@civic/hook-common";
+import { logger } from "../logger/logger.js";
 import type { LinkedListHook } from "./hookChain.js";
 
 /**
@@ -56,7 +57,7 @@ export async function processRequestThroughHooks<
   let currentRequest = request;
   let currentHook = head;
 
-  console.log(
+  logger.debug(
     `[Processor] Processing request through hooks for method ${methodName}`,
   );
   while (currentHook) {
@@ -68,13 +69,13 @@ export async function processRequestThroughHooks<
     // - A hook might not implement every possible method
     // - TypeScript ensures methodName is valid, but not that every hook has it
     if (!hookMethod || typeof hookMethod !== "function") {
-      console.log(
+      logger.debug(
         `[Processor] Skipping hook ${hook.name} - no method ${methodName}`,
       );
       continue;
     }
 
-    console.log(`Processing hook ${hook.name} for method ${methodName}`);
+    logger.debug(`Processing hook ${hook.name} for method ${methodName}`);
 
     // Why use .call():
     // - Ensures 'this' context is properly bound to the hook instance

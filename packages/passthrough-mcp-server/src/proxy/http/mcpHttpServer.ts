@@ -16,7 +16,7 @@ import { logger } from "../../logger/logger.js";
 
 export interface ProxyOptions {
   targetUrl: string;
-  mcpEndpoint?: string; // defaults to /mcp
+  mcpPath: string;
 }
 
 /**
@@ -29,13 +29,12 @@ export function createMcpHttpServer(
   mcpHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
 ): http.Server {
   const targetUrl = new URL(options.targetUrl);
-  const mcpEndpoint = options.mcpEndpoint || "/mcp";
 
   return http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url || "/", `http://${req.headers.host}`);
 
     // Route based on path
-    if (requestUrl.pathname === mcpEndpoint) {
+    if (requestUrl.pathname === options.mcpPath) {
       // Handle MCP requests
       await mcpHandler(req, res);
     } else {

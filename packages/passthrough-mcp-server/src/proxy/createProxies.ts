@@ -3,6 +3,7 @@
  */
 
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { configureLoggerForStdio } from "../logger/logger.js";
 import type { Config } from "./config.js";
 import { HttpPassthroughProxy } from "./http/httpPassthroughProxy.js";
 import { StdioPassthroughProxy } from "./stdio/stdioPassthroughProxy.js";
@@ -41,6 +42,9 @@ export type CustomProxyConfig = Omit<Config, "sourceTransportType"> & {
 export async function createStdioPassthroughProxy(
   config: StdioProxyConfig,
 ): Promise<StdioPassthroughProxy> {
+  // Configure logger for stdio mode to avoid interfering with stdout
+  configureLoggerForStdio();
+
   const { autoStart = true, ...proxyConfig } = config;
 
   const fullConfig: Config = {
@@ -119,7 +123,7 @@ export async function createPassthroughProxy(
     return createHttpPassthroughProxy(config);
   }
   if (sourceTransportType === "custom") {
-    throw new Error("Custom Transport not supported yet.");
+    throw new Error("Custom sourceTransport not supported yet.");
   }
   throw new Error(
     `Unsupported transport type: ${sourceTransportType}. Only stdio and httpStream are supported.`,

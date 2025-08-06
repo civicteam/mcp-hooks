@@ -19,7 +19,7 @@ export const TEST_CONFIG = {
   },
   passthroughServers: {
     withoutAuth: {
-      url: "http://localhost:34000/mcp",
+      url: "http://localhost:34000/stream",
       description: "Passthrough server pointing to target without auth",
     },
     withAuth: {
@@ -31,7 +31,7 @@ export const TEST_CONFIG = {
       description: "Passthrough server pointing to echo test server",
     },
     withHooks: {
-      url: "http://localhost:34200/mcp",
+      url: "http://localhost:34200/stream",
       description: "Passthrough server with explain hook pointing to fetchDocs",
     },
     programmatic: {

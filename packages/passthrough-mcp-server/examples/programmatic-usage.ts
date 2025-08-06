@@ -13,9 +13,10 @@ import {
   type ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import { createPassthroughProxy } from "../src/index.js";
+import { logger } from "../src/logger/logger.js";
 
 async function example1_basicUsage() {
-  console.log("Example 1: Basic Usage");
+  logger.info("Example 1: Basic Usage");
 
   // Create and start the proxy
   const proxy = await createPassthroughProxy({
@@ -27,17 +28,17 @@ async function example1_basicUsage() {
     },
   });
 
-  console.log("Passthrough proxy is running!");
+  logger.info("Passthrough proxy is running!");
 
   // Stop after 10 seconds
   setTimeout(async () => {
     await proxy.stop();
-    console.log("Proxy stopped");
+    logger.info("Proxy stopped");
   }, 10000);
 }
 
 async function example2_manualStart() {
-  console.log("\nExample 2: Manual Start");
+  logger.info("\nExample 2: Manual Start");
 
   // Create without auto-starting
   const proxy = await createPassthroughProxy({
@@ -50,16 +51,16 @@ async function example2_manualStart() {
     autoStart: false,
   });
 
-  console.log("Proxy created but not started");
+  logger.info("Proxy created but not started");
 
   // Start manually after some setup
-  console.log("Starting proxy...");
+  logger.info("Starting proxy...");
   await proxy.start();
-  console.log("Proxy is now running!");
+  logger.info("Proxy is now running!");
 }
 
 async function example3_withRemoteHooks() {
-  console.log("\nExample 3: With Remote Hooks");
+  logger.info("\nExample 3: With Remote Hooks");
 
   const proxy = await createPassthroughProxy({
     sourceTransportType: "httpStream",
@@ -79,11 +80,11 @@ async function example3_withRemoteHooks() {
       },
     ],
   });
-  console.log("Proxy running with remote hooks configured");
+  logger.info("Proxy running with remote hooks configured");
 }
 
 async function example4_withProgrammaticHooks() {
-  console.log("\nExample 4: With Programmatic Hooks");
+  logger.info("\nExample 4: With Programmatic Hooks");
 
   // Create a simple logging hook
   class LoggingHook extends AbstractHook {
@@ -94,9 +95,8 @@ async function example4_withProgrammaticHooks() {
     async processToolCallRequest(
       toolCall: CallToolRequest,
     ): Promise<ToolCallRequestHookResult> {
-      console.log(
-        `[${this.name}] Tool request: ${toolCall.params.name}`,
-        toolCall.params.arguments,
+      logger.info(
+        `[${this.name}] Tool request: ${toolCall.params.name} ${JSON.stringify(toolCall.params.arguments)}`,
       );
       return {
         resultType: "continue",
@@ -108,13 +108,12 @@ async function example4_withProgrammaticHooks() {
       response: CallToolResult,
       originalToolCall: CallToolRequest,
     ): Promise<ToolCallResponseHookResult> {
-      console.log(
-        `[${this.name}] Tool response for ${originalToolCall.params.name}:`,
-        response,
+      logger.info(
+        `[${this.name}] Tool response for ${originalToolCall.params.name}: ${JSON.stringify(response)}`,
       );
       return {
         resultType: "continue",
-        response: response,
+        response,
       };
     }
   }
@@ -165,11 +164,13 @@ async function example4_withProgrammaticHooks() {
     ],
   });
 
-  console.log("Proxy running with both programmatic and remote hooks");
+  logger.info("Proxy running with both programmatic and remote hooks");
 }
 
 async function example5_stdioProxy() {
-  console.log("\nExample 5: Stdio Proxy");
+  // Note: When using stdio transport, all logging is sent to stderr
+  // to avoid interfering with the stdio protocol communication
+  logger.info("\nExample 5: Stdio Proxy");
 
   // Example of stdio proxy (useful for direct command-line integration)
   const proxy = await createPassthroughProxy({
@@ -180,8 +181,9 @@ async function example5_stdioProxy() {
     },
   });
 
-  console.log("Stdio proxy is running!");
-  console.log("The proxy will forward stdio input/output to the HTTP target");
+  // These messages are sent to stderr when using stdio transport
+  logger.info("Stdio proxy is running!");
+  logger.info("The proxy will forward stdio input/output to the HTTP target");
 }
 
 // Run examples based on command line argument
@@ -189,25 +191,25 @@ const exampleNumber = process.argv[2] || "1";
 
 switch (exampleNumber) {
   case "1":
-    example1_basicUsage().catch(console.error);
+    example1_basicUsage().catch((err) => logger.error(String(err)));
     break;
   case "2":
-    example2_manualStart().catch(console.error);
+    example2_manualStart().catch((err) => logger.error(String(err)));
     break;
   case "3":
-    example3_withRemoteHooks().catch(console.error);
+    example3_withRemoteHooks().catch((err) => logger.error(String(err)));
     break;
   case "4":
-    example4_withProgrammaticHooks().catch(console.error);
+    example4_withProgrammaticHooks().catch((err) => logger.error(String(err)));
     break;
   case "5":
-    example5_stdioProxy().catch(console.error);
+    example5_stdioProxy().catch((err) => logger.error(String(err)));
     break;
   default:
-    console.log("Usage: tsx programmatic-usage.ts [1|2|3|4|5]");
-    console.log("1 - Basic usage");
-    console.log("2 - Manual start");
-    console.log("3 - With remote hooks");
-    console.log("4 - With programmatic hooks");
-    console.log("5 - Stdio proxy");
+    logger.info("Usage: tsx programmatic-usage.ts [1|2|3|4|5]");
+    logger.info("1 - Basic usage");
+    logger.info("2 - Manual start");
+    logger.info("3 - With remote hooks");
+    logger.info("4 - With programmatic hooks");
+    logger.info("5 - Stdio proxy");
 }
