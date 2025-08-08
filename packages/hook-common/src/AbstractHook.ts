@@ -9,15 +9,11 @@ import type {
   InitializeRequestHookResult,
   InitializeRequestWithContext,
   InitializeResponseHookResult,
-  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsRequestWithContext,
   ListToolsResponseHookResult,
-  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
-  ToolCallTransportErrorHookResult,
-  TransportError,
 } from "./types.js";
 
 /**
@@ -85,34 +81,6 @@ export abstract class AbstractHook implements Hook {
   }
 
   /**
-   * Process transport errors for tool calls.
-   * Default implementation passes through without modification.
-   */
-  async processToolCallTransportError?(
-    error: TransportError,
-    originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallTransportErrorHookResult> {
-    return {
-      resultType: "continue",
-      error: error,
-    };
-  }
-
-  /**
-   * Process transport errors for tools/list requests.
-   * Default implementation passes through without modification.
-   */
-  async processToolsListTransportError?(
-    error: TransportError,
-    originalRequest: ListToolsRequestWithContext,
-  ): Promise<ListToolsTransportErrorHookResult> {
-    return {
-      resultType: "continue",
-      error: error,
-    };
-  }
-
-  /**
    * Process an initialize request.
    * Default implementation passes through without modification.
    */
@@ -136,20 +104,6 @@ export abstract class AbstractHook implements Hook {
     return {
       resultType: "continue",
       response: response,
-    };
-  }
-
-  /**
-   * Process transport errors for initialize requests.
-   * Default implementation passes through without modification.
-   */
-  async processInitializeTransportError?(
-    error: TransportError,
-    originalRequest: InitializeRequestWithContext,
-  ): Promise<InitializeTransportErrorHookResult> {
-    return {
-      resultType: "continue",
-      error: error,
     };
   }
 }

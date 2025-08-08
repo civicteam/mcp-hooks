@@ -13,14 +13,10 @@ import type {
   Hook,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
-  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
-  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
-  ToolCallTransportErrorHookResult,
-  TransportError,
 } from "./types.js";
 
 /**
@@ -168,81 +164,6 @@ export class RemoteHookClient implements Hook {
         resultType: "continue",
         body: null,
       });
-    }
-  }
-
-  /**
-   * Process a tool call transport error through the hook
-   */
-  async processToolCallTransportError(
-    error: TransportError,
-    originalToolCall: CallToolRequest,
-  ): Promise<ToolCallTransportErrorHookResult> {
-    try {
-      return await this.client.processToolCallTransportError.mutate({
-        error,
-        originalToolCall,
-      });
-    } catch (clientError) {
-      return handleHookError(
-        clientError,
-        this.name,
-        "processToolCallTransportError",
-        {
-          resultType: "continue" as const,
-          error,
-        },
-      );
-    }
-  }
-
-  /**
-   * Process a tools/list transport error through the hook
-   */
-  async processToolsListTransportError(
-    error: TransportError,
-    originalRequest: ListToolsRequest,
-  ): Promise<ListToolsTransportErrorHookResult> {
-    try {
-      return await this.client.processToolsListTransportError.mutate({
-        error,
-        originalRequest,
-      });
-    } catch (clientError) {
-      return handleHookError(
-        clientError,
-        this.name,
-        "processToolsListTransportError",
-        {
-          resultType: "continue" as const,
-          error,
-        },
-      );
-    }
-  }
-
-  /**
-   * Process an initialize transport error through the hook
-   */
-  async processInitializeTransportError(
-    error: TransportError,
-    originalRequest: InitializeRequest,
-  ): Promise<InitializeTransportErrorHookResult> {
-    try {
-      return await this.client.processInitializeTransportError.mutate({
-        error,
-        originalRequest,
-      });
-    } catch (clientError) {
-      return handleHookError(
-        clientError,
-        this.name,
-        "processInitializeTransportError",
-        {
-          resultType: "continue" as const,
-          error,
-        },
-      );
     }
   }
 

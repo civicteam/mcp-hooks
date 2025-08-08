@@ -16,14 +16,10 @@ import type {
   Hook,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
-  InitializeTransportErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
-  ListToolsTransportErrorHookResult,
   ToolCallRequestHookResult,
   ToolCallResponseHookResult,
-  ToolCallTransportErrorHookResult,
-  TransportError,
 } from "./types.js";
 
 export class LocalHookClient implements Hook {
@@ -148,70 +144,6 @@ export class LocalHookClient implements Hook {
   }
 
   /**
-   * Process a tool call transport error through the hook
-   */
-  async processToolCallTransportError(
-    error: TransportError,
-    originalToolCall: CallToolRequest,
-  ): Promise<ToolCallTransportErrorHookResult> {
-    try {
-      // Check if hook supports transport error processing
-      if (!this.hook.processToolCallTransportError) {
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      return await this.hook.processToolCallTransportError(
-        error,
-        originalToolCall,
-      );
-    } catch (hookError) {
-      console.error(
-        `Hook ${this.name} tool call transport error processing failed:`,
-        hookError,
-      );
-      // On error, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
-      };
-    }
-  }
-
-  /**
-   * Process a tools/list transport error through the hook
-   */
-  async processToolsListTransportError(
-    error: TransportError,
-    originalRequest: ListToolsRequest,
-  ): Promise<ListToolsTransportErrorHookResult> {
-    try {
-      // Check if hook supports transport error processing
-      if (!this.hook.processToolsListTransportError) {
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      return await this.hook.processToolsListTransportError(
-        error,
-        originalRequest,
-      );
-    } catch (hookError) {
-      console.error(
-        `Hook ${this.name} tools/list transport error processing failed:`,
-        hookError,
-      );
-      // On error, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
-      };
-    }
-  }
-
-  /**
    * Process an initialize request through the hook
    */
   async processInitializeRequest(
@@ -267,38 +199,6 @@ export class LocalHookClient implements Hook {
       return {
         resultType: "continue",
         response,
-      };
-    }
-  }
-
-  /**
-   * Process an initialize transport error through the hook
-   */
-  async processInitializeTransportError(
-    error: TransportError,
-    originalRequest: InitializeRequest,
-  ): Promise<InitializeTransportErrorHookResult> {
-    try {
-      // Check if hook supports initialize transport error processing
-      if (!this.hook.processInitializeTransportError) {
-        return {
-          resultType: "continue",
-          error,
-        };
-      }
-      return await this.hook.processInitializeTransportError(
-        error,
-        originalRequest,
-      );
-    } catch (hookError) {
-      console.error(
-        `Hook ${this.name} initialize transport error processing failed:`,
-        hookError,
-      );
-      // On error, continue with unmodified error
-      return {
-        resultType: "continue",
-        error,
       };
     }
   }

@@ -16,12 +16,9 @@
 import type {
   GenericRequestHookResult,
   GenericResponseHookResult,
-  GenericTransportErrorHookResult,
   Hook,
   MethodsWithRequestType,
   MethodsWithResponseType,
-  MethodsWithTransportErrorType,
-  TransportError,
 } from "@civic/hook-common";
 import { logger } from "../logger/logger.js";
 import type { LinkedListHook } from "./hookChain.js";

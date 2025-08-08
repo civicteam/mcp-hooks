@@ -11,14 +11,10 @@ import { z } from "zod";
 import {
   InitializeRequestHookResultSchema,
   InitializeResponseHookResultSchema,
-  InitializeTransportErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
   ListToolsResponseHookResultSchema,
-  ListToolsTransportErrorHookResultSchema,
   ToolCallRequestHookResultSchema,
   ToolCallResponseHookResultSchema,
-  ToolCallTransportErrorHookResultSchema,
-  TransportErrorSchema,
 } from "./types.js";
 import type { Hook } from "./types.js";
 
@@ -105,56 +101,6 @@ const toolsListRouter = t.router({
 });
 
 /**
- * Transport error router procedures
- */
-const transportErrorRouter = t.router({
-  /**
-   * Process a tool call transport error
-   */
-  processToolCallTransportError: t.procedure
-    .input(
-      z.object({
-        error: TransportErrorSchema,
-        originalToolCall: CallToolRequestSchema,
-      }),
-    )
-    .output(ToolCallTransportErrorHookResultSchema)
-    .mutation(async ({ input }) => {
-      throw new Error("processToolCallTransportError not implemented");
-    }),
-
-  /**
-   * Process a tools/list transport error
-   */
-  processToolsListTransportError: t.procedure
-    .input(
-      z.object({
-        error: TransportErrorSchema,
-        originalRequest: ListToolsRequestSchema,
-      }),
-    )
-    .output(ListToolsTransportErrorHookResultSchema)
-    .mutation(async ({ input }) => {
-      throw new Error("processToolsListTransportError not implemented");
-    }),
-
-  /**
-   * Process an initialize transport error
-   */
-  processInitializeTransportError: t.procedure
-    .input(
-      z.object({
-        error: TransportErrorSchema,
-        originalRequest: InitializeRequestSchema,
-      }),
-    )
-    .output(InitializeTransportErrorHookResultSchema)
-    .mutation(async ({ input }) => {
-      throw new Error("processInitializeTransportError not implemented");
-    }),
-});
-
-/**
  * Initialize procedures router
  */
 const initializeRouter = t.router({
@@ -190,7 +136,6 @@ const initializeRouter = t.router({
 const fullRouter = t.router({
   ...baseRouter._def.procedures,
   ...toolsListRouter._def.procedures,
-  ...transportErrorRouter._def.procedures,
   ...initializeRouter._def.procedures,
 });
 
@@ -268,69 +213,6 @@ export function createHookRouter(hook: Hook) {
         }
         return await hook.processToolsListResponse(
           input.response,
-          input.originalRequest,
-        );
-      });
-  }
-
-  if (hook.processToolCallTransportError) {
-    procedures.processToolCallTransportError = t.procedure
-      .input(
-        z.object({
-          error: TransportErrorSchema,
-          originalToolCall: CallToolRequestSchema,
-        }),
-      )
-      .output(ToolCallTransportErrorHookResultSchema)
-      .mutation(async ({ input }) => {
-        // This should never happen since we check for the method existence
-        if (!hook.processToolCallTransportError) {
-          throw new Error("processToolCallTransportError not implemented");
-        }
-        return await hook.processToolCallTransportError(
-          input.error,
-          input.originalToolCall,
-        );
-      });
-  }
-
-  if (hook.processToolsListTransportError) {
-    procedures.processToolsListTransportError = t.procedure
-      .input(
-        z.object({
-          error: TransportErrorSchema,
-          originalRequest: ListToolsRequestSchema,
-        }),
-      )
-      .output(ListToolsTransportErrorHookResultSchema)
-      .mutation(async ({ input }) => {
-        // This should never happen since we check for the method existence
-        if (!hook.processToolsListTransportError) {
-          throw new Error("processToolsListTransportError not implemented");
-        }
-        return await hook.processToolsListTransportError(
-          input.error,
-          input.originalRequest,
-        );
-      });
-  }
-
-  if (hook.processInitializeTransportError) {
-    procedures.processInitializeTransportError = t.procedure
-      .input(
-        z.object({
-          error: TransportErrorSchema,
-          originalRequest: InitializeRequestSchema,
-        }),
-      )
-      .output(InitializeTransportErrorHookResultSchema)
-      .mutation(async ({ input }) => {
-        // This should never happen since we check for the method existence
-        if (!hook.processInitializeTransportError) {
-          throw new Error("processInitializeTransportError not implemented");
-        }
-        return await hook.processInitializeTransportError(
-          input.error,
           input.originalRequest,
         );
       });
