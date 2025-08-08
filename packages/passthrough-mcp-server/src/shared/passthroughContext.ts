@@ -27,7 +27,7 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
-import { createAbortException } from "./mcpErrorUtils.js";
+import { createAbortException } from "../error/mcpErrorUtils.js";
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
