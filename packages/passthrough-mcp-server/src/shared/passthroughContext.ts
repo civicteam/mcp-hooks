@@ -20,6 +20,8 @@ import {
   ServerResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { PassthroughClient } from "../client/passthroughClient.js";
+import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
+import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain } from "../hook/hookChain.js";
 import {
   processRequestThroughHooks,
@@ -27,7 +29,6 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
-import { createAbortException } from "../error/mcpErrorUtils.js";
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -141,6 +142,13 @@ export class PassthroughContext {
       response = requestResult.response as ServerResult;
     } else {
       // (requestResult.resultType === "continue")
+      // Check if client transport is connected before forwarding request
+      if (!this._passthroughClient.transport) {
+        throw new McpError(
+          MCP_ERROR_CODES.REQUEST_REJECTED,
+          ERROR_MESSAGES.NO_CLIENT_TRANSPORT,
+        );
+      }
       response = await this._passthroughClient.request(
         requestResult.request,
         ServerResultSchema,
@@ -194,6 +202,12 @@ export class PassthroughContext {
   }
 
   private async _onServerNotification(notification: Notification) {
+    // Check if client transport is connected before forwarding notification
+    if (!this._passthroughClient.transport) {
+      // For notifications, we can't throw an error back, so we log and return
+      this._onerror(new Error(ERROR_MESSAGES.NO_CLIENT_TRANSPORT_NOTIFICATION));
+      return;
+    }
     // for now, just directly pass through
     return this._passthroughClient.notification(notification);
   }
@@ -214,7 +228,7 @@ export class PassthroughContext {
       .then(() => this._passthroughClient.close())
       .catch((error) =>
         this._onerror(
-          new Error(`Error trying to close the Passthrough Client: ${error}`),
+          new Error(`${ERROR_MESSAGES.ERROR_CLOSING_CLIENT}: ${error}`),
         ),
       );
   }
@@ -225,29 +239,34 @@ export class PassthroughContext {
       .then(() => this._passthroughServer.close())
       .catch((error) =>
         this._onerror(
-          new Error(`Error trying to close the Passthrough Server: ${error}`),
+          new Error(`${ERROR_MESSAGES.ERROR_CLOSING_SERVER}: ${error}`),
         ),
       );
   }
 
   /**
-   * Attaches to the given server and client transport, starts it, and starts listening for messages.
+   * Attaches to the given server and optionally client transport, starts them, and starts listening for messages.
    *
    * The Protocol object assumes ownership of the Transport, replacing any callbacks that have already been set, and expects that it is the only user of the Transport instance going forward.
+   *
+   * @param serverTransport The transport for the server connection (required)
+   * @param clientTransport The transport for the client connection (optional)
    */
   async connect(
     serverTransport: Transport,
-    clientTransport: Transport,
+    clientTransport?: Transport,
   ): Promise<void> {
     await this._passthroughServer.connect(serverTransport);
-    await this._passthroughClient.connect(clientTransport);
+    if (clientTransport) {
+      await this._passthroughClient.connect(clientTransport);
+    }
   }
 
   /**
    * Clean up resources and close both transports
    */
   async close(): Promise<void> {
-    // Close both transports
+    // Close both transports (safe even if client transport is not connected)
     await Promise.all([
       this._passthroughServer.close(),
       this._passthroughClient.close(),

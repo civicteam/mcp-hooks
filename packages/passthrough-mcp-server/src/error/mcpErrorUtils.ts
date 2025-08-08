@@ -3,6 +3,7 @@
  */
 
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ERROR_MESSAGES, MCP_ERROR_CODES } from "./errorCodes.js";
 
 type ResponseType = "request" | "response";
 
@@ -19,12 +20,12 @@ export function createAbortException(
 
   switch (responseType) {
     case "request":
-      code = -32001; // MCP-specific error code for request rejection
-      defaultMessage = "Request rejected by hook";
+      code = MCP_ERROR_CODES.REQUEST_REJECTED;
+      defaultMessage = ERROR_MESSAGES.REQUEST_REJECTED_BY_HOOK;
       break;
     case "response":
-      code = -32603; // Internal error (response was rejected)
-      defaultMessage = "Response rejected by hook";
+      code = MCP_ERROR_CODES.RESPONSE_REJECTED;
+      defaultMessage = ERROR_MESSAGES.RESPONSE_REJECTED_BY_HOOK;
       break;
   }
 
