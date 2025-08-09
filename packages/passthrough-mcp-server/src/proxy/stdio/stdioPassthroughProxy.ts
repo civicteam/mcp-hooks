@@ -45,8 +45,13 @@ export class StdioPassthroughProxy implements PassthroughProxy {
 
     this.isStarted = true;
 
+    const targetInfo =
+      this.config.target.transportType === "custom"
+        ? "custom transport"
+        : `${getTargetUrl(this.config.target)}`;
+
     logger.info(
-      `[StdioPassthrough] Passthrough MCP Server running with stdio transport, connecting to target at ${getTargetUrl(this.config.target)}`,
+      `[StdioPassthrough] Passthrough MCP Server running with stdio transport, connecting to target at ${targetInfo}`,
     );
   }
 

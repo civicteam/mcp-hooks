@@ -217,11 +217,19 @@ export class HttpPassthroughProxy implements PassthroughProxy {
 
   async initialize(): Promise<void> {
     // Create HTTP proxy server
+    const proxyOptions =
+      this.config.target.transportType === "custom"
+        ? {
+            targetUrl: undefined,
+            mcpPath: "/mcp", // Default MCP path for custom transports
+          }
+        : {
+            targetUrl: getTargetUrl(this.config.target),
+            mcpPath: getTargetMcpPath(this.config.target),
+          };
+
     this.httpServer = createMcpHttpServer(
-      {
-        targetUrl: getTargetUrl(this.config.target),
-        mcpPath: getTargetMcpPath(this.config.target),
-      },
+      proxyOptions,
       this.handleRequest.bind(this),
     );
   }
@@ -247,8 +255,13 @@ export class HttpPassthroughProxy implements PassthroughProxy {
 
     this.isStarted = true;
 
+    const targetInfo =
+      this.config.target.transportType === "custom"
+        ? "custom transport"
+        : `${getTargetUrl(this.config.target)}`;
+
     logger.info(
-      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${getTargetUrl(this.config.target)}`,
+      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${targetInfo}`,
     );
   }
 
