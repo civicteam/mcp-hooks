@@ -99,10 +99,10 @@ describe("PassthroughContext", () => {
       expect(HookChain).toHaveBeenCalledWith(hooks);
     });
 
-    it("should set up request handlers for Initialize and ListTools", () => {
+    it("should set up request handlers for Initialize, ListTools, and CallTool", () => {
       context = new PassthroughContext();
 
-      expect(mockPassthroughServer.setRequestHandler).toHaveBeenCalledTimes(2);
+      expect(mockPassthroughServer.setRequestHandler).toHaveBeenCalledTimes(3);
       expect(mockPassthroughServer.setRequestHandler).toHaveBeenCalledWith(
         expect.objectContaining({ parse: expect.any(Function) }),
         expect.any(Function),
@@ -183,19 +183,21 @@ describe("PassthroughContext", () => {
     it("should process server request through hooks and forward to client", async () => {
       context = new PassthroughContext();
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
       const request: Request = {
-        method: "tool/call",
-        params: { tool: "test" },
+        method: "tools/call",
+        params: { name: "test", arguments: {} },
       };
 
-      const result = await serverRequestHandler(request);
+      const result = await callToolHandler(request);
 
       expect(processRequestThroughHooksMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          method: "tool/call",
+          method: "tools/call",
           params: expect.objectContaining({
-            tool: "test",
+            name: "test",
+            arguments: {},
             _meta: expect.objectContaining({
               sessionId: "server-session-123",
               timestamp: expect.any(String),
@@ -216,10 +218,11 @@ describe("PassthroughContext", () => {
       context = new PassthroughContext();
       mockPassthroughClient.transport = undefined;
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
-      const request: Request = { method: "tool/call", params: {} };
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
+      const request: Request = { method: "tools/call", params: { name: "test" } };
 
-      await expect(serverRequestHandler(request)).rejects.toThrow(
+      await expect(callToolHandler(request)).rejects.toThrow(
         new McpError(
           -32001,
           "No client transport connected. Cannot forward request to upstream server.",
@@ -238,10 +241,11 @@ describe("PassthroughContext", () => {
       const mockError = new McpError(-32001, "Request blocked");
       (createAbortException as any).mockReturnValue(mockError);
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
-      const request: Request = { method: "tool/call", params: {} };
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
+      const request: Request = { method: "tools/call", params: { name: "test" } };
 
-      await expect(serverRequestHandler(request)).rejects.toThrow(mockError);
+      await expect(callToolHandler(request)).rejects.toThrow(mockError);
       expect(createAbortException).toHaveBeenCalledWith(
         "request",
         "Request blocked",
@@ -259,10 +263,11 @@ describe("PassthroughContext", () => {
       const mockError = new McpError(-32002, "Response blocked");
       (createAbortException as any).mockReturnValue(mockError);
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
-      const request: Request = { method: "tool/call", params: {} };
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
+      const request: Request = { method: "tools/call", params: { name: "test" } };
 
-      await expect(serverRequestHandler(request)).rejects.toThrow(mockError);
+      await expect(callToolHandler(request)).rejects.toThrow(mockError);
       expect(createAbortException).toHaveBeenCalledWith(
         "response",
         "Response blocked",
@@ -279,10 +284,11 @@ describe("PassthroughContext", () => {
         lastProcessedHook: null,
       });
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
-      const request: Request = { method: "tool/call", params: {} };
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
+      const request: Request = { method: "tools/call", params: { name: "test" } };
 
-      const result = await serverRequestHandler(request);
+      const result = await callToolHandler(request);
 
       expect(mockPassthroughClient.request).not.toHaveBeenCalled();
       expect(processResponseThroughHooksMock).toHaveBeenCalledWith(
@@ -519,6 +525,29 @@ describe("PassthroughContext", () => {
         "processToolsListResponse",
       );
     });
+
+    it("should handle CallTool request with specific hook methods", async () => {
+      context = new PassthroughContext();
+
+      const callToolHandler =
+        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
+      const request = { method: "tools/call", params: { name: "test" } };
+
+      await callToolHandler(request);
+
+      expect(processor.processRequestThroughHooks).toHaveBeenCalledWith(
+        expect.any(Object),
+        null,
+        "processToolCallRequest",
+      );
+
+      expect(processor.processResponseThroughHooks).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(Object),
+        null,
+        "processToolCallResponse",
+      );
+    });
   });
 
   describe("metadata annotation", () => {
@@ -543,13 +572,14 @@ describe("PassthroughContext", () => {
     it("should add metadata to request", async () => {
       context = new PassthroughContext();
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
       const request: Request = {
-        method: "tool/call",
-        params: { tool: "test" },
+        method: "tools/call",
+        params: { name: "test" },
       };
 
-      await serverRequestHandler(request);
+      await callToolHandler(request);
 
       const processedRequest = (processor.processRequestThroughHooks as any)
         .mock.calls[0][0];
@@ -563,13 +593,14 @@ describe("PassthroughContext", () => {
     it("should add metadata to response", async () => {
       context = new PassthroughContext();
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
       const request: Request = {
-        method: "tool/call",
-        params: { tool: "test" },
+        method: "tools/call",
+        params: { name: "test" },
       };
 
-      await serverRequestHandler(request);
+      await callToolHandler(request);
 
       const processedResponse = (processor.processResponseThroughHooks as any)
         .mock.calls[0][0];
@@ -583,16 +614,17 @@ describe("PassthroughContext", () => {
     it("should preserve existing metadata when adding new metadata", async () => {
       context = new PassthroughContext();
 
-      const serverRequestHandler = (PassthroughServer as any).mock.calls[0][0];
+      // Get the CallTool handler (third registered handler)
+      const callToolHandler = mockPassthroughServer.setRequestHandler.mock.calls[2][1];
       const request: Request = {
-        method: "tool/call",
+        method: "tools/call",
         params: {
-          tool: "test",
+          name: "test",
           _meta: { existingField: "value" },
         },
       };
 
-      await serverRequestHandler(request);
+      await callToolHandler(request);
 
       const processedRequest = (processor.processRequestThroughHooks as any)
         .mock.calls[0][0];

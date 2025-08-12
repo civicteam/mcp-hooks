@@ -3,19 +3,26 @@
  * in the passthrough proxy.
  */
 
-import { MethodsWithRequestType } from "@civic/hook-common";
+import {
+  MethodsWithRequestType,
+  MethodsWithResponseType
+} from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
-  type ClientResult,
-  ClientResultSchema,
+  CallToolRequest, CallToolRequestSchema,
+  CallToolResult, CallToolResultSchema,
   type InitializeRequest,
-  InitializeRequestSchema,
-  InitializeResult,
+  InitializeRequestSchema, InitializeResult,
+  InitializeResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
+  type ListToolsResult,
+  ListToolsResultSchema,
   McpError,
   type Notification,
   type Request,
+  type Result,
+  ResultSchema,
   type ServerResult,
   ServerResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -29,6 +36,7 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
+import {z} from "zod";
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -82,6 +90,11 @@ export class PassthroughContext {
       this._onServerListToolsRequest.bind(this),
     );
 
+    this._passthroughServer.setRequestHandler(
+        CallToolRequestSchema,
+        this._onServerCallToolRequest.bind(this),
+    );
+
     this._passthroughServer.onclose = this._onServerClose.bind(this);
     this._passthroughClient.onclose = this._onClientClose.bind(this);
   }
@@ -90,7 +103,7 @@ export class PassthroughContext {
     this.onerror?.(error);
   }
 
-  private addMetaToRequest(request: Request): Request {
+  private addMetaToRequest<TRequest extends Request>(request: TRequest): TRequest {
     return {
       ...request,
       params: {
@@ -105,7 +118,7 @@ export class PassthroughContext {
     };
   }
 
-  private addMetaToResult(result: ServerResult): ServerResult {
+  private addMetaToResult<TResult extends Result>(result: TResult): TResult {
     return {
       ...result,
       _meta: {
@@ -117,29 +130,36 @@ export class PassthroughContext {
     };
   }
 
-  private async processServerRequest(
-    request: Request,
-    hookRequestMethodName: string,
-    hookResponseMethodName: string,
-  ): Promise<ServerResult> {
+  private async processServerRequest<
+      TRequest extends Request,
+      TResponse extends Result,
+      TResponseSchema extends z.ZodSchema<TResponse>,
+      TRequestMethodName extends MethodsWithRequestType<TRequest>,
+      TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>
+  >(
+    request: TRequest,
+    responseSchema: TResponseSchema,
+    hookRequestMethodName: TRequestMethodName,
+    hookResponseMethodName: TResponseMethodName,
+  ): Promise<TResponse> {
     // Annotate request
-    const annotatedRequest = this.addMetaToRequest(request);
+    const annotatedRequest = this.addMetaToRequest<TRequest>(request);
 
     // pass request through chain
-    const requestResult = await processRequestThroughHooks(
+    const requestResult = await processRequestThroughHooks<TRequest, TResponse, TRequestMethodName>(
       annotatedRequest,
       this._hookChain.head,
       hookRequestMethodName,
     );
 
-    let response: ServerResult | undefined = undefined;
+    let response: TResponse | undefined = undefined;
 
     if (requestResult.resultType === "abort") {
       throw createAbortException("request", requestResult.reason);
     }
 
     if (requestResult.resultType === "respond") {
-      response = requestResult.response as ServerResult;
+      response = requestResult.response;
     } else {
       // (requestResult.resultType === "continue")
       // Check if client transport is connected before forwarding request
@@ -151,7 +171,7 @@ export class PassthroughContext {
       }
       response = await this._passthroughClient.request(
         requestResult.request,
-        ServerResultSchema,
+        responseSchema,
       );
     }
 
@@ -174,34 +194,51 @@ export class PassthroughContext {
 
   private async _onServerInitializeRequest(
     request: InitializeRequest,
-  ): Promise<ServerResult> {
+  ): Promise<InitializeResult> {
     return this.processServerRequest(
       request,
+        InitializeResultSchema,
       "processInitializeRequest",
-      "processInitializeResponse",
+      "processInitializeResponse"
     );
   }
 
   private async _onServerListToolsRequest(
     request: ListToolsRequest,
-  ): Promise<ServerResult> {
+  ): Promise<ListToolsResult> {
     return this.processServerRequest(
       request,
+        ListToolsResultSchema,
       "processToolsListRequest",
-      "processToolsListResponse",
+      "processToolsListResponse"
+    );
+  }
+
+  private async _onServerCallToolRequest(
+      request: CallToolRequest,
+  ): Promise<CallToolResult> {
+    return this.processServerRequest(
+        request,
+        CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
+        "processToolCallRequest",
+        "processToolCallResponse"
     );
   }
 
   private async _onServerRequest(request: Request): Promise<ServerResult> {
-    // pass request through chain
-    return this.processServerRequest(
-      request,
-      "processToolCallRequest",
-      "processToolCallResponse",
-    );
+    // all other calls are just forwarded to the client
+    if (!this._passthroughClient.transport) {
+      throw new McpError(
+          MCP_ERROR_CODES.REQUEST_REJECTED,
+          ERROR_MESSAGES.NO_CLIENT_TRANSPORT,
+      );
+    }
+
+    return this._passthroughClient.request(request, ServerResultSchema);
   }
 
   private async _onServerNotification(notification: Notification) {
+    // TODO: Needs to be supported by hooks.
     // Check if client transport is connected before forwarding notification
     if (!this._passthroughClient.transport) {
       // For notifications, we can't throw an error back, so we log and return
@@ -212,12 +249,14 @@ export class PassthroughContext {
     return this._passthroughClient.notification(notification);
   }
 
-  private async _onClientRequest(request: Request): Promise<ClientResult> {
+  private async _onClientRequest(request: Request): Promise<Result> {
+    // TODO: Needs to be supported by hooks.
     // for now, directly pass through
-    return this._passthroughServer.request(request, ClientResultSchema);
+    return this._passthroughServer.request(request, ResultSchema);
   }
 
   private async _onClientNotification(notification: Notification) {
+    // TODO: Needs to be supported by hooks.
     // for now, directly pass through
     return this._passthroughServer.notification(notification);
   }

@@ -6,8 +6,8 @@
 
 import type {
   Hook,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -36,7 +36,7 @@ export class GuardrailHook implements Hook {
    */
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     const { name, arguments: toolArgs } = toolCall.params;
 
     // Check for disallowed tools or operations
@@ -119,7 +119,7 @@ export class GuardrailHook implements Hook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     const { name } = originalToolCall.params;
 
     // Convert response to string for analysis if it's an object

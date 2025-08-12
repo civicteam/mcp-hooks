@@ -2,9 +2,14 @@ import type {
   CallToolResult,
   InitializeResult,
   ListToolsResult,
+  Notification,
+  Request,
+  Result,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
+  CallToolRequestHookResult,
   CallToolRequestWithContext,
+  CallToolResponseHookResult,
   Hook,
   InitializeRequestHookResult,
   InitializeRequestWithContext,
@@ -12,8 +17,9 @@ import type {
   ListToolsRequestHookResult,
   ListToolsRequestWithContext,
   ListToolsResponseHookResult,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  NotificationHookResult,
+  RequestHookResult,
+  ResponseHookResult,
 } from "./types.js";
 
 /**
@@ -32,7 +38,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processToolCallRequest(
     toolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
       request: toolCall,
@@ -46,7 +52,7 @@ export abstract class AbstractHook implements Hook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     return {
       resultType: "continue",
       response,
@@ -104,6 +110,82 @@ export abstract class AbstractHook implements Hook {
     return {
       resultType: "continue",
       response: response,
+    };
+  }
+
+  /**
+   * Process a request from the client NOT covered by a dedicated handler.
+   * Default implementation passes through without modification.
+   */
+  async processOtherRequest?(request: Request): Promise<RequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process a response from the client NOT covered by a dedicated handler.
+   * Default implementation passes through without modification.
+   */
+  async processOtherResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process a target request.
+   * Default implementation passes through without modification.
+   */
+  async processTargetRequest?(request: Request): Promise<RequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process a target response.
+   * Default implementation passes through without modification.
+   */
+  async processTargetResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process a notification.
+   * Default implementation passes through without modification.
+   */
+  async processNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult> {
+    return {
+      resultType: "continue",
+      notification: notification,
+    };
+  }
+
+  /**
+   * Process a target notification.
+   * Default implementation passes through without modification.
+   */
+  async processTargetNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult> {
+    return {
+      resultType: "continue",
+      notification: notification,
     };
   }
 }

@@ -12,7 +12,7 @@ import {
   type ListToolsRequestHookResult,
   type ListToolsRequestWithContext,
   type RequestContext,
-  type ToolCallRequestHookResult,
+  type CallToolRequestHookResult,
 } from "@civic/hook-common";
 
 export interface ApiKeyHookConfig {
@@ -42,7 +42,7 @@ export class ApiKeyHook extends AbstractHook {
    */
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     return this.addApiKeyHeader(request);
   }
 

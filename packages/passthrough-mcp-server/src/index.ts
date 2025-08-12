@@ -39,8 +39,8 @@ export type {
   ListToolsRequest,
   ListToolsResult,
   LocalHookClient,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
 } from "@civic/hook-common";

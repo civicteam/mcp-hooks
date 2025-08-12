@@ -1,18 +1,22 @@
-import type {
-  CallToolRequest,
-  InitializeRequest,
-  InitializeResult,
-} from "@modelcontextprotocol/sdk/types";
 import {
+  type CallToolRequest,
   CallToolRequestSchema,
   type CallToolResult,
   CallToolResultSchema,
+  type InitializeRequest,
   InitializeRequestSchema,
+  type InitializeResult,
   InitializeResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
   ListToolsResultSchema,
+  type Notification,
+  NotificationSchema,
+  type Request,
+  RequestSchema,
+  type Result,
+  ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
@@ -28,10 +32,13 @@ import { z } from "zod";
 export type {
   CallToolRequest,
   CallToolResult,
-  ListToolsRequest,
-  ListToolsResult,
   InitializeRequest,
   InitializeResult,
+  ListToolsRequest,
+  ListToolsResult,
+  Notification,
+  Request,
+  Result,
 };
 
 /**
@@ -98,7 +105,7 @@ const HookAbortSchema = z.object({
   reason: z.string(),
 });
 
-export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
+export const CallToolRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
     HookAbortSchema,
@@ -115,7 +122,7 @@ export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
   ],
 );
 
-export const ToolCallResponseHookResultSchema = z.discriminatedUnion(
+export const CallToolResponseHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
     HookAbortSchema,
@@ -185,11 +192,43 @@ export const InitializeResponseHookResultSchema = z.discriminatedUnion(
   ],
 );
 
-export type ToolCallRequestHookResult = z.infer<
-  typeof ToolCallRequestHookResultSchema
+export const RequestHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) request
+  z.object({
+    resultType: z.literal("continue"),
+    request: RequestSchema,
+  }),
+  // stop the request and return to the caller with this response
+  z.object({
+    resultType: z.literal("respond"),
+    response: ResultSchema,
+  }),
+]);
+
+export const ResponseHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) response
+  z.object({
+    resultType: z.literal("continue"),
+    response: ResultSchema,
+  }),
+]);
+
+export const NotificationHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) notification
+  z.object({
+    resultType: z.literal("continue"),
+    notification: NotificationSchema,
+  }),
+]);
+
+export type CallToolRequestHookResult = z.infer<
+  typeof CallToolRequestHookResultSchema
 >;
-export type ToolCallResponseHookResult = z.infer<
-  typeof ToolCallResponseHookResultSchema
+export type CallToolResponseHookResult = z.infer<
+  typeof CallToolResponseHookResultSchema
 >;
 export type ListToolsRequestHookResult = z.infer<
   typeof ListToolsRequestHookResultSchema
@@ -202,6 +241,11 @@ export type InitializeRequestHookResult = z.infer<
 >;
 export type InitializeResponseHookResult = z.infer<
   typeof InitializeResponseHookResultSchema
+>;
+export type RequestHookResult = z.infer<typeof RequestHookResultSchema>;
+export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
+export type NotificationHookResult = z.infer<
+  typeof NotificationHookResultSchema
 >;
 /**
  * Hook interface that all hooks must implement
@@ -217,7 +261,7 @@ export interface Hook {
    */
   processToolCallRequest?(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult>;
+  ): Promise<CallToolRequestHookResult>;
 
   /**
    * Process a tool call response
@@ -225,7 +269,7 @@ export interface Hook {
   processToolCallResponse?(
     response: CallToolResult,
     originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallResponseHookResult>;
+  ): Promise<CallToolResponseHookResult>;
 
   /**
    * Process a tools/list request (optional)
@@ -256,6 +300,46 @@ export interface Hook {
     response: InitializeResult,
     originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeResponseHookResult>;
+
+  /**
+   * Process a request from the client NOT covered by a dedicated handler (optional)
+   */
+  processOtherRequest?(request: Request): Promise<RequestHookResult>;
+
+  /**
+   * Process a reponse from the client NOT covered by a dedicated handler (optional)
+   */
+  processOtherResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult>;
+
+  /**
+   * Process a target request (request coming from the target server back to the client) (optional)
+   */
+  processTargetRequest?(request: Request): Promise<RequestHookResult>;
+
+  /**
+   * Process a target response (response going back to the target server) (optional)
+   */
+  processTargetResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult>;
+
+  /**
+   * Process a notification (notification from client to target server) (optional)
+   */
+  processNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult>;
+
+  /**
+   * Process a target notification (notification from target server to client) (optional)
+   */
+  processTargetNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult>;
 }
 
 /**

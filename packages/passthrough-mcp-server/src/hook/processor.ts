@@ -77,7 +77,9 @@ export async function processRequestThroughHooks<
     // Why use .call():
     // - Ensures 'this' context is properly bound to the hook instance
     // - Allows hooks to access their own properties/state via 'this'
-    const hookResult = await hookMethod.call(hook, currentRequest);
+    // Type assertion needed because TypeScript can't correlate the generic
+    // methodName with the specific method signature at compile time
+    const hookResult = await (hookMethod as (request: TRequest) => Promise<GenericRequestHookResult<TRequest, TResponse>>).call(hook, currentRequest);
 
     if (hookResult.resultType === "continue") {
       // Hook may have modified the request - use the updated version
@@ -154,7 +156,9 @@ export async function processResponseThroughHooks<
       continue;
     }
 
-    const hookResult = await hookMethod.call(
+    // Type assertion needed because TypeScript can't correlate the generic
+    // methodName with the specific method signature at compile time
+    const hookResult = await (hookMethod as (response: TResponse, request: TRequest) => Promise<GenericResponseHookResult<TResponse>>).call(
       hook,
       currentResponse,
       originalRequest,
@@ -165,7 +169,9 @@ export async function processResponseThroughHooks<
     } else {
       // abort - even responses can be rejected
       // Why: A hook might detect sensitive data in response that shouldn't be exposed
-      return { ...hookResult, lastProcessedHook: currentHook };
+      return { ...hookResult, lastProcessedHook: currentHook } as GenericResponseHookResult<TResponse> & {
+        lastProcessedHook: LinkedListHook | null;
+      };
     }
 
     if (currentHook.previous) {

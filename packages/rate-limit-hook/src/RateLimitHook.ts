@@ -7,7 +7,7 @@
 import {
   AbstractHook,
   type CallToolRequest,
-  type ToolCallRequestHookResult,
+  type CallToolRequestHookResult,
 } from "@civic/hook-common";
 
 interface RateLimitInfo {
@@ -32,7 +32,7 @@ export class RateLimitHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     // Extract userId from metadata
     const userId = this.extractUserId(toolCall);
     if (!userId) {

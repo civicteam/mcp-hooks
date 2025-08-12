@@ -1,8 +1,8 @@
 import {
   AbstractHook,
   LocalHookClient,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
+  type CallToolRequestHookResult,
+  type CallToolResponseHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -20,7 +20,7 @@ class TestLoggingHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     this.logs.push(`REQUEST: ${toolCall.params.name}`);
     return {
       resultType: "continue",
@@ -31,7 +31,7 @@ class TestLoggingHook extends AbstractHook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     this.logs.push(`RESPONSE: ${originalToolCall.params.name}`);
     return {
       resultType: "continue",
@@ -48,7 +48,7 @@ class TestValidationHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     if (toolCall.params.name.includes("dangerous")) {
       return {
         resultType: "abort",
@@ -145,7 +145,7 @@ describe("LocalHookClient", () => {
         return "ErrorHook";
       }
 
-      async processToolCallRequest(): Promise<ToolCallRequestHookResult> {
+      async processToolCallRequest(): Promise<CallToolRequestHookResult> {
         throw new Error("Hook error");
       }
     }

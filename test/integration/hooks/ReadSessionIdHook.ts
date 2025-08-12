@@ -2,8 +2,8 @@ import {
   AbstractHook,
   type CallToolRequest,
   type CallToolResult,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
+  type CallToolRequestHookResult,
+  type CallToolResponseHookResult,
 } from "@civic/passthrough-mcp-server";
 
 /**
@@ -16,7 +16,7 @@ export class ReadSessionIdHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
       request: toolCall,
@@ -26,7 +26,7 @@ export class ReadSessionIdHook extends AbstractHook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     // Get session ID from _meta
     const sessionId = originalToolCall.params._meta?.sessionId;
 

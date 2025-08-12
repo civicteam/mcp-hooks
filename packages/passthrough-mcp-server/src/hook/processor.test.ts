@@ -3,8 +3,8 @@ import type {
   Hook,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -46,14 +46,14 @@ class MockHook implements Hook {
   // Default implementations that satisfy the interface
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
 
   async processToolCallResponse(
     response: CallToolResult,
     originalRequest: CallToolRequestWithContext,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     return { resultType: "continue", response };
   }
 }
@@ -90,7 +90,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processRequestThroughHooks<
@@ -114,7 +114,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Destructive operation",
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processRequestThroughHooks<
@@ -140,13 +140,13 @@ describe("Hook Processor", () => {
         hook1.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const hook2 = new MockHook("hook2");
         hook2.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Blocked by hook2",
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const hook3 = new MockHook("hook3");
         hook3.processToolCallRequest = vi.fn();
@@ -180,7 +180,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: modifiedToolCall,
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processRequestThroughHooks<
@@ -209,7 +209,7 @@ describe("Hook Processor", () => {
         hook2.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
-        } satisfies ToolCallRequestHookResult);
+        } satisfies CallToolRequestHookResult);
 
         const chain = new HookChain([hook1, hook2]);
         const result = await processRequestThroughHooks<
@@ -236,7 +236,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
           resultType: "respond",
           response: mockResponse,
-        } as ToolCallRequestHookResult);
+        } as CallToolRequestHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processRequestThroughHooks<
@@ -275,14 +275,14 @@ describe("Hook Processor", () => {
           return {
             resultType: "continue",
             request: toolCall,
-          } satisfies ToolCallRequestHookResult;
+          } satisfies CallToolRequestHookResult;
         });
         hook1.processToolCallResponse = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook1-response");
           return {
             resultType: "continue",
             response: modifiedResponse,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const hook2 = new MockHook("hook2");
@@ -291,14 +291,14 @@ describe("Hook Processor", () => {
           return {
             resultType: "respond",
             response: directResponse,
-          } satisfies ToolCallRequestHookResult;
+          } satisfies CallToolRequestHookResult;
         });
         hook2.processToolCallResponse = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook2-response");
           return {
             resultType: "continue",
             response: directResponse,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const hook3 = new MockHook("hook3");
@@ -307,14 +307,14 @@ describe("Hook Processor", () => {
           return {
             resultType: "continue",
             request: toolCall,
-          } satisfies ToolCallRequestHookResult;
+          } satisfies CallToolRequestHookResult;
         });
         hook3.processToolCallResponse = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook3-response");
           return {
             resultType: "continue",
             response: directResponse,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const chain = new HookChain([hook1, hook2, hook3]);
@@ -422,7 +422,7 @@ describe("Hook Processor", () => {
           return {
             resultType: "continue",
             response,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const hook2 = new MockHook("hook2");
@@ -431,7 +431,7 @@ describe("Hook Processor", () => {
           return {
             resultType: "continue",
             response,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const hook3 = new MockHook("hook3");
@@ -440,7 +440,7 @@ describe("Hook Processor", () => {
           return {
             resultType: "continue",
             response,
-          } satisfies ToolCallResponseHookResult;
+          } satisfies CallToolResponseHookResult;
         });
 
         const chain = new HookChain([hook1, hook2, hook3]);
@@ -464,7 +464,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallResponse = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Sensitive content",
-        } satisfies ToolCallResponseHookResult);
+        } satisfies CallToolResponseHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processResponseThroughHooks<
@@ -493,7 +493,7 @@ describe("Hook Processor", () => {
         mockHook.processToolCallResponse = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: modifiedResponse,
-        } satisfies ToolCallResponseHookResult);
+        } satisfies CallToolResponseHookResult);
 
         const chain = new HookChain([mockHook]);
         const result = await processResponseThroughHooks<

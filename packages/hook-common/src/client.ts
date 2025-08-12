@@ -5,18 +5,24 @@ import type {
   InitializeResult,
   ListToolsRequest,
   ListToolsResult,
+  Notification,
+  Request,
+  Result,
 } from "@modelcontextprotocol/sdk/types.js";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { HookRouter } from "./router.js";
 import type {
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
   Hook,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  NotificationHookResult,
+  RequestHookResult,
+  ResponseHookResult,
 } from "./types.js";
 
 /**
@@ -80,7 +86,7 @@ export class RemoteHookClient implements Hook {
    */
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     try {
       return await this.client.processToolCallRequest.mutate(toolCall);
     } catch (error) {
@@ -97,7 +103,7 @@ export class RemoteHookClient implements Hook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     try {
       return await this.client.processToolCallResponse.mutate({
         response,
@@ -199,6 +205,72 @@ export class RemoteHookClient implements Hook {
       return handleHookError(error, this.name, "processInitializeResponse", {
         resultType: "continue" as const,
         response: response,
+      });
+    }
+  }
+
+  /**
+   * Process a target request through the hook
+   */
+  async processTargetRequest(request: Request): Promise<RequestHookResult> {
+    try {
+      return await this.client.processTargetRequest.mutate(request);
+    } catch (error) {
+      return handleHookError(error, this.name, "processTargetRequest", {
+        resultType: "continue" as const,
+        request: request,
+      });
+    }
+  }
+
+  /**
+   * Process a target response through the hook
+   */
+  async processTargetResponse(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult> {
+    try {
+      return await this.client.processTargetResponse.mutate({
+        response,
+        originalRequest,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processTargetResponse", {
+        resultType: "continue" as const,
+        response: response,
+      });
+    }
+  }
+
+  /**
+   * Process a notification through the hook
+   */
+  async processNotification(
+    notification: Notification,
+  ): Promise<NotificationHookResult> {
+    try {
+      return await this.client.processNotification.mutate(notification);
+    } catch (error) {
+      return handleHookError(error, this.name, "processNotification", {
+        resultType: "continue" as const,
+        notification: notification,
+      });
+    }
+  }
+
+  /**
+   * Process a target notification through the hook
+   */
+  async processTargetNotification(
+    notification: Notification,
+  ): Promise<NotificationHookResult> {
+    try {
+      return await this.client.processTargetNotification.mutate(notification);
+    } catch (error) {
+      return handleHookError(error, this.name, "processTargetNotification", {
+        resultType: "continue" as const,
+        notification: notification,
       });
     }
   }

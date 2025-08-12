@@ -2,8 +2,8 @@ import {
   AbstractHook,
   type CallToolRequest,
   type CallToolResult,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
+  type CallToolRequestHookResult,
+  type CallToolResponseHookResult,
 } from "@civic/passthrough-mcp-server";
 
 type CallToolRequestWithHookData = CallToolRequest & {
@@ -26,7 +26,7 @@ export class CallCounterHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     // Get session ID from _meta
     const sessionId = toolCall.params._meta?.sessionId || "default";
 
@@ -57,7 +57,7 @@ export class CallCounterHook extends AbstractHook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     // Get the session count from the modified tool call
     const sessionCount: number =
       (originalToolCall as CallToolRequestWithHookData).params._meta?._hookData
