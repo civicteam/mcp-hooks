@@ -1,8 +1,8 @@
 import {
   AbstractHook,
-  type ListToolsResponseHookResult,
   type CallToolRequestHookResult,
   type CallToolResponseHookResult,
+  type ListToolsResponseHookResult,
 } from "@civic/hook-common";
 import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {

@@ -6,13 +6,13 @@
 
 import {
   AbstractHook,
+  type CallToolRequestHookResult,
   type CallToolRequestWithContext,
   type InitializeRequestHookResult,
   type InitializeRequestWithContext,
   type ListToolsRequestHookResult,
   type ListToolsRequestWithContext,
   type RequestContext,
-  type CallToolRequestHookResult,
 } from "@civic/hook-common";
 
 export interface ApiKeyHookConfig {

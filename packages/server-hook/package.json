@@ -1,0 +1,28 @@
+{
+  "name": "@civic/server-hook",
+  "version": "0.0.1",
+  "description": "MCP hook that provides server-side initialization handling and callbacks",
+  "author": "Civic",
+  "license": "MIT",
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "biome check .",
+    "format": "biome check . --write",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@civic/hook-common": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.17.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "tsx": "^4.19.4",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

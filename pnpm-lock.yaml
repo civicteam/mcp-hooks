@@ -283,6 +283,34 @@ importers:
         specifier: ^5.2.2
         version: 5.8.3
 
+  packages/server-hook:
+    dependencies:
+      '@civic/hook-common':
+        specifier: workspace:*
+        version: link:../hook-common
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.17.1
+        version: 1.17.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.4
+        version: 1.9.4
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.16.5
+      '@vitest/coverage-v8':
+        specifier: ^2.1.8
+        version: 2.1.9(vitest@2.1.9(@types/node@22.16.5))
+      tsx:
+        specifier: ^4.19.4
+        version: 4.20.3
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.16.5)
+
   packages/simple-log-hook:
     dependencies:
       '@civic/hook-common':
@@ -3192,6 +3220,24 @@ snapshots:
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
       vitest: 2.1.9(@types/node@20.19.9)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@vitest/coverage-v8@2.1.9(vitest@2.1.9(@types/node@22.16.5))':
+    dependencies:
+      '@ampproject/remapping': 2.3.0
+      '@bcoe/v8-coverage': 0.2.3
+      debug: 4.4.1
+      istanbul-lib-coverage: 3.2.2
+      istanbul-lib-report: 3.0.1
+      istanbul-lib-source-maps: 5.0.6
+      istanbul-reports: 3.1.7
+      magic-string: 0.30.17
+      magicast: 0.3.5
+      std-env: 3.9.0
+      test-exclude: 7.0.1
+      tinyrainbow: 1.2.0
+      vitest: 2.1.9(@types/node@22.16.5)
     transitivePeerDependencies:
       - supports-color
 

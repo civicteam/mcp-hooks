@@ -5,9 +5,9 @@
  */
 
 import type {
-  Hook,
   CallToolRequestHookResult,
   CallToolResponseHookResult,
+  Hook,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,

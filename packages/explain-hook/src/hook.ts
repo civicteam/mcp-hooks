@@ -6,8 +6,8 @@
 
 import {
   AbstractHook,
-  type ListToolsResponseHookResult,
   type CallToolRequestHookResult,
+  type ListToolsResponseHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
