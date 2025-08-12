@@ -7,7 +7,9 @@
 
 import {
   AbstractHook,
+  type CallToolRequestHookResult,
   type CallToolRequestWithContext,
+  type CallToolResponseHookResult,
   type CallToolResult,
   type InitializeRequestHookResult,
   type InitializeRequestWithContext,
@@ -17,8 +19,6 @@ import {
   type ListToolsRequestWithContext,
   type ListToolsResponseHookResult,
   type ListToolsResult,
-  type CallToolRequestHookResult,
-  type CallToolResponseHookResult,
 } from "@civic/hook-common";
 import { logger } from "../src/logger/logger.js";
 

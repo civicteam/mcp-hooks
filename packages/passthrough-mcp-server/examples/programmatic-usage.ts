@@ -8,9 +8,9 @@
 import {
   AbstractHook,
   type CallToolRequest,
-  type CallToolResult,
   type CallToolRequestHookResult,
   type CallToolResponseHookResult,
+  type CallToolResult,
 } from "@civic/hook-common";
 import { createPassthroughProxy } from "../src/index.js";
 import { logger } from "../src/logger/logger.js";

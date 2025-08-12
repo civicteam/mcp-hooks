@@ -268,7 +268,15 @@ describe("Passthrough Integration Tests", () => {
     // Send a ping from the server side through the transport
     const clientReply = await realMcpServer.server.ping();
 
-    // Verify client received the ping
-    expect(clientReply).toStrictEqual({});
+    // Verify client received the ping (now includes metadata from passthrough processing)
+    expect(clientReply).toEqual(
+      expect.objectContaining({
+        _meta: expect.objectContaining({
+          sessionId: expect.any(String),
+          source: "passthrough-server",
+          timestamp: expect.any(String),
+        }),
+      }),
+    );
   });
 });

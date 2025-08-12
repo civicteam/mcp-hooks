@@ -3,10 +3,10 @@
  */
 
 import type {
-  CallToolRequestWithContext,
-  Hook,
   CallToolRequestHookResult,
+  CallToolRequestWithContext,
   CallToolResponseHookResult,
+  Hook,
 } from "@civic/hook-common";
 import { LocalHookClient, RemoteHookClient } from "@civic/hook-common";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";

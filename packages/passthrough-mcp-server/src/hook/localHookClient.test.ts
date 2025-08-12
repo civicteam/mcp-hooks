@@ -1,8 +1,8 @@
 import {
   AbstractHook,
-  LocalHookClient,
   type CallToolRequestHookResult,
   type CallToolResponseHookResult,
+  LocalHookClient,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,

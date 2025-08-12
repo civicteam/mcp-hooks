@@ -309,9 +309,17 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Wait for the response to be processed
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Verify the server ping completed successfully
+    // Verify the server ping completed successfully (now includes metadata from passthrough processing)
     const pingResult = await serverPingPromise;
-    expect(pingResult).toEqual({});
+    expect(pingResult).toEqual(
+      expect.objectContaining({
+        _meta: expect.objectContaining({
+          sessionId: expect.any(String),
+          source: "passthrough-server",
+          timestamp: expect.any(String),
+        }),
+      }),
+    );
 
     // Verify we handled the server ping correctly
     expect(serverPingId).not.toBeNull();

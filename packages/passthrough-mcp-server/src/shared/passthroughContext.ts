@@ -3,16 +3,19 @@
  * in the passthrough proxy.
  */
 
-import {
+import type {
   MethodsWithRequestType,
-  MethodsWithResponseType
+  MethodsWithResponseType,
 } from "@civic/hook-common";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
-  CallToolRequest, CallToolRequestSchema,
-  CallToolResult, CallToolResultSchema,
+  type CallToolRequest,
+  CallToolRequestSchema,
+  type CallToolResult,
+  CallToolResultSchema,
   type InitializeRequest,
-  InitializeRequestSchema, InitializeResult,
+  InitializeRequestSchema,
+  type InitializeResult,
   InitializeResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
@@ -26,17 +29,18 @@ import {
   type ServerResult,
   ServerResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { z } from "zod";
 import { PassthroughClient } from "../client/passthroughClient.js";
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain } from "../hook/hookChain.js";
 import {
+  processNotificationThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
-import {z} from "zod";
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -91,8 +95,8 @@ export class PassthroughContext {
     );
 
     this._passthroughServer.setRequestHandler(
-        CallToolRequestSchema,
-        this._onServerCallToolRequest.bind(this),
+      CallToolRequestSchema,
+      this._onServerCallToolRequest.bind(this),
     );
 
     this._passthroughServer.onclose = this._onServerClose.bind(this);
@@ -103,7 +107,9 @@ export class PassthroughContext {
     this.onerror?.(error);
   }
 
-  private addMetaToRequest<TRequest extends Request>(request: TRequest): TRequest {
+  private addMetaToRequest<TRequest extends Request>(
+    request: TRequest,
+  ): TRequest {
     return {
       ...request,
       params: {
@@ -130,12 +136,88 @@ export class PassthroughContext {
     };
   }
 
+  /**
+   * Process client requests (target server -> client direction) through hooks in reverse order
+   *
+   * Why reverse order:
+   * - Client requests flow from target server back to client (reverse direction)
+   * - Hooks should process in reverse to maintain symmetry with server requests
+   * - This ensures proper "unwrapping" of transformations applied during server->client flow
+   */
+  private async processClientRequest<
+    TRequest extends Request,
+    TResponse extends Result,
+    TResponseSchema extends z.ZodSchema<TResponse>,
+    TRequestMethodName extends MethodsWithRequestType<TRequest>,
+    TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
+  >(
+    request: TRequest,
+    responseSchema: TResponseSchema,
+    hookRequestMethodName: TRequestMethodName,
+    hookResponseMethodName: TResponseMethodName,
+  ): Promise<TResponse> {
+    // Annotate request with metadata
+    const annotatedRequest = this.addMetaToRequest<TRequest>(request);
+
+    // Process request through hooks IN REVERSE ORDER (tail to head)
+    const requestResult = await processRequestThroughHooks<
+      TRequest,
+      TResponse,
+      TRequestMethodName
+    >(
+      annotatedRequest,
+      this._hookChain.tail, // Start from tail instead of head
+      hookRequestMethodName,
+      "reverse", // Process in reverse direction
+    );
+
+    let response: TResponse | undefined = undefined;
+
+    if (requestResult.resultType === "abort") {
+      throw createAbortException("request", requestResult.reason);
+    }
+
+    if (requestResult.resultType === "respond") {
+      response = requestResult.response;
+    } else {
+      // (requestResult.resultType === "continue")
+      // Forward the request to the actual server
+      if (!this._passthroughServer.transport) {
+        throw new McpError(
+          MCP_ERROR_CODES.REQUEST_REJECTED,
+          "No server transport connected. Cannot forward request to target server.",
+        );
+      }
+      response = await this._passthroughServer.request(
+        requestResult.request,
+        responseSchema,
+      );
+    }
+
+    const annotatedResponse = this.addMetaToResult(response);
+
+    // Process response through hooks (also in reverse, from last processed hook back)
+    const responseResult = await processResponseThroughHooks(
+      annotatedResponse,
+      annotatedRequest,
+      requestResult.lastProcessedHook,
+      hookResponseMethodName,
+      "forward", // Process in reverse direction
+    );
+
+    if (responseResult.resultType === "abort") {
+      throw createAbortException("response", responseResult.reason);
+    }
+
+    return responseResult.response;
+  }
+
   private async processServerRequest<
-      TRequest extends Request,
-      TResponse extends Result,
-      TResponseSchema extends z.ZodSchema<TResponse>,
-      TRequestMethodName extends MethodsWithRequestType<TRequest>,
-      TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>
+    TRequest extends Request,
+    TResponse extends Result,
+    TResponseSchema extends z.ZodSchema<TResponse>,
+    TRequestMethodName extends MethodsWithRequestType<TRequest>,
+    TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
   >(
     request: TRequest,
     responseSchema: TResponseSchema,
@@ -146,11 +228,11 @@ export class PassthroughContext {
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
 
     // pass request through chain
-    const requestResult = await processRequestThroughHooks<TRequest, TResponse, TRequestMethodName>(
-      annotatedRequest,
-      this._hookChain.head,
-      hookRequestMethodName,
-    );
+    const requestResult = await processRequestThroughHooks<
+      TRequest,
+      TResponse,
+      TRequestMethodName
+    >(annotatedRequest, this._hookChain.head, hookRequestMethodName);
 
     let response: TResponse | undefined = undefined;
 
@@ -197,9 +279,9 @@ export class PassthroughContext {
   ): Promise<InitializeResult> {
     return this.processServerRequest(
       request,
-        InitializeResultSchema,
+      InitializeResultSchema,
       "processInitializeRequest",
-      "processInitializeResponse"
+      "processInitializeResponse",
     );
   }
 
@@ -208,57 +290,176 @@ export class PassthroughContext {
   ): Promise<ListToolsResult> {
     return this.processServerRequest(
       request,
-        ListToolsResultSchema,
+      ListToolsResultSchema,
       "processToolsListRequest",
-      "processToolsListResponse"
+      "processToolsListResponse",
     );
   }
 
   private async _onServerCallToolRequest(
-      request: CallToolRequest,
+    request: CallToolRequest,
   ): Promise<CallToolResult> {
     return this.processServerRequest(
-        request,
-        CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
-        "processToolCallRequest",
-        "processToolCallResponse"
+      request,
+      CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
+      "processToolCallRequest",
+      "processToolCallResponse",
     );
   }
 
-  private async _onServerRequest(request: Request): Promise<ServerResult> {
+  private async _onServerRequest(request: Request): Promise<Result> {
     // all other calls are just forwarded to the client
     if (!this._passthroughClient.transport) {
       throw new McpError(
-          MCP_ERROR_CODES.REQUEST_REJECTED,
-          ERROR_MESSAGES.NO_CLIENT_TRANSPORT,
+        MCP_ERROR_CODES.REQUEST_REJECTED,
+        ERROR_MESSAGES.NO_CLIENT_TRANSPORT,
       );
     }
 
-    return this._passthroughClient.request(request, ServerResultSchema);
+    return this.processServerRequest(
+      request,
+      ResultSchema,
+      "processOtherRequest",
+      "processOtherResponse",
+    );
   }
 
+  /**
+   * Handle notifications from the server (client -> server direction)
+   * Process through hooks and forward to the upstream server if not aborted
+   */
   private async _onServerNotification(notification: Notification) {
-    // TODO: Needs to be supported by hooks.
-    // Check if client transport is connected before forwarding notification
-    if (!this._passthroughClient.transport) {
-      // For notifications, we can't throw an error back, so we log and return
-      this._onerror(new Error(ERROR_MESSAGES.NO_CLIENT_TRANSPORT_NOTIFICATION));
-      return;
+    try {
+      // Add metadata to the notification
+      const annotatedNotification = {
+        ...notification,
+        params: {
+          ...notification.params,
+          _meta: {
+            ...notification.params?._meta,
+            sessionId: this.passthroughServerTransport?.sessionId,
+            timestamp: new Date().toISOString(),
+            source: "passthrough-server",
+          },
+        },
+      };
+
+      // Process notification through hooks
+      const result = await processNotificationThroughHooks(
+        annotatedNotification,
+        this._hookChain.head,
+        "processNotification",
+      );
+
+      // If aborted by hooks, log and return (notifications can't return errors)
+      if (result.resultType === "abort") {
+        this._onerror(
+          new Error(`Notification aborted by hook: ${result.reason}`),
+        );
+        return;
+      }
+
+      // Check if client transport is connected before forwarding notification
+      if (!this._passthroughClient.transport) {
+        // For notifications, we can't throw an error back, so we log and return
+        this._onerror(
+          new Error(ERROR_MESSAGES.NO_CLIENT_TRANSPORT_NOTIFICATION),
+        );
+        return;
+      }
+
+      // Forward the (potentially modified) notification to the upstream server
+      return this._passthroughClient.notification(result.notification);
+    } catch (error) {
+      // Log any unexpected errors (notifications can't return errors to caller)
+      this._onerror(
+        error instanceof Error
+          ? error
+          : new Error(`Notification processing error: ${error}`),
+      );
     }
-    // for now, just directly pass through
-    return this._passthroughClient.notification(notification);
   }
 
+  /**
+   * Handle requests from the client (target server -> client direction)
+   * Process through hooks in REVERSE order and forward to the target server if not aborted
+   *
+   * Why reverse order:
+   * - Client requests come from the target server back to the client
+   * - This is the "return journey" so hooks should process in reverse
+   * - Maintains symmetry: server requests go head->tail, client requests go tail->head
+   */
   private async _onClientRequest(request: Request): Promise<Result> {
-    // TODO: Needs to be supported by hooks.
-    // for now, directly pass through
-    return this._passthroughServer.request(request, ResultSchema);
+    return this.processClientRequest(
+      request,
+      ResultSchema,
+      "processTargetRequest",
+      "processTargetResponse",
+    );
   }
 
+  /**
+   * Handle notifications from the client (target server -> client direction)
+   * Process through hooks in REVERSE order and forward to the target server if not aborted
+   *
+   * Why reverse order:
+   * - Client notifications come from the target server back to the client
+   * - This is the "return journey" so hooks should process in reverse
+   * - Maintains symmetry: server notifications go head->tail, client notifications go tail->head
+   */
   private async _onClientNotification(notification: Notification) {
-    // TODO: Needs to be supported by hooks.
-    // for now, directly pass through
-    return this._passthroughServer.notification(notification);
+    try {
+      // Add metadata to the notification
+      const annotatedNotification = {
+        ...notification,
+        params: {
+          ...notification.params,
+          _meta: {
+            ...notification.params?._meta,
+            sessionId: this.passthroughServerTransport?.sessionId,
+            timestamp: new Date().toISOString(),
+            source: "passthrough-server",
+          },
+        },
+      };
+
+      // Process notification through hooks IN REVERSE ORDER (tail to head)
+      const result = await processNotificationThroughHooks(
+        annotatedNotification,
+        this._hookChain.tail,
+        "processTargetNotification",
+        "reverse",
+      );
+
+      // If aborted by hooks, log and return (notifications can't return errors)
+      if (result.resultType === "abort") {
+        this._onerror(
+          new Error(`Client notification aborted by hook: ${result.reason}`),
+        );
+        return;
+      }
+
+      // Check if server transport is connected before forwarding notification
+      if (!this._passthroughServer.transport) {
+        // For notifications, we can't throw an error back, so we log and return
+        this._onerror(
+          new Error(
+            "No server transport connected. Cannot forward client notification to target server.",
+          ),
+        );
+        return;
+      }
+
+      // Forward the (potentially modified) notification to the target server
+      return this._passthroughServer.notification(result.notification);
+    } catch (error) {
+      // Log any unexpected errors (notifications can't return errors to caller)
+      this._onerror(
+        error instanceof Error
+          ? error
+          : new Error(`Client notification processing error: ${error}`),
+      );
+    }
   }
 
   private _onServerClose(): void {
