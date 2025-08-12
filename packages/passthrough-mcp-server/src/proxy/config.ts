@@ -8,10 +8,14 @@
 
 import * as process from "node:process";
 import type { Hook } from "@civic/hook-common";
+import type {
+  StreamableHTTPServerTransport,
+  StreamableHTTPServerTransportOptions,
+} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { logger } from "../logger/logger.js";
 
-type SourceTransportType = "stdio" | "httpStream" | "sse" | "custom";
+type SourceTransportType = "stdio" | "httpStream";
 
 // Base configuration with discriminated union based on transport type
 export type BaseConfig =
@@ -20,12 +24,12 @@ export type BaseConfig =
       // Port is not required for stdio
     }
   | {
-      sourceTransportType: "httpStream" | "sse";
+      sourceTransportType: "httpStream";
       port: number;
-    }
-  | {
-      sourceTransportType: "custom";
-      sourceTransport: Transport;
+      sourceMcpPath?: string; // Path to MCP endpoint of the http server, defaults to /mcp
+      transportFactory?: (
+        options: StreamableHTTPServerTransportOptions,
+      ) => StreamableHTTPServerTransport;
     };
 
 export type TargetConfig =
@@ -57,7 +61,6 @@ export type Config = BaseConfig & {
  */
 export function parseServerTransport(args: string[]): SourceTransportType {
   if (args.includes("--stdio")) return "stdio";
-  if (args.includes("--sse")) return "sse";
   return "httpStream";
 }
 
@@ -108,6 +111,8 @@ export function createHookConfigs(urls: string[]): RemoteHookConfig[] {
 export function loadConfig(): Config {
   // Server configuration
   const sourceTransportType = parseServerTransport(process.argv);
+  const sourceMcpPath =
+    process.env.SOURCE_SERVER_MCP_PATH || process.env.TARGET_SERVER_MCP_PATH;
 
   // Target configuration
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33000";
@@ -129,13 +134,11 @@ export function loadConfig(): Config {
         ...(targetMcpPath && { mcpPath: targetMcpPath }),
       },
     };
-  } else if (
-    sourceTransportType === "httpStream" ||
-    sourceTransportType === "sse"
-  ) {
+  } else if (sourceTransportType === "httpStream") {
     const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34000;
     config = {
       sourceTransportType,
+      sourceMcpPath,
       port,
       target: {
         url: targetUrl,

@@ -15,20 +15,20 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { logger } from "../../logger/logger.js";
 
 export interface ProxyOptions {
-  targetUrl: string;
+  targetUrl?: string;
   mcpPath: string;
 }
 
 /**
  * Creates an HTTP server that routes requests:
  * - /mcp -> MCP handler
- * - Everything else -> proxy to target
+ * - Everything else -> proxy to target (if targetUrl provided) or 404
  */
 export function createMcpHttpServer(
   options: ProxyOptions,
   mcpHandler: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
 ): http.Server {
-  const targetUrl = new URL(options.targetUrl);
+  const targetUrl = options.targetUrl ? new URL(options.targetUrl) : null;
 
   return http.createServer(async (req, res) => {
     const requestUrl = new URL(req.url || "/", `http://${req.headers.host}`);
@@ -37,9 +37,13 @@ export function createMcpHttpServer(
     if (requestUrl.pathname === options.mcpPath) {
       // Handle MCP requests
       await mcpHandler(req, res);
-    } else {
+    } else if (targetUrl) {
       // Proxy all other requests directly to target
       await proxyToTarget(req, res, targetUrl);
+    } else {
+      // No target URL configured (custom transport), return 404 for non-MCP paths
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Not Found" }));
     }
   });
 }

@@ -13,7 +13,10 @@ import type {
 
 import { randomUUID } from "node:crypto";
 import { URL } from "node:url";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import {
+  StreamableHTTPServerTransport,
+  type StreamableHTTPServerTransportOptions,
+} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
@@ -21,6 +24,7 @@ import { RequestContextAwareStreamableHTTPClientTransport } from "../../transpor
 import type { Config } from "../config.js";
 import {
   createClientTransport,
+  getSourceMcpPath,
   getTargetMcpPath,
   getTargetUrl,
 } from "../transportFactory.js";
@@ -95,7 +99,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
           headers, // Pass custom headers
         );
 
-        serverTransport = new StreamableHTTPServerTransport({
+        const options: StreamableHTTPServerTransportOptions = {
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (newSessionId) => {
             // Store the transport by session ID
@@ -104,7 +108,16 @@ export class HttpPassthroughProxy implements PassthroughProxy {
               `HTTP transport initialized for session: ${newSessionId}`,
             );
           },
-        });
+        };
+
+        if (this.config.transportFactory) {
+          logger.debug(
+            "Creating StreamableHTTPServerTransport with custom factory",
+          );
+          serverTransport = this.config.transportFactory(options);
+        } else {
+          serverTransport = new StreamableHTTPServerTransport(options);
+        }
 
         // Clean up transport when closed
         serverTransport.onclose = () => {
@@ -220,7 +233,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     this.httpServer = createMcpHttpServer(
       {
         targetUrl: getTargetUrl(this.config.target),
-        mcpPath: getTargetMcpPath(this.config.target),
+        mcpPath: getSourceMcpPath(this.config),
       },
       this.handleRequest.bind(this),
     );
@@ -247,8 +260,13 @@ export class HttpPassthroughProxy implements PassthroughProxy {
 
     this.isStarted = true;
 
+    const targetInfo =
+      this.config.target.transportType === "custom"
+        ? "custom transport"
+        : `${getTargetUrl(this.config.target)}`;
+
     logger.info(
-      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${getTargetUrl(this.config.target)}`,
+      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${targetInfo}`,
     );
   }
 

@@ -30,19 +30,15 @@ async function main() {
         ...config,
         autoStart: true,
       });
-    } else if (
-      config.sourceTransportType === "httpStream" ||
-      config.sourceTransportType === "sse"
-    ) {
+    } else if (config.sourceTransportType === "httpStream") {
       proxy = await createHttpPassthroughProxy({
         ...config,
         port: config.port || 3000,
         autoStart: true,
       });
     } else {
-      throw new Error(
-        `Source Transport Type ${config.sourceTransportType} not supported`,
-      );
+      // This should never happen due to type checking, but included for safety
+      throw new Error("Source Transport Type not supported");
     }
 
     // Handle graceful shutdown

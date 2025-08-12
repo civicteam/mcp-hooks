@@ -14,11 +14,6 @@ describe("Config Utils", () => {
       expect(parseServerTransport(args)).toBe("stdio");
     });
 
-    it("should return sse when --sse flag is present", () => {
-      const args = ["node", "script.js", "--sse"];
-      expect(parseServerTransport(args)).toBe("sse");
-    });
-
     it("should return httpStream by default", () => {
       const args = ["node", "script.js"];
       expect(parseServerTransport(args)).toBe("httpStream");

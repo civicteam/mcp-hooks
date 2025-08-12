@@ -13,7 +13,7 @@ import { type ZodRawShape, z } from "zod";
 async function main() {
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33100";
   const targetTransport = (process.env.TARGET_SERVER_TRANSPORT ||
-    "httpStream") as "httpStream" | "sse";
+    "httpStream") as "httpStream";
 
   console.error(
     "[Test Server] Starting with target:",

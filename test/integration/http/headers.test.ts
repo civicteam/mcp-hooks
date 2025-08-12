@@ -20,8 +20,8 @@ describe("Headers Hook Tests", () => {
 
   it("should fail to access protected server without API key", async () => {
     // Connect directly to the API key protected server
-    const shouldFail= createUnauthenticatedClient(
-      `${TEST_CONFIG.targetServers.apiKeyProtected.url}/mcp`
+    const shouldFail = createUnauthenticatedClient(
+      `${TEST_CONFIG.targetServers.apiKeyProtected.url}/mcp`,
     );
 
     await expect(shouldFail).rejects.toThrow("Unauthorized");
@@ -30,13 +30,13 @@ describe("Headers Hook Tests", () => {
   it("should successfully access protected server through API key hook", async () => {
     // Connect through the passthrough server with API key hook
     proxiedClient = await createUnauthenticatedClient(
-      TEST_CONFIG.passthroughServers.withApiKeyHook.url
+      TEST_CONFIG.passthroughServers.withApiKeyHook.url,
     );
 
     // List tools - should work because the hook adds the API key
     const tools = await proxiedClient.listTools();
     expect(tools.tools.length).toBeGreaterThan(0);
-    
+
     // Find the protected-echo tool
     const protectedEcho = tools.tools.find((t) => t.name === "protected-echo");
     expect(protectedEcho).toBeDefined();
@@ -45,7 +45,7 @@ describe("Headers Hook Tests", () => {
   it("should execute protected tool through API key hook", async () => {
     // Connect through the passthrough server with API key hook
     proxiedClient = await createUnauthenticatedClient(
-      TEST_CONFIG.passthroughServers.withApiKeyHook.url
+      TEST_CONFIG.passthroughServers.withApiKeyHook.url,
     );
 
     // Call the protected echo tool
