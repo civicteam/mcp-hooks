@@ -154,9 +154,6 @@ Replaces tool descriptions based on configuration. Useful for providing context-
 **@civic/rate-limit-hook**
 Enforces rate limits on tool calls per user. Configurable limits per minute and per hour with clear retry-after responses.
 
-**@civic/alert-hook**
-Monitors transport-layer errors and triggers alerts when server errors occur. Sends webhook notifications when 5xx HTTP errors are detected, useful for operational monitoring.
-
 **@civic/local-tools-hook**
 A programmatic hook that allows adding local tools directly to passthrough MCP servers without requiring a separate MCP server. Perfect for defining custom tools in your application code.
 
@@ -318,7 +315,6 @@ mcp-hooks/
 │   ├── explain-hook/             # Example: Transparency hook
 │   ├── custom-description-hook/  # Example: Transform hook
 │   ├── rate-limit-hook/          # Example: Rate limiting hook
-│   ├── alert-hook/               # Example: Error alerting hook
 │   ├── local-tools-hook/         # Example: Programmatic tools hook
 │   ├── fetch-docs/               # Test MCP server
 │   └── whoami-server/            # Test auth server

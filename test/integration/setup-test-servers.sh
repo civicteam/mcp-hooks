@@ -29,7 +29,7 @@ check_port() {
 }
 
 echo "Checking port availability..."
-for port in 33000 33007 33008 33009 33100 33200 33201 34000 34008 34100 34101 34200 34300 34400; do
+for port in 33000 33007 33008 33100 33200 33201 34000 34008 34100 34101 34200 34400; do
     if ! check_port $port; then
         echo "Please free up port $port before running tests"
         exit 1
@@ -133,14 +133,6 @@ start_server "Passthrough with hooks to fetchDocs (port 34200)" \
 # Broken server (always returns 500)
 start_server "Broken server (port 33200)" \
     "cd test/integration/servers/broken-server && PORT=33200 npx tsx src/index.ts"
-
-# Alert hook server
-start_server "Alert hook server (port 33009)" \
-    "cd packages/alert-hook && PORT=33009 ALERT_WEBHOOK_URL=http://localhost:9999/webhook ALERT_LOG_TO_CONSOLE=true npx tsx src/index.ts"
-
-# Passthrough to broken server with alert hook
-start_server "Passthrough with alert hook to broken server (port 34300)" \
-    "cd packages/passthrough-mcp-server && TARGET_SERVER_URL=http://localhost:33200 HOOKS=http://localhost:33009 PORT=34300 npx tsx src/cli.ts"
 
 # API Key Protected server
 start_server "API Key Protected server (port 33201)" \

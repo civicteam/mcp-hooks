@@ -3,10 +3,10 @@
  */
 
 import type {
+  CallToolRequestHookResult,
   CallToolRequestWithContext,
+  CallToolResponseHookResult,
   Hook,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import { LocalHookClient, RemoteHookClient } from "@civic/hook-common";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
@@ -39,14 +39,14 @@ class MockHook implements Hook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
 
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     return { resultType: "continue", response };
   }
 }

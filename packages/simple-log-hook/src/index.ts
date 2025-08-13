@@ -8,8 +8,8 @@
 import * as process from "node:process";
 import {
   AbstractHook,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
+  type CallToolRequestHookResult,
+  type CallToolResponseHookResult,
   startHookServer,
 } from "@civic/hook-common";
 import type {
@@ -30,7 +30,7 @@ class SimpleLogHook extends AbstractHook {
 
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     console.log(`[REQUEST] ${toolCall.params.name}`, toolCall.params.arguments);
 
     // Call parent implementation to continue with unmodified tool call
@@ -40,7 +40,7 @@ class SimpleLogHook extends AbstractHook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     console.log(`[RESPONSE] ${originalToolCall.params.name}`, response);
 
     // Call parent implementation to continue with unmodified response

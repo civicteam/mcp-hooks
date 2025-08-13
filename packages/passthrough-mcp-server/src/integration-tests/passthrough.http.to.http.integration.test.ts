@@ -8,8 +8,6 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { ListToolsResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-// import { StreamableHTTPClientTransport as PassthroughHTTPClientTransport } from "../client/streamableHttp.js";
-// import { StreamableHTTPServerTransport as PassthroughHTTPServerTransport } from "../server/streamableHttp.js";
 import { PassthroughContext } from "../shared/passthroughContext.js";
 
 describe("Passthrough Integration Tests", () => {
@@ -268,7 +266,15 @@ describe("Passthrough Integration Tests", () => {
     // Send a ping from the server side through the transport
     const clientReply = await realMcpServer.server.ping();
 
-    // Verify client received the ping
-    expect(clientReply).toStrictEqual({});
+    // Verify client received the ping (now includes metadata from passthrough processing)
+    expect(clientReply).toEqual(
+      expect.objectContaining({
+        _meta: expect.objectContaining({
+          sessionId: expect.any(String),
+          source: "passthrough-server",
+          timestamp: expect.any(String),
+        }),
+      }),
+    );
   });
 });

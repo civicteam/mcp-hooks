@@ -7,7 +7,9 @@
 
 import {
   AbstractHook,
+  type CallToolRequestHookResult,
   type CallToolRequestWithContext,
+  type CallToolResponseHookResult,
   type CallToolResult,
   type InitializeRequestHookResult,
   type InitializeRequestWithContext,
@@ -17,8 +19,6 @@ import {
   type ListToolsRequestWithContext,
   type ListToolsResponseHookResult,
   type ListToolsResult,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import { logger } from "../src/logger/logger.js";
 
@@ -40,7 +40,7 @@ export class AuthenticationHeaderHook extends AbstractHook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     // Add authentication header
     const modifiedHeaders = {
       ...request.req?.headers,
@@ -97,7 +97,7 @@ export class ConditionalRoutingHook extends AbstractHook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     const toolName = request.params.name;
     const targetHost = this.routingRules[toolName];
 
@@ -136,7 +136,7 @@ export class PathRewritingHook extends AbstractHook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     if (!request.req?.path) {
       return { resultType: "continue", request };
     }
@@ -183,7 +183,7 @@ export class HeaderFilteringHook extends AbstractHook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     if (!request.req?.headers) {
       return { resultType: "continue", request };
     }
@@ -221,7 +221,7 @@ export class CombinedManipulationHook extends AbstractHook {
 
   async processToolCallRequest(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     const toolName = request.params.name;
 
     // Different manipulations based on tool

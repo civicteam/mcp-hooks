@@ -10,8 +10,8 @@ import {
   createRemoteHookClients,
 } from "./client.js";
 import type {
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
 } from "./types.js";
 
 // Mock tRPC client
@@ -99,7 +99,7 @@ describe("RemoteHookClient", () => {
         },
       };
 
-      const expectedResponse: ToolCallRequestHookResult = {
+      const expectedResponse: CallToolRequestHookResult = {
         resultType: "continue",
         request: adaptedToolCall,
       };
@@ -124,7 +124,7 @@ describe("RemoteHookClient", () => {
         },
       });
 
-      const expectedResponse: ToolCallRequestHookResult = {
+      const expectedResponse: CallToolRequestHookResult = {
         resultType: "continue",
         request: toolCall,
       };
@@ -144,7 +144,7 @@ describe("RemoteHookClient", () => {
         toolDefinition: undefined,
       });
 
-      const abortResponse: ToolCallRequestHookResult = {
+      const abortResponse: CallToolRequestHookResult = {
         resultType: "abort",
         reason: "Tool not allowed",
       };
@@ -201,7 +201,7 @@ describe("RemoteHookClient", () => {
         ],
       };
 
-      const expectedResponse: ToolCallResponseHookResult = {
+      const expectedResponse: CallToolResponseHookResult = {
         resultType: "continue",
         response: {
           content: [
@@ -256,7 +256,7 @@ describe("RemoteHookClient", () => {
       ];
 
       for (const response of testCases) {
-        const expectedResponse: ToolCallResponseHookResult = {
+        const expectedResponse: CallToolResponseHookResult = {
           resultType: "continue",
           response: response,
         };
@@ -287,7 +287,7 @@ describe("RemoteHookClient", () => {
         ],
       };
 
-      const abortResponse: ToolCallResponseHookResult = {
+      const abortResponse: CallToolResponseHookResult = {
         resultType: "abort",
         reason: "Sensitive data detected",
       };

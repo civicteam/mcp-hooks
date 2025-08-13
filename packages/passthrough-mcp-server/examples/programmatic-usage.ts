@@ -8,9 +8,9 @@
 import {
   AbstractHook,
   type CallToolRequest,
+  type CallToolRequestHookResult,
+  type CallToolResponseHookResult,
   type CallToolResult,
-  type ToolCallRequestHookResult,
-  type ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import { createPassthroughProxy } from "../src/index.js";
 import { logger } from "../src/logger/logger.js";
@@ -94,7 +94,7 @@ async function example4_withProgrammaticHooks() {
 
     async processToolCallRequest(
       toolCall: CallToolRequest,
-    ): Promise<ToolCallRequestHookResult> {
+    ): Promise<CallToolRequestHookResult> {
       logger.info(
         `[${this.name}] Tool request: ${toolCall.params.name} ${JSON.stringify(toolCall.params.arguments)}`,
       );
@@ -107,7 +107,7 @@ async function example4_withProgrammaticHooks() {
     async processToolCallResponse(
       response: CallToolResult,
       originalToolCall: CallToolRequest,
-    ): Promise<ToolCallResponseHookResult> {
+    ): Promise<CallToolResponseHookResult> {
       logger.info(
         `[${this.name}] Tool response for ${originalToolCall.params.name}: ${JSON.stringify(response)}`,
       );
@@ -126,7 +126,7 @@ async function example4_withProgrammaticHooks() {
 
     async processToolCallRequest(
       toolCall: CallToolRequest,
-    ): Promise<ToolCallRequestHookResult> {
+    ): Promise<CallToolRequestHookResult> {
       // Block dangerous operations
       if (
         toolCall.params.name.toLowerCase().includes("delete") ||

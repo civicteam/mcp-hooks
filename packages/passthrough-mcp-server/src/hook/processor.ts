@@ -16,13 +16,12 @@
 import type {
   GenericRequestHookResult,
   GenericResponseHookResult,
-  GenericTransportErrorHookResult,
   Hook,
   MethodsWithRequestType,
   MethodsWithResponseType,
-  MethodsWithTransportErrorType,
-  TransportError,
+  NotificationHookResult,
 } from "@civic/hook-common";
+import type { Notification } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../logger/logger.js";
 import type { LinkedListHook } from "./hookChain.js";
 
@@ -47,18 +46,19 @@ export async function processRequestThroughHooks<
   TMethodName extends MethodsWithRequestType<TRequest>,
 >(
   request: TRequest,
-  head: LinkedListHook | null, // null : empty hook-chain,
+  startHook: LinkedListHook | null, // null: empty hook-chain, can be head or tail
   methodName: TMethodName,
+  direction: "forward" | "reverse" = "forward", // forward: head->tail, reverse: tail->head
 ): Promise<
   GenericRequestHookResult<TRequest, TResponse> & {
     lastProcessedHook: LinkedListHook | null;
   }
 > {
   let currentRequest = request;
-  let currentHook = head;
+  let currentHook = startHook;
 
   logger.debug(
-    `[Processor] Processing request through hooks for method ${methodName}`,
+    `[Processor] Processing request through hooks ${direction === "reverse" ? "in REVERSE " : ""}for method ${methodName}`,
   );
   while (currentHook) {
     const hook = currentHook.hook;
@@ -80,7 +80,13 @@ export async function processRequestThroughHooks<
     // Why use .call():
     // - Ensures 'this' context is properly bound to the hook instance
     // - Allows hooks to access their own properties/state via 'this'
-    const hookResult = await hookMethod.call(hook, currentRequest);
+    // Type assertion needed because TypeScript can't correlate the generic
+    // methodName with the specific method signature at compile time
+    const hookResult = await (
+      hookMethod as (
+        request: TRequest,
+      ) => Promise<GenericRequestHookResult<TRequest, TResponse>>
+    ).call(hook, currentRequest);
 
     if (hookResult.resultType === "continue") {
       // Hook may have modified the request - use the updated version
@@ -99,8 +105,11 @@ export async function processRequestThroughHooks<
       return { ...hookResult, lastProcessedHook: currentHook };
     }
 
-    if (currentHook.next) {
+    // Move to next hook based on direction
+    if (direction === "forward" && currentHook.next) {
       currentHook = currentHook.next;
+    } else if (direction === "reverse" && currentHook.previous) {
+      currentHook = currentHook.previous;
     } else {
       break;
     }
@@ -136,15 +145,16 @@ export async function processResponseThroughHooks<
 >(
   response: TResponse,
   originalRequest: TRequest,
-  last: LinkedListHook | null, // null : empty hook-chain
+  startHook: LinkedListHook | null, // null : empty hook-chain
   methodName: TMethodName,
+  direction: "forward" | "reverse" = "reverse", // forward: head->tail, reverse: tail->head
 ): Promise<
   GenericResponseHookResult<TResponse> & {
     lastProcessedHook: LinkedListHook | null;
   }
 > {
   let currentResponse = response;
-  let currentHook = last;
+  let currentHook = startHook;
 
   // Why iterate backwards from startIndex:
   // - Ensures symmetric processing (first to see request = last to see response)
@@ -157,21 +167,31 @@ export async function processResponseThroughHooks<
       continue;
     }
 
-    const hookResult = await hookMethod.call(
-      hook,
-      currentResponse,
-      originalRequest,
-    );
+    // Type assertion needed because TypeScript can't correlate the generic
+    // methodName with the specific method signature at compile time
+    const hookResult = await (
+      hookMethod as (
+        response: TResponse,
+        request: TRequest,
+      ) => Promise<GenericResponseHookResult<TResponse>>
+    ).call(hook, currentResponse, originalRequest);
 
     if (hookResult.resultType === "continue") {
       currentResponse = hookResult.response;
     } else {
       // abort - even responses can be rejected
       // Why: A hook might detect sensitive data in response that shouldn't be exposed
-      return { ...hookResult, lastProcessedHook: currentHook };
+      return {
+        ...hookResult,
+        lastProcessedHook: currentHook,
+      } as GenericResponseHookResult<TResponse> & {
+        lastProcessedHook: LinkedListHook | null;
+      };
     }
 
-    if (currentHook.previous) {
+    if (direction === "forward" && currentHook.next) {
+      currentHook = currentHook.next;
+    } else if (direction === "reverse" && currentHook.previous) {
       currentHook = currentHook.previous;
     } else {
       break;
@@ -182,5 +202,89 @@ export async function processResponseThroughHooks<
     resultType: "continue",
     response: currentResponse,
     lastProcessedHook: currentHook,
+  };
+}
+
+/**
+ * Process a notification through a chain of hooks
+ *
+ * Why this exists:
+ * - Notifications are fire-and-forget messages that don't expect responses
+ * - Hooks can inspect, modify, or block notifications
+ * - Unlike requests/responses, there's no response phase for notifications
+ *
+ * Why simpler than request/response:
+ * - No response handling needed (notifications are one-way)
+ * - No need to track lastProcessedHook (no reverse processing)
+ * - Can only abort or continue, not respond (no response to return)
+ *
+ * @param notification The notification to process
+ * @param startHook The first hook in the chain (or null for empty chain)
+ * @param methodName The hook method to call (e.g., "processNotification")
+ * @param direction The direction in which the list should be traversed
+ * @returns Result indicating whether to continue or abort
+ */
+export async function processNotificationThroughHooks<
+  TMethodName extends keyof Hook,
+>(
+  notification: Notification,
+  startHook: LinkedListHook | null,
+  methodName: TMethodName,
+  direction: "forward" | "reverse" = "forward", // forward: head->tail, reverse: tail->head
+): Promise<NotificationHookResult> {
+  let currentNotification = notification;
+  let currentHook = startHook;
+
+  logger.debug(
+    `[Processor] Processing notification through hooks for method ${String(methodName)}`,
+  );
+
+  while (currentHook) {
+    const hook = currentHook.hook;
+    const hookMethod = hook[methodName];
+
+    // Skip hooks that don't implement this notification method
+    if (!hookMethod || typeof hookMethod !== "function") {
+      logger.debug(
+        `[Processor] Skipping hook ${hook.name} - no method ${String(methodName)}`,
+      );
+      currentHook = currentHook.next;
+      continue;
+    }
+
+    logger.debug(
+      `Processing hook ${hook.name} for method ${String(methodName)}`,
+    );
+
+    // Type assertion needed because TypeScript can't correlate the generic
+    // methodName with the specific method signature at compile time
+    const hookResult = await (
+      hookMethod as (
+        notification: Notification,
+      ) => Promise<NotificationHookResult>
+    ).call(hook, currentNotification);
+
+    if (hookResult.resultType === "continue") {
+      // Hook may have modified the notification - use the updated version
+      currentNotification = hookResult.notification;
+    } else {
+      // abort case - stop processing immediately
+      logger.debug(
+        `[Processor] Hook ${hook.name} aborted notification: ${hookResult.reason}`,
+      );
+      return { resultType: "abort", reason: hookResult.reason };
+    }
+
+    if (direction === "forward") {
+      currentHook = currentHook.next;
+    } else {
+      // direction === "reverse"
+      currentHook = currentHook.previous;
+    }
+  }
+
+  return {
+    resultType: "continue",
+    notification: currentNotification,
   };
 }

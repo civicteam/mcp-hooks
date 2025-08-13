@@ -5,9 +5,9 @@
  */
 
 import type {
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
   Hook,
-  ToolCallRequestHookResult,
-  ToolCallResponseHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -30,7 +30,7 @@ export class AuditHook implements Hook {
    */
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     const sessionId =
       (toolCall.params._meta as { sessionId?: string })?.sessionId || "unknown";
 
@@ -67,7 +67,7 @@ export class AuditHook implements Hook {
   async processToolCallResponse(
     response: CallToolResult,
     originalToolCall: CallToolRequest,
-  ): Promise<ToolCallResponseHookResult> {
+  ): Promise<CallToolResponseHookResult> {
     const sessionId =
       (originalToolCall.params._meta as { sessionId?: string })?.sessionId ||
       "unknown";

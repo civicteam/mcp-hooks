@@ -1,18 +1,22 @@
-import type {
-  CallToolRequest,
-  InitializeRequest,
-  InitializeResult,
-} from "@modelcontextprotocol/sdk/types";
 import {
+  type CallToolRequest,
   CallToolRequestSchema,
   type CallToolResult,
   CallToolResultSchema,
+  type InitializeRequest,
   InitializeRequestSchema,
+  type InitializeResult,
   InitializeResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
   ListToolsResultSchema,
+  type Notification,
+  NotificationSchema,
+  type Request,
+  RequestSchema,
+  type Result,
+  ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
@@ -28,10 +32,13 @@ import { z } from "zod";
 export type {
   CallToolRequest,
   CallToolResult,
-  ListToolsRequest,
-  ListToolsResult,
   InitializeRequest,
   InitializeResult,
+  ListToolsRequest,
+  ListToolsResult,
+  Notification,
+  Request,
+  Result,
 };
 
 /**
@@ -86,25 +93,6 @@ export type InitializeRequestWithContext = InitializeRequest & {
 };
 
 /**
- * Generic error type for transport errors
- *
- * Why: MCP servers communicate over different transports (HTTP, stdio, etc).
- * When errors occur at the transport layer (e.g., network failures, 5xx errors),
- * we need a common format to represent them so hooks can:
- * 1. Inspect error codes to make decisions (e.g., retry on 503, alert on 500)
- * 2. Transform error messages before they reach the client
- * 3. Track which transport type caused the error for debugging
- */
-export const TransportErrorSchema = z.object({
-  code: z.number(),
-  message: z.string(),
-  data: z.unknown().optional(),
-  responseType: z.enum(["http", "jsonrpc"]).optional(), // Track original response type
-});
-
-export type TransportError = z.infer<typeof TransportErrorSchema>;
-
-/**
  * Base schema for aborting hook processing
  *
  * Why: Hooks need a way to stop the request/response pipeline entirely.
@@ -117,7 +105,7 @@ const HookAbortSchema = z.object({
   reason: z.string(),
 });
 
-export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
+export const CallToolRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
     HookAbortSchema,
@@ -134,7 +122,7 @@ export const ToolCallRequestHookResultSchema = z.discriminatedUnion(
   ],
 );
 
-export const ToolCallResponseHookResultSchema = z.discriminatedUnion(
+export const CallToolResponseHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
     HookAbortSchema,
@@ -175,40 +163,6 @@ export const ListToolsResponseHookResultSchema = z.discriminatedUnion(
   ],
 );
 
-export const ToolCallTransportErrorHookResultSchema = z.discriminatedUnion(
-  "resultType",
-  [
-    HookAbortSchema,
-    // continue the hook chain, passing this (potentially updated) error
-    z.object({
-      resultType: z.literal("continue"),
-      error: TransportErrorSchema,
-    }),
-    // stop the error handling and replace the error with this response
-    z.object({
-      resultType: z.literal("respond"),
-      response: CallToolResultSchema,
-    }),
-  ],
-);
-
-export const ListToolsTransportErrorHookResultSchema = z.discriminatedUnion(
-  "resultType",
-  [
-    HookAbortSchema,
-    // continue the hook chain, passing this (potentially updated) error
-    z.object({
-      resultType: z.literal("continue"),
-      error: TransportErrorSchema,
-    }),
-    // stop the error handling and replace the error with this response
-    z.object({
-      resultType: z.literal("respond"),
-      response: ListToolsResultSchema,
-    }),
-  ],
-);
-
 export const InitializeRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
@@ -238,28 +192,43 @@ export const InitializeResponseHookResultSchema = z.discriminatedUnion(
   ],
 );
 
-export const InitializeTransportErrorHookResultSchema = z.discriminatedUnion(
-  "resultType",
-  [
-    HookAbortSchema,
-    // continue the hook chain, passing this (potentially updated) error
-    z.object({
-      resultType: z.literal("continue"),
-      error: TransportErrorSchema,
-    }),
-    // stop the error handling and replace the error with this response
-    z.object({
-      resultType: z.literal("respond"),
-      response: InitializeResultSchema,
-    }),
-  ],
-);
+export const RequestHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) request
+  z.object({
+    resultType: z.literal("continue"),
+    request: RequestSchema,
+  }),
+  // stop the request and return to the caller with this response
+  z.object({
+    resultType: z.literal("respond"),
+    response: ResultSchema,
+  }),
+]);
 
-export type ToolCallRequestHookResult = z.infer<
-  typeof ToolCallRequestHookResultSchema
+export const ResponseHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) response
+  z.object({
+    resultType: z.literal("continue"),
+    response: ResultSchema,
+  }),
+]);
+
+export const NotificationHookResultSchema = z.discriminatedUnion("resultType", [
+  HookAbortSchema,
+  // continue the hook chain, passing this (potentially updated) notification
+  z.object({
+    resultType: z.literal("continue"),
+    notification: NotificationSchema,
+  }),
+]);
+
+export type CallToolRequestHookResult = z.infer<
+  typeof CallToolRequestHookResultSchema
 >;
-export type ToolCallResponseHookResult = z.infer<
-  typeof ToolCallResponseHookResultSchema
+export type CallToolResponseHookResult = z.infer<
+  typeof CallToolResponseHookResultSchema
 >;
 export type ListToolsRequestHookResult = z.infer<
   typeof ListToolsRequestHookResultSchema
@@ -267,20 +236,16 @@ export type ListToolsRequestHookResult = z.infer<
 export type ListToolsResponseHookResult = z.infer<
   typeof ListToolsResponseHookResultSchema
 >;
-export type ToolCallTransportErrorHookResult = z.infer<
-  typeof ToolCallTransportErrorHookResultSchema
->;
-export type ListToolsTransportErrorHookResult = z.infer<
-  typeof ListToolsTransportErrorHookResultSchema
->;
 export type InitializeRequestHookResult = z.infer<
   typeof InitializeRequestHookResultSchema
 >;
 export type InitializeResponseHookResult = z.infer<
   typeof InitializeResponseHookResultSchema
 >;
-export type InitializeTransportErrorHookResult = z.infer<
-  typeof InitializeTransportErrorHookResultSchema
+export type RequestHookResult = z.infer<typeof RequestHookResultSchema>;
+export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
+export type NotificationHookResult = z.infer<
+  typeof NotificationHookResultSchema
 >;
 /**
  * Hook interface that all hooks must implement
@@ -296,7 +261,7 @@ export interface Hook {
    */
   processToolCallRequest?(
     request: CallToolRequestWithContext,
-  ): Promise<ToolCallRequestHookResult>;
+  ): Promise<CallToolRequestHookResult>;
 
   /**
    * Process a tool call response
@@ -304,7 +269,7 @@ export interface Hook {
   processToolCallResponse?(
     response: CallToolResult,
     originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallResponseHookResult>;
+  ): Promise<CallToolResponseHookResult>;
 
   /**
    * Process a tools/list request (optional)
@@ -322,22 +287,6 @@ export interface Hook {
   ): Promise<ListToolsResponseHookResult>;
 
   /**
-   * Process transport errors for tool calls (optional)
-   */
-  processToolCallTransportError?(
-    error: TransportError,
-    originalToolCall: CallToolRequestWithContext,
-  ): Promise<ToolCallTransportErrorHookResult>;
-
-  /**
-   * Process transport errors for tools/list requests (optional)
-   */
-  processToolsListTransportError?(
-    error: TransportError,
-    originalRequest: ListToolsRequestWithContext,
-  ): Promise<ListToolsTransportErrorHookResult>;
-
-  /**
    * Process an initialize request (optional)
    */
   processInitializeRequest?(
@@ -353,12 +302,44 @@ export interface Hook {
   ): Promise<InitializeResponseHookResult>;
 
   /**
-   * Process transport errors for initialize requests (optional)
+   * Process a request from the client NOT covered by a dedicated handler (optional)
    */
-  processInitializeTransportError?(
-    error: TransportError,
-    originalRequest: InitializeRequestWithContext,
-  ): Promise<InitializeTransportErrorHookResult>;
+  processOtherRequest?(request: Request): Promise<RequestHookResult>;
+
+  /**
+   * Process a reponse from the client NOT covered by a dedicated handler (optional)
+   */
+  processOtherResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult>;
+
+  /**
+   * Process a target request (request coming from the target server back to the client) (optional)
+   */
+  processTargetRequest?(request: Request): Promise<RequestHookResult>;
+
+  /**
+   * Process a target response (response going back to the target server) (optional)
+   */
+  processTargetResponse?(
+    response: Result,
+    originalRequest: Request,
+  ): Promise<ResponseHookResult>;
+
+  /**
+   * Process a notification (notification from client to target server) (optional)
+   */
+  processNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult>;
+
+  /**
+   * Process a target notification (notification from target server to client) (optional)
+   */
+  processTargetNotification?(
+    notification: Notification,
+  ): Promise<NotificationHookResult>;
 }
 
 /**
@@ -384,17 +365,6 @@ export type GenericRequestHookResult<TRequest, TResponse> =
 export type GenericResponseHookResult<TResponse> =
   | { resultType: "abort"; reason: string }
   | { resultType: "continue"; response: TResponse };
-
-/**
- * Generic type for transport error hook results
- * - abort: Stop processing with a reason
- * - continue: Continue with potentially modified error
- * - respond: Stop processing and return a successful response
- */
-export type GenericTransportErrorHookResult<TResponse> =
-  | { resultType: "abort"; reason: string }
-  | { resultType: "continue"; error: TransportError }
-  | { resultType: "respond"; response: TResponse };
 
 /**
  * Type helpers to find methods by parameter types
@@ -454,24 +424,6 @@ export type MethodsWithResponseType<TResponse, TRequest> = Exclude<
         ? O extends TRequest
           ? K
           : never
-        : never
-      : never;
-  }[keyof Hook],
-  undefined
->;
-
-// Find transport error method names that accept a specific request type
-export type MethodsWithTransportErrorType<TRequest> = Exclude<
-  {
-    [K in keyof Hook]: Hook[K] extends
-      | ((
-          error: TransportError,
-          originalRequest: infer R,
-          ...args: unknown[]
-        ) => unknown)
-      | undefined
-      ? R extends TRequest
-        ? K
         : never
       : never;
   }[keyof Hook],

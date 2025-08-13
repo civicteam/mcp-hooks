@@ -6,8 +6,8 @@
 
 import {
   AbstractHook,
+  type CallToolRequestHookResult,
   type ListToolsResponseHookResult,
-  type ToolCallRequestHookResult,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -28,7 +28,7 @@ export class ExplainHook extends AbstractHook {
    */
   async processToolCallRequest(
     toolCall: CallToolRequest,
-  ): Promise<ToolCallRequestHookResult> {
+  ): Promise<CallToolRequestHookResult> {
     // Clone the tool call to avoid modifying the original
     const modifiedToolCall = { ...toolCall };
 
