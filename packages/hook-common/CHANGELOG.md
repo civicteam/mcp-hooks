@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-08-13
+
+### Added
+
+- Comprehensive Hook interface supporting all MCP operations
+- Support for bidirectional request and response processing
+- New hook methods:
+  - `processToolsListRequest` and `processToolsListResponse` for tools/list operations
+  - `processInitializeRequest` and `processInitializeResponse` for initialization handling
+  - `processOtherRequest` and `processOtherResponse` for non-standard MCP methods
+  - `processTargetRequest` and `processTargetResponse` for target server communication
+  - `processNotification` for handling MCP notifications
+- Request context support with `RequestContext` type for HTTP metadata (headers, host, path)
+- Extended request types with context: `CallToolRequestWithContext`, `ListToolsRequestWithContext`, `InitializeRequestWithContext`
+- Comprehensive response types and schemas for all hook operations
+- `AbstractHook` base class providing default implementations for all hook methods
+
+### Changed
+
+- **BREAKING**: Expanded Hook interface from basic tool operations to full MCP protocol coverage
+- **BREAKING**: Removed all TransportError-related functionality and types
+- **BREAKING**: Updated hook method signatures to include context and support bidirectional processing
+- **BREAKING**: Hook methods now return specific result types (e.g., `CallToolRequestHookResult`, `ListToolsRequestHookResult`)
+- Improved type safety with comprehensive schema validation using Zod
+- Enhanced documentation and examples for hook implementations
+
+### Removed
+
+- **BREAKING**: All TransportError-related functions, types, and schemas
+- **BREAKING**: Transport error handling from hook interface
+- Legacy hook patterns that don't support the new bidirectional model
+
+### Technical Details
+
+- Full TypeScript support with comprehensive type definitions
+- Zod schema validation for all hook result types
+- Support for hook chaining and processing pipelines
+- Compatible with @civic/passthrough-mcp-server v0.7.0 bidirectional processing
+
+## [0.2.3] - 2025-08-05
+
+### Changed
+- Maintained compatibility with existing implementations
+- Prepared foundation for upcoming interface changes
+
 ## [0.1.0] - 2025-01-12
 
 ### Changed

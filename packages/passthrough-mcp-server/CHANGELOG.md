@@ -5,7 +5,9 @@ All notable changes to the `@civic/passthrough-mcp-server` package will be docum
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] - 2025-08-05
+## [Unreleased]
+
+## [0.7.0] - 2025-08-13
 
 ### Added
 
@@ -19,13 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for graceful shutdown and cascading transport closure
 - Protocol-level coordination between server and client sides
 - Built on Model Context Protocol (MCP) SDK v1.17.1
+- Comprehensive hooks-only integration test suite for PassthroughContext without HTTP client transport
+- Support for processing all MCP requests entirely through hook chains
+- Integration with @civic/server-hook for server-side initialization handling
+- Test coverage for initialization, tools listing, tool execution, and error handling in hook-only mode
 
 ### Changed
 
 - **BREAKING**: Complete rewrite from legacy implementation to new protocol-level architecture
 - **BREAKING**: Updated hook interface to work at the protocol level rather than HTTP middleware level
+- **BREAKING**: Removed all TransportError-related functionality from hook system
+- **BREAKING**: Hook interface now supports bidirectional request/response processing with direction parameters
 - Improved TypeScript support with better type exports
 - Simplified architecture by removing unused getter methods from PassthroughContext
+- Enhanced bidirectional hook processing with comprehensive test coverage
+- Updated Hook interface to support new passthrough-mcp-server functionality
+- Improved hook chain processing for better request/response handling
 
 ### Features
 
@@ -46,6 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Zero side effects for optimal bundling
 - Comprehensive integration tests covering stdio-to-HTTP and HTTP-to-HTTP scenarios
 - Proper MCP protocol compliance with schema validation
+
+### Development
+
+- Added @civic/server-hook as development dependency for testing
+- Extended integration test coverage to validate hook-only operation modes
 
 ## Legacy History (pre-rewrite)
 
