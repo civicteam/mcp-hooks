@@ -245,6 +245,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@civic/server-hook':
+        specifier: workspace:^
+        version: link:../server-hook
       '@types/content-type':
         specifier: ^1.1.9
         version: 1.1.9
