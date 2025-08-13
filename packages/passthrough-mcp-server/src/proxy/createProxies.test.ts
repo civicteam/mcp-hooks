@@ -3,6 +3,10 @@
  * This file verifies that TypeScript correctly infers return types
  */
 
+import {
+  StreamableHTTPServerTransport,
+  type StreamableHTTPServerTransportOptions,
+} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { createPassthroughProxy } from "./createProxies.js";
 import type { HttpPassthroughProxy } from "./http/httpPassthroughProxy";
@@ -23,6 +27,9 @@ describe("createPassthroughProxy type inference", () => {
     const proxy = await createPassthroughProxy({
       sourceTransportType: "httpStream",
       port: 33355,
+      sourceMcpPath: "/mcp", // Path to MCP endpoint of the http server, defaults to /mcp
+      transportFactory: (options: StreamableHTTPServerTransportOptions) =>
+        new StreamableHTTPServerTransport(options),
       target: { url: "http://localhost:3001", transportType: "httpStream" },
     });
 

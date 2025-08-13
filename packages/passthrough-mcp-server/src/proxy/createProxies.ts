@@ -2,24 +2,26 @@
  * Transport-specific factory functions for creating passthrough proxies
  */
 
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type {
+  StreamableHTTPServerTransport,
+  StreamableHTTPServerTransportOptions,
+} from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { configureLoggerForStdio } from "../logger/logger.js";
 import type { Config } from "./config.js";
 import { HttpPassthroughProxy } from "./http/httpPassthroughProxy.js";
 import { StdioPassthroughProxy } from "./stdio/stdioPassthroughProxy.js";
 import type { PassthroughProxy } from "./types.js";
 
-export type StdioProxyConfig = Omit<Config, "sourceTransportType" | "port"> & {
+export type StdioProxyConfig = Omit<Config, "sourceTransportType"> & {
   autoStart?: boolean;
 };
 
 export type HttpProxyConfig = Omit<Config, "sourceTransportType"> & {
   port: number;
-  autoStart?: boolean;
-};
-
-export type CustomProxyConfig = Omit<Config, "sourceTransportType"> & {
-  transport: Transport;
+  sourceMcpPath?: string;
+  transportFactory?: (
+    options: StreamableHTTPServerTransportOptions,
+  ) => StreamableHTTPServerTransport;
   autoStart?: boolean;
 };
 
