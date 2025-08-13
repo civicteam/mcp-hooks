@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-08-13
+
+### Changed
+
+- **BREAKING**: Updated Config interface structure to use nested `source` and `target` objects
+  - `sourceTransportType` is now `source.transportType`
+  - HTTP-specific properties (`port`, `mcpPath`, `transportFactory`) now nested under `source`
+  - Cleaner separation between source and target configuration
+- Updated `createPassthroughProxy` to use unified interface with new Config structure
+- Enhanced type definitions with separate `HttpProxyConfig` and `StdioProxyConfig` types
+- Updated all examples and integration tests to use new interface
+
+### Migration Guide
+
+**Before (0.7.0):**
+```typescript
+const proxy = await createPassthroughProxy({
+  sourceTransportType: "httpStream",
+  port: 3000,
+  sourceMcpPath: "/mcp",
+  target: {
+    url: "http://localhost:3001",
+    transportType: "httpStream"
+  }
+});
+```
+
+**After (0.7.1):**
+```typescript
+const proxy = await createPassthroughProxy({
+  source: {
+    transportType: "httpStream",
+    port: 3000,
+    mcpPath: "/mcp"
+  },
+  target: {
+    url: "http://localhost:3001", 
+    transportType: "httpStream"
+  }
+});
+```
+
 ## [0.7.0] - 2025-08-13
 
 ### Added

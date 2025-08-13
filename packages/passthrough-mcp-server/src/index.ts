@@ -17,16 +17,14 @@ export {
 // Export types
 export type { PassthroughProxy } from "./proxy/types.js";
 
-export type {
-  StdioProxyConfig,
-  HttpProxyConfig,
-} from "./proxy/createProxies.js";
+export type { StdioProxyConfig } from "./proxy/stdio/stdioPassthroughProxy.js";
+export type { HttpProxyConfig } from "./proxy/http/httpPassthroughProxy.js";
 
 // Export config types
 export type {
   Config,
   TargetConfig,
-  BaseConfig,
+  SourceConfig,
   HookDefinition,
   RemoteHookConfig,
 } from "./proxy/config.js";

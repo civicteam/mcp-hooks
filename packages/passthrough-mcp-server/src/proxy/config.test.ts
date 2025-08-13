@@ -129,8 +129,11 @@ describe("Config Utils", () => {
       const config = loadConfig();
 
       expect(config).toEqual({
-        port: 34000,
-        sourceTransportType: "httpStream",
+        source: {
+          transportType: "httpStream",
+          mcpPath: undefined,
+          port: 34000,
+        },
         target: {
           url: "http://localhost:33000",
           transportType: "httpStream",
@@ -145,7 +148,8 @@ describe("Config Utils", () => {
 
       const config = loadConfig();
 
-      expect(config.sourceTransportType).toBe("httpStream");
+      expect(config.source.transportType).toBe("httpStream");
+      expect(config.source.port).toBe(8080);
       expect(config.target.url).toBe("http://example.com:3000");
       expect(config.target.transportType).toBe("sse");
     });
@@ -171,7 +175,7 @@ describe("Config Utils", () => {
       const config = loadConfig();
 
       // Default case (no args) should be httpStream
-      expect(config.sourceTransportType).toBe("httpStream");
+      expect(config.source.transportType).toBe("httpStream");
 
       // The actual --stdio test is covered by parseServerTransport tests
     });

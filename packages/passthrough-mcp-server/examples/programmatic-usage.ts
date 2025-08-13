@@ -20,8 +20,10 @@ async function example1_basicUsage() {
 
   // Create and start the proxy
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "httpStream",
-    port: 34000,
+    source: {
+      transportType: "httpStream",
+      port: 34000,
+    },
     target: {
       url: "http://localhost:33000",
       transportType: "httpStream",
@@ -42,8 +44,10 @@ async function example2_manualStart() {
 
   // Create without auto-starting
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "httpStream",
-    port: 34001,
+    source: {
+      transportType: "httpStream",
+      port: 34001,
+    },
     target: {
       url: "http://localhost:33001",
       transportType: "httpStream",
@@ -63,8 +67,10 @@ async function example3_withRemoteHooks() {
   logger.info("\nExample 3: With Remote Hooks");
 
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "httpStream",
-    port: 34002,
+    source: {
+      transportType: "httpStream",
+      port: 34002,
+    },
     target: {
       url: "http://localhost:33002",
       transportType: "httpStream",
@@ -147,8 +153,10 @@ async function example4_withProgrammaticHooks() {
 
   // Mix programmatic hooks with remote hooks
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "httpStream",
-    port: 34002,
+    source: {
+      transportType: "httpStream",
+      port: 34002,
+    },
     target: {
       url: "http://localhost:33002",
       transportType: "httpStream",
@@ -174,7 +182,9 @@ async function example5_stdioProxy() {
 
   // Example of stdio proxy (useful for direct command-line integration)
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "stdio",
+    source: {
+      transportType: "stdio",
+    },
     target: {
       url: "http://localhost:33003",
       transportType: "httpStream",

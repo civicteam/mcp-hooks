@@ -23,8 +23,10 @@ async function main() {
 
   // Create passthrough proxy with programmatic hooks
   const proxy = await createPassthroughProxy({
-    sourceTransportType: "httpStream",
-    port,
+    source: {
+      transportType: "httpStream",
+      port,
+    },
     target: {
       url: targetUrl,
       transportType: "httpStream",

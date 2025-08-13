@@ -12,6 +12,10 @@ import type { Config } from "../config.js";
 import { createClientTransport, getTargetUrl } from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
 
+export type StdioProxyConfig = Omit<Config, "source"> & {
+  autoStart?: boolean;
+};
+
 export class StdioPassthroughProxy implements PassthroughProxy {
   private isStarted = false;
 
@@ -19,7 +23,7 @@ export class StdioPassthroughProxy implements PassthroughProxy {
   private serverTransport: StdioServerTransport;
   private clientTransport: Transport;
 
-  constructor(private config: Config & { sourceTransportType: "stdio" }) {
+  constructor(private config: StdioProxyConfig) {
     this.serverTransport = new StdioServerTransport();
     this.clientTransport = createClientTransport(
       this.config.target,

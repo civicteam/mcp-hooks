@@ -22,23 +22,27 @@ import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
 import { RequestContextAwareStreamableHTTPClientTransport } from "../../transports/requestContextAwareStreamableHTTPClientTransport.js";
 import type { Config } from "../config.js";
-import {
-  createClientTransport,
-  getSourceMcpPath,
-  getTargetMcpPath,
-  getTargetUrl,
-} from "../transportFactory.js";
+import { createClientTransport, getTargetUrl } from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
 import { createMcpHttpServer } from "./mcpHttpServer.js";
 import { McpSessionManager } from "./mcpSessionManager.js";
 import { buildClientHeaders, parseJsonBody } from "./utils.js";
+
+export type HttpProxyConfig = Omit<Config, "source"> & {
+  port?: number;
+  mcpPath?: string;
+  transportFactory?: (
+    options: StreamableHTTPServerTransportOptions,
+  ) => StreamableHTTPServerTransport;
+  autoStart?: boolean;
+};
 
 export class HttpPassthroughProxy implements PassthroughProxy {
   private httpServer!: HttpServer;
   private isStarted = false;
   private sessionManager: McpSessionManager;
 
-  constructor(private config: Config & { sourceTransportType: "httpStream" }) {
+  constructor(private config: HttpProxyConfig) {
     this.sessionManager = new McpSessionManager();
   }
 
@@ -233,7 +237,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
     this.httpServer = createMcpHttpServer(
       {
         targetUrl: getTargetUrl(this.config.target),
-        mcpPath: getSourceMcpPath(this.config),
+        mcpPath: this.config.mcpPath || "/mcp",
       },
       this.handleRequest.bind(this),
     );
@@ -266,7 +270,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         : `${getTargetUrl(this.config.target)}`;
 
     logger.info(
-      `[HttpPassthrough] Passthrough MCP Server running with ${this.config.sourceTransportType} transport on port ${port}, connecting to target at ${targetInfo}`,
+      `[HttpPassthrough] Passthrough MCP Server running with httpStream transport on port ${port}, connecting to target at ${targetInfo}`,
     );
   }
 

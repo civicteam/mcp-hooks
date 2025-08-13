@@ -8,7 +8,7 @@
 import { URL } from "node:url";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { RequestContextAwareStreamableHTTPClientTransport } from "../transports/requestContextAwareStreamableHTTPClientTransport.js";
-import type { BaseConfig, TargetConfig } from "./config.js";
+import type { Config, SourceConfig, TargetConfig } from "./config.js";
 
 /**
  * Helper function to get URL from target config safely
@@ -28,16 +28,6 @@ export function getTargetMcpPath(targetConfig: TargetConfig): string {
     throw new Error("MCP path not available for custom transport type");
   }
   return targetConfig.mcpPath || "/mcp";
-}
-
-/**
- * Helper function to get MCP path from target config safely
- */
-export function getSourceMcpPath(config: BaseConfig): string {
-  if (config.sourceTransportType === "stdio") {
-    throw new Error("MCP path not available for stdio transport type");
-  }
-  return config.sourceMcpPath || "/mcp";
 }
 
 /**

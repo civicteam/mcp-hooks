@@ -17,16 +17,15 @@ import { logger } from "../logger/logger.js";
 
 type SourceTransportType = "stdio" | "httpStream";
 
-// Base configuration with discriminated union based on transport type
-export type BaseConfig =
+export type SourceConfig =
   | {
-      sourceTransportType: "stdio";
-      // Port is not required for stdio
+      transportType: "stdio";
+      // no other config required for stdio
     }
   | {
-      sourceTransportType: "httpStream";
+      transportType: "httpStream";
       port: number;
-      sourceMcpPath?: string; // Path to MCP endpoint of the http server, defaults to /mcp
+      mcpPath?: string; // Path to MCP endpoint of the http server, defaults to /mcp
       transportFactory?: (
         options: StreamableHTTPServerTransportOptions,
       ) => StreamableHTTPServerTransport;
@@ -50,7 +49,8 @@ export interface RemoteHookConfig {
 
 export type HookDefinition = RemoteHookConfig | Hook;
 
-export type Config = BaseConfig & {
+export type Config = {
+  source: SourceConfig;
   target: TargetConfig;
   hooks?: HookDefinition[];
   authToken?: string; // Optional auth token for stdio transport
@@ -127,7 +127,9 @@ export function loadConfig(): Config {
 
   if (sourceTransportType === "stdio") {
     config = {
-      sourceTransportType: "stdio",
+      source: {
+        transportType: "stdio",
+      },
       target: {
         url: targetUrl,
         transportType: targetTransport,
@@ -137,9 +139,11 @@ export function loadConfig(): Config {
   } else if (sourceTransportType === "httpStream") {
     const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34000;
     config = {
-      sourceTransportType,
-      sourceMcpPath,
-      port,
+      source: {
+        transportType: "httpStream",
+        mcpPath: sourceMcpPath,
+        port,
+      },
       target: {
         url: targetUrl,
         transportType: targetTransport,
