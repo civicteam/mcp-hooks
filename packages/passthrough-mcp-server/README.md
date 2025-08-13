@@ -240,9 +240,9 @@ const customConfig = {
 };
 ```
 
-### Advanced Configuration (Legacy API Compatible)
+### High-Level API with createPassthroughProxy
 
-For backward compatibility, the package also exports legacy-style configuration functions:
+For simplified usage, the package exports a high-level `createPassthroughProxy` function:
 
 ```typescript
 import { createPassthroughProxy, loadConfig } from '@civic/passthrough-mcp-server';
@@ -250,10 +250,13 @@ import { createPassthroughProxy, loadConfig } from '@civic/passthrough-mcp-serve
 // Load configuration from environment
 const config = loadConfig();
 
-// Create proxy with environment-based config
+// Create proxy with new structured config
 const proxy = await createPassthroughProxy({
-  transportType: "httpStream",
-  port: 34000,
+  source: {
+    transportType: "httpStream",
+    port: 34000,
+    mcpPath: "/mcp" // Optional, defaults to /mcp
+  },
   target: {
     transportType: "httpStream",
     url: "http://localhost:33000",
@@ -266,6 +269,39 @@ const proxy = await createPassthroughProxy({
 
 // Later, stop the proxy
 await proxy.stop();
+```
+
+### Transport-Specific Functions
+
+You can also use transport-specific functions for more explicit control:
+
+```typescript
+import { 
+  createHttpPassthroughProxy, 
+  createStdioPassthroughProxy 
+} from '@civic/passthrough-mcp-server';
+
+// HTTP passthrough proxy
+const httpProxy = await createHttpPassthroughProxy({
+  port: 34000,
+  mcpPath: "/mcp",
+  target: {
+    transportType: "httpStream",
+    url: "http://localhost:33000"
+  },
+  hooks: [
+    { url: "http://localhost:33004", name: "audit-hook" }
+  ]
+});
+
+// Stdio passthrough proxy  
+const stdioProxy = await createStdioPassthroughProxy({
+  target: {
+    transportType: "httpStream", 
+    url: "http://localhost:33000"
+  },
+  authToken: "optional-auth-token"
+});
 ```
 
 ## Hook API
@@ -388,6 +424,38 @@ Now clients can connect to the passthrough server on port 34000, and all request
 1. Logged by the audit hook
 2. Validated by the guardrail hook
 3. Forwarded to the target server
+
+## Migration from v0.7.0
+
+If you're upgrading from v0.7.0, the configuration interface has been updated to use nested `source` and `target` objects:
+
+**Before (v0.7.0):**
+```typescript
+const proxy = await createPassthroughProxy({
+  sourceTransportType: "httpStream",
+  port: 3000,
+  sourceMcpPath: "/mcp",
+  target: {
+    url: "http://localhost:3001",
+    transportType: "httpStream"
+  }
+});
+```
+
+**After (v0.7.1):**
+```typescript
+const proxy = await createPassthroughProxy({
+  source: {
+    transportType: "httpStream",
+    port: 3000,
+    mcpPath: "/mcp"
+  },
+  target: {
+    url: "http://localhost:3001",
+    transportType: "httpStream"
+  }
+});
+```
 
 ## Contributing
 

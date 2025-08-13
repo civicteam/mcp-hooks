@@ -8,14 +8,19 @@ import {
   type StreamableHTTPServerTransportOptions,
 } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
-import { createPassthroughProxy } from "./createProxies.js";
+import {
+  createHttpPassthroughProxy,
+  createPassthroughProxy,
+  createStdioPassthroughProxy,
+} from "./createProxies.js";
 import type { HttpPassthroughProxy } from "./http/httpPassthroughProxy";
 import type { StdioPassthroughProxy } from "./stdio/stdioPassthroughProxy";
+import type { PassthroughProxy } from "./types";
 
 describe("createPassthroughProxy type inference", () => {
-  it("should return StdioPassthroughProxy when sourceTransportType is 'stdio'", async () => {
+  it("should work with stdio source transport", async () => {
     const proxy = await createPassthroughProxy({
-      sourceTransportType: "stdio",
+      source: { transportType: "stdio" },
       target: { url: "http://localhost:33355", transportType: "httpStream" },
     });
 
@@ -23,17 +28,76 @@ describe("createPassthroughProxy type inference", () => {
     expectTypeOf(proxy).toEqualTypeOf<StdioPassthroughProxy>();
   });
 
-  it("should return HttpPassthroughProxy when sourceTransportType is 'httpStream'", async () => {
+  it("should work with httpStream source transport", async () => {
     const proxy = await createPassthroughProxy({
-      sourceTransportType: "httpStream",
-      port: 33355,
-      sourceMcpPath: "/mcp", // Path to MCP endpoint of the http server, defaults to /mcp
-      transportFactory: (options: StreamableHTTPServerTransportOptions) =>
-        new StreamableHTTPServerTransport(options),
+      source: {
+        transportType: "httpStream",
+        port: 33355,
+        mcpPath: "/mcp", // Path to MCP endpoint of the http server, defaults to /mcp
+        transportFactory: (options: StreamableHTTPServerTransportOptions) =>
+          new StreamableHTTPServerTransport(options),
+      },
       target: { url: "http://localhost:3001", transportType: "httpStream" },
     });
 
     // TypeScript should know this is HttpPassthroughProxy
     expectTypeOf(proxy).toEqualTypeOf<HttpPassthroughProxy>();
+  });
+});
+
+describe("createStdioPassthroughProxy", () => {
+  it("should create a StdioPassthroughProxy directly", async () => {
+    const proxy = await createStdioPassthroughProxy({
+      target: { url: "http://localhost:33355", transportType: "httpStream" },
+      autoStart: false, // Don't auto-start for test
+    });
+
+    expectTypeOf(proxy).toEqualTypeOf<StdioPassthroughProxy>();
+    expect(proxy).toBeDefined();
+    await proxy.stop();
+  });
+
+  it("should support hooks configuration", async () => {
+    const proxy = await createStdioPassthroughProxy({
+      target: { url: "http://localhost:33355", transportType: "httpStream" },
+      hooks: [{ url: "http://localhost:8080/hook", name: "test-hook" }],
+      authToken: "test-token",
+      autoStart: false,
+    });
+
+    expectTypeOf(proxy).toEqualTypeOf<StdioPassthroughProxy>();
+    expect(proxy).toBeDefined();
+    await proxy.stop();
+  });
+});
+
+describe("createHttpPassthroughProxy", () => {
+  it("should create an HttpPassthroughProxy directly", async () => {
+    const proxy = await createHttpPassthroughProxy({
+      port: 33356,
+      target: { url: "http://localhost:33355", transportType: "httpStream" },
+      autoStart: false, // Don't auto-start for test
+    });
+
+    expectTypeOf(proxy).toEqualTypeOf<HttpPassthroughProxy>();
+    expect(proxy).toBeDefined();
+    await proxy.stop();
+  });
+
+  it("should support HTTP-specific configuration", async () => {
+    const proxy = await createHttpPassthroughProxy({
+      port: 33357,
+      mcpPath: "/custom-mcp",
+      transportFactory: (options: StreamableHTTPServerTransportOptions) =>
+        new StreamableHTTPServerTransport(options),
+      target: { url: "http://localhost:33355", transportType: "httpStream" },
+      hooks: [{ url: "http://localhost:8080/hook", name: "test-hook" }],
+      authToken: "test-token",
+      autoStart: false,
+    });
+
+    expectTypeOf(proxy).toEqualTypeOf<HttpPassthroughProxy>();
+    expect(proxy).toBeDefined();
+    await proxy.stop();
   });
 });

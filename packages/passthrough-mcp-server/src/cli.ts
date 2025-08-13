@@ -9,10 +9,7 @@
 
 import { logger } from "./logger/logger.js";
 import { loadConfig } from "./proxy/config.js";
-import {
-  createHttpPassthroughProxy,
-  createStdioPassthroughProxy,
-} from "./proxy/createProxies.js";
+import { createPassthroughProxy } from "./proxy/createProxies.js";
 import type { PassthroughProxy } from "./proxy/types.js";
 
 /**
@@ -23,23 +20,11 @@ async function main() {
     // Load configuration
     const config = loadConfig();
 
-    // Create and start the passthrough proxy based on transport type
-    let proxy: PassthroughProxy;
-    if (config.sourceTransportType === "stdio") {
-      proxy = await createStdioPassthroughProxy({
-        ...config,
-        autoStart: true,
-      });
-    } else if (config.sourceTransportType === "httpStream") {
-      proxy = await createHttpPassthroughProxy({
-        ...config,
-        port: config.port || 3000,
-        autoStart: true,
-      });
-    } else {
-      // This should never happen due to type checking, but included for safety
-      throw new Error("Source Transport Type not supported");
-    }
+    // Create and start the passthrough proxy
+    const proxy = await createPassthroughProxy({
+      ...config,
+      autoStart: true,
+    });
 
     // Handle graceful shutdown
     const shutdown = async () => {

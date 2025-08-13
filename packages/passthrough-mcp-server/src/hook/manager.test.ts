@@ -25,8 +25,7 @@ describe("Hook Manager", () => {
   describe("getHookClients", () => {
     it("should return empty array when no hooks configured", () => {
       const config: Config = {
-        sourceTransportType: "httpStream",
-        port: 34000,
+        source: { transportType: "httpStream", port: 34000 },
         target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [],
       };
@@ -37,8 +36,7 @@ describe("Hook Manager", () => {
 
     it("should create remote hook clients for URL-based hooks", () => {
       const config: Config = {
-        sourceTransportType: "httpStream",
-        port: 34000,
+        source: { transportType: "httpStream", port: 34000 },
         target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [
           { url: "http://localhost:3001", name: "audit-hook" },
@@ -67,8 +65,7 @@ describe("Hook Manager", () => {
       };
 
       const config: Config = {
-        sourceTransportType: "httpStream",
-        port: 34000,
+        source: { transportType: "httpStream", port: 34000 },
         target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [mockHook1, mockHook2],
       };
@@ -88,8 +85,7 @@ describe("Hook Manager", () => {
       };
 
       const config: Config = {
-        sourceTransportType: "httpStream",
-        port: 34000,
+        source: { transportType: "httpStream", port: 34000 },
         target: { transportType: "httpStream", url: "http://localhost:3000" },
         hooks: [
           { url: "http://localhost:3001", name: "remote-hook" },
