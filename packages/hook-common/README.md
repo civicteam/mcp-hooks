@@ -70,26 +70,26 @@ The interface for implementing hooks:
 ```typescript
 interface Hook {
   get name(): string;
-  processToolCallRequest?(request: CallToolRequest): Promise<ToolCallRequestHookResult>;
-  processToolCallResponse?(
+  processCallToolRequest?(request: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processCallToolResult?(
     response: CallToolResult,
-    originalToolCall: CallToolRequest
+    originalCallToolRequest: CallToolRequest
   ): Promise<ToolCallResponseHookResult>;
-  processToolsListRequest?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
-  processToolsListResponse?(
+  processListToolsRequest?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
+  processListToolsResult?(
     response: ListToolsResult,
     originalRequest: ListToolsRequest
   ): Promise<ListToolsResponseHookResult>;
   processToolCallTransportError?(
     error: TransportError,
-    originalToolCall: CallToolRequest
+    originalCallToolRequest: CallToolRequest
   ): Promise<ToolCallTransportErrorHookResult>;
   processToolsListTransportError?(
     error: TransportError,
     originalRequest: ListToolsRequest
   ): Promise<ListToolsTransportErrorHookResult>;
   processInitializeRequest?(request: InitializeRequest): Promise<InitializeRequestHookResult>;
-  processInitializeResponse?(
+  processInitializeResult?(
     response: InitializeResult,
     originalRequest: InitializeRequest
   ): Promise<InitializeResponseHookResult>;
@@ -113,7 +113,7 @@ export class MyCustomHook extends AbstractHook {
     return 'my-custom-hook';
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processCallToolRequest(request: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Analyze the tool call
     console.log(`Processing request for tool: ${toolCall.params.name}`);
     
@@ -136,12 +136,12 @@ export class MyCustomHook extends AbstractHook {
     };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest
+    originalCallToolRequest: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {
     // Process the tool's response
-    console.log(`Processing response for tool: ${originalToolCall.params.name}`);
+    console.log(`Processing response for tool: ${originalCallToolRequest.params.name}`);
     
     // Optionally modify the response
     return {
@@ -195,7 +195,7 @@ export class LoggingHook extends AbstractHook {
     return 'logging-hook';
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processCallToolRequest(request: CallToolRequest): Promise<ToolCallRequestHookResult> {
     console.log(`[${new Date().toISOString()}] Tool called: ${toolCall.params.name}`);
     console.log('Arguments:', JSON.stringify(toolCall.params.arguments, null, 2));
     
@@ -205,11 +205,11 @@ export class LoggingHook extends AbstractHook {
     };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest
+    originalCallToolRequest: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {
-    console.log(`[${new Date().toISOString()}] Response from: ${originalToolCall.params.name}`);
+    console.log(`[${new Date().toISOString()}] Response from: ${originalCallToolRequest.params.name}`);
     console.log('Response:', JSON.stringify(response, null, 2));
     
     return {
@@ -228,7 +228,7 @@ export class ValidationHook extends AbstractHook {
     return 'validation-hook';
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processCallToolRequest(request: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Validate tool calls
     if (toolCall.params.name === 'dangerous-tool') {
       return {
@@ -244,9 +244,9 @@ export class ValidationHook extends AbstractHook {
     };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest
+    originalCallToolRequest: CallToolRequest
   ): Promise<ToolCallResponseHookResult> {
     return {
       resultType: 'continue',

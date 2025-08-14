@@ -1,6 +1,6 @@
 {
   "name": "@civic/local-tools-hook",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A programmatic hook for adding local tools to passthrough MCP servers",
   "keywords": ["mcp", "hooks", "local-tools", "passthrough", "middleware"],
   "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/local-tools-hook",

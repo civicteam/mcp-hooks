@@ -36,12 +36,12 @@ export abstract class AbstractHook implements Hook {
    * Process an incoming tool call request.
    * Default implementation passes through without modification.
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequestWithContext,
+  async processCallToolRequest(
+    request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
-      request: toolCall,
+      request,
     };
   }
 
@@ -49,9 +49,9 @@ export abstract class AbstractHook implements Hook {
    * Process a tool call response.
    * Default implementation passes through without modification.
    */
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequestWithContext,
+    originalCallToolRequest: CallToolRequestWithContext,
   ): Promise<CallToolResponseHookResult> {
     return {
       resultType: "continue",
@@ -63,7 +63,7 @@ export abstract class AbstractHook implements Hook {
    * Process a tools/list request.
    * Default implementation passes through without modification.
    */
-  async processToolsListRequest?(
+  async processListToolsRequest?(
     request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult> {
     return {
@@ -76,7 +76,7 @@ export abstract class AbstractHook implements Hook {
    * Process a tools/list response.
    * Default implementation passes through without modification.
    */
-  async processToolsListResponse?(
+  async processListToolsResult?(
     response: ListToolsResult,
     originalRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsResponseHookResult> {
@@ -103,7 +103,7 @@ export abstract class AbstractHook implements Hook {
    * Process an initialize response.
    * Default implementation passes through without modification.
    */
-  async processInitializeResponse?(
+  async processInitializeResult?(
     response: InitializeResult,
     originalRequest: InitializeRequestWithContext,
   ): Promise<InitializeResponseHookResult> {
@@ -128,7 +128,7 @@ export abstract class AbstractHook implements Hook {
    * Process a response from the client NOT covered by a dedicated handler.
    * Default implementation passes through without modification.
    */
-  async processOtherResponse?(
+  async processOtherResult?(
     response: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult> {
@@ -153,7 +153,7 @@ export abstract class AbstractHook implements Hook {
    * Process a target response.
    * Default implementation passes through without modification.
    */
-  async processTargetResponse?(
+  async processTargetResult?(
     response: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult> {

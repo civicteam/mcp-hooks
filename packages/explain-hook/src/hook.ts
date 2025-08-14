@@ -26,11 +26,11 @@ export class ExplainHook extends AbstractHook {
   /**
    * Process an incoming tool call request to validate and strip the reason parameter
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     // Clone the tool call to avoid modifying the original
-    const modifiedToolCall = { ...toolCall };
+    const modifiedToolCall = { ...request };
 
     // Check if arguments exist and are an object
     if (
@@ -59,7 +59,7 @@ export class ExplainHook extends AbstractHook {
     }
 
     // Log the reason before removing it
-    console.log(`[${toolCall.params.name}] Reason: ${args.reason}`);
+    console.log(`[${request.params.name}] Reason: ${args.reason}`);
 
     // Clone arguments and remove the reason
     const { reason: _, ...strippedArguments } = args;
@@ -73,7 +73,7 @@ export class ExplainHook extends AbstractHook {
   /**
    * Process a tools/list response to add the reason parameter to all tools
    */
-  async processToolsListResponse(
+  async processListToolsResult(
     response: ListToolsResult,
     _originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult> {

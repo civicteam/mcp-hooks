@@ -30,14 +30,14 @@ export class RateLimitHook extends AbstractHook {
     this.startCleanupTimer();
   }
 
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     // Extract userId from metadata
-    const userId = this.extractUserId(toolCall);
+    const userId = this.extractUserId(request);
     if (!userId) {
       // No user ID, allow the request
-      return { resultType: "continue", request: toolCall };
+      return { resultType: "continue", request };
     }
 
     const now = Date.now();
@@ -65,12 +65,12 @@ export class RateLimitHook extends AbstractHook {
     userLimits.count++;
     this.rateLimits.set(userId, userLimits);
 
-    return { resultType: "continue", request: toolCall };
+    return { resultType: "continue", request };
   }
 
-  private extractUserId(toolCall: CallToolRequest): string | undefined {
+  private extractUserId(request: CallToolRequest): string | undefined {
     // Try to extract userId from metadata
-    const meta = toolCall.params._meta;
+    const meta = request.params._meta;
     if (meta) {
       // Support different metadata structures
       if (typeof meta === "object" && "userId" in meta) {

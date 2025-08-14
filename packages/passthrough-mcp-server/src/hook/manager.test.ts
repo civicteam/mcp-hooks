@@ -7,13 +7,13 @@ import { getHookClients } from "./manager.js";
 vi.mock("@civic/hook-common", () => ({
   RemoteHookClient: vi.fn().mockImplementation((config) => ({
     name: config.name,
-    processToolCallRequest: vi.fn(),
-    processToolCallResponse: vi.fn(),
+    processCallToolRequest: vi.fn(),
+    processCallToolResult: vi.fn(),
   })),
   LocalHookClient: vi.fn().mockImplementation((hook) => ({
     name: hook.name,
-    processToolCallRequest: vi.fn(),
-    processToolCallResponse: vi.fn(),
+    processCallToolRequest: vi.fn(),
+    processCallToolResult: vi.fn(),
   })),
 }));
 
@@ -54,14 +54,14 @@ describe("Hook Manager", () => {
     it("should create local hook clients for Hook instances", () => {
       const mockHook1: Hook = {
         name: "TestHook1",
-        processToolCallRequest: vi.fn(),
-        processToolCallResponse: vi.fn(),
+        processCallToolRequest: vi.fn(),
+        processCallToolResult: vi.fn(),
       };
 
       const mockHook2: Hook = {
         name: "TestHook2",
-        processToolCallRequest: vi.fn(),
-        processToolCallResponse: vi.fn(),
+        processCallToolRequest: vi.fn(),
+        processCallToolResult: vi.fn(),
       };
 
       const config: Config = {
@@ -80,8 +80,8 @@ describe("Hook Manager", () => {
     it("should support mixing remote and local hooks", () => {
       const mockHook: Hook = {
         name: "LocalTestHook",
-        processToolCallRequest: vi.fn(),
-        processToolCallResponse: vi.fn(),
+        processCallToolRequest: vi.fn(),
+        processCallToolResult: vi.fn(),
       };
 
       const config: Config = {

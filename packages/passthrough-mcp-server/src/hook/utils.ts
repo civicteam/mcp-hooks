@@ -13,7 +13,7 @@ import type { HookDefinition } from "../proxy/config.js";
  * Check if a hook definition is a Hook instance
  */
 function isHookInstance(hook: HookDefinition): hook is Hook {
-  return "processToolCallRequest" in hook && "processToolCallResponse" in hook;
+  return "processCallToolRequest" in hook && "processCallToolResult" in hook;
 }
 
 /**

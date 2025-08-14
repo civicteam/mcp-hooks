@@ -17,8 +17,8 @@ import type { HookDefinition } from "../proxy/config.js";
 function isHookInstance(hook: HookDefinition): hook is Hook {
   return (
     typeof hook === "object" &&
-    "processToolCallRequest" in hook &&
-    "processToolCallResponse" in hook &&
+    "processCallToolRequest" in hook &&
+    "processCallToolResult" in hook &&
     "name" in hook
   );
 }

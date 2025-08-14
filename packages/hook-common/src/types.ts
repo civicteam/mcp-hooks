@@ -259,31 +259,31 @@ export interface Hook {
   /**
    * Process an incoming tool call request
    */
-  processToolCallRequest?(
+  processCallToolRequest?(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult>;
 
   /**
    * Process a tool call response
    */
-  processToolCallResponse?(
-    response: CallToolResult,
-    originalToolCall: CallToolRequestWithContext,
+  processCallToolResult?(
+    result: CallToolResult,
+    originalCallToolRequest: CallToolRequestWithContext,
   ): Promise<CallToolResponseHookResult>;
 
   /**
    * Process a tools/list request (optional)
    */
-  processToolsListRequest?(
+  processListToolsRequest?(
     request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult>;
 
   /**
    * Process a tools/list response (optional)
    */
-  processToolsListResponse?(
-    response: ListToolsResult,
-    originalRequest: ListToolsRequestWithContext,
+  processListToolsResult?(
+    result: ListToolsResult,
+    originalListToolsRequest: ListToolsRequestWithContext,
   ): Promise<ListToolsResponseHookResult>;
 
   /**
@@ -296,9 +296,9 @@ export interface Hook {
   /**
    * Process an initialize response (optional)
    */
-  processInitializeResponse?(
-    response: InitializeResult,
-    originalRequest: InitializeRequestWithContext,
+  processInitializeResult?(
+    result: InitializeResult,
+    originalInitializeRequest: InitializeRequestWithContext,
   ): Promise<InitializeResponseHookResult>;
 
   /**
@@ -309,8 +309,8 @@ export interface Hook {
   /**
    * Process a reponse from the client NOT covered by a dedicated handler (optional)
    */
-  processOtherResponse?(
-    response: Result,
+  processOtherResult?(
+    result: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult>;
 
@@ -322,8 +322,8 @@ export interface Hook {
   /**
    * Process a target response (response going back to the target server) (optional)
    */
-  processTargetResponse?(
-    response: Result,
+  processTargetResult?(
+    result: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult>;
 
@@ -371,7 +371,7 @@ export type GenericResponseHookResult<TResponse> =
  *
  * These types solve a specific problem: We have a request object (like CallToolRequest)
  * and we need to find which Hook methods can process it. Instead of hardcoding
- * "processToolCallRequest", we use TypeScript to figure it out automatically.
+ * "processCallToolRequest", we use TypeScript to figure it out automatically.
  *
  * This ensures that if someone passes a CallToolRequest, they can only specify
  * method names that actually accept CallToolRequest as a parameter.
@@ -380,7 +380,7 @@ export type GenericResponseHookResult<TResponse> =
 /**
  * Find all Hook method names that accept a specific request type
  *
- * Example: MethodsWithRequestType<CallToolRequest> will return "processToolCallRequest"
+ * Example: MethodsWithRequestType<CallToolRequest> will return "processCallToolRequest"
  * because that's the only method that accepts CallToolRequest as its first parameter.
  *
  * How it works:

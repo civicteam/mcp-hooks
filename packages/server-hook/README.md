@@ -169,7 +169,7 @@ const serverHook = new ServerHook({
 // Create custom tools hook
 const toolsHook = {
   name: "CustomTools",
-  async processToolsListRequest() {
+  async processListToolsRequest() {
     return {
       resultType: "respond",
       response: {
@@ -186,7 +186,7 @@ const toolsHook = {
       }
     };
   },
-  async processToolCallRequest(request) {
+  async processCallToolRequest(request) {
     if (request.params.name === "greet") {
       return {
         resultType: "respond",

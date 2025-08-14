@@ -69,7 +69,7 @@ export class CustomDescriptionHook extends AbstractHook {
   /**
    * Process a tools/list response to replace tool descriptions
    */
-  async processToolsListResponse(
+  async processListToolsResult(
     response: ListToolsResult,
     _originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult> {

@@ -34,10 +34,10 @@ export class GuardrailHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
-    const { name, arguments: toolArgs } = toolCall.params;
+    const { name, arguments: toolArgs } = request.params;
 
     // Check for disallowed tools or operations
     if (
@@ -109,18 +109,18 @@ export class GuardrailHook implements Hook {
     // Return the tool call without modification
     return {
       resultType: "continue",
-      request: toolCall,
+      request,
     };
   }
 
   /**
    * Process a tool call response
    */
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
-    const { name } = originalToolCall.params;
+    const { name } = originalCallToolRequest.params;
 
     // Convert response to string for analysis if it's an object
     const responseStr =
