@@ -28,7 +28,7 @@ export class CallCounterHook extends AbstractHook {
     toolCall: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     // Get session ID from _meta
-    const sessionId = toolCall.params._meta?.sessionId || "default";
+    const sessionId = toolCall.params._meta?.sourceSessionId || "default";
 
     console.log(
       `[CallCounterHook] Session ${sessionId}: ${toolCall.params.name}`,

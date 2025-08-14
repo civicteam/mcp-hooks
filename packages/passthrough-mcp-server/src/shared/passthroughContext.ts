@@ -7,12 +7,15 @@ import type {
   MethodsWithRequestType,
   MethodsWithResponseType,
 } from "@civic/hook-common";
+import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type CallToolRequest,
   CallToolRequestSchema,
   type CallToolResult,
   CallToolResultSchema,
+  type EmptyResult,
+  EmptyResultSchema,
   type InitializeRequest,
   InitializeRequestSchema,
   type InitializeResult,
@@ -26,8 +29,6 @@ import {
   type Request,
   type Result,
   ResultSchema,
-  type ServerResult,
-  ServerResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
 import { PassthroughClient } from "../client/passthroughClient.js";
@@ -41,6 +42,45 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
+
+/**
+ * Interface for transport communication (used for both source and target)
+ */
+export interface TransportInterface {
+  /**
+   * Send a request through the transport
+   * @param request The request to send
+   * @param resultSchema Schema for validating the response
+   * @param options Optional request options
+   * @throws McpError if transport is not connected
+   */
+  request<T extends z.ZodSchema<object>>(
+    request: Request,
+    resultSchema: T,
+    options?: RequestOptions,
+  ): Promise<z.infer<T>>;
+
+  /**
+   * Send a notification through the transport
+   * @param notification The notification to send
+   * @throws McpError if transport is not connected
+   */
+  notification(notification: Notification): Promise<void>;
+
+  /**
+   * Send a ping request through the transport
+   * @param options Optional request options
+   * @throws McpError if transport is not connected
+   */
+  ping(options?: RequestOptions): Promise<EmptyResult>;
+
+  /**
+   * Get the underlying transport instance
+   * @returns The transport instance or undefined if not connected
+   */
+  transport(): Transport | undefined;
+}
+
 /**
  * Context that manages and coordinates multiple PassthroughTransports.
  * Provides a centralized place for transports to communicate and share state.
@@ -50,12 +90,28 @@ export class PassthroughContext {
   private _passthroughClient: PassthroughClient;
   private _hookChain: HookChain;
 
-  get passthroughServerTransport(): Transport | undefined {
-    return this._passthroughServer.transport;
+  /**
+   * Source interface for sending requests and notifications to connected clients
+   */
+  get source(): TransportInterface {
+    return {
+      request: this._sourceRequest.bind(this),
+      notification: this._sourceNotification.bind(this),
+      ping: this._sourcePing.bind(this),
+      transport: this._sourceTransport.bind(this),
+    };
   }
 
-  get passthroughClientTransport(): Transport | undefined {
-    return this._passthroughClient.transport;
+  /**
+   * Target interface for sending requests and notifications to the target server
+   */
+  get target(): TransportInterface {
+    return {
+      request: this._targetRequest.bind(this),
+      notification: this._targetNotification.bind(this),
+      ping: this._targetPing.bind(this),
+      transport: this._targetTransport.bind(this),
+    };
   }
 
   /**
@@ -116,7 +172,8 @@ export class PassthroughContext {
         ...request.params,
         _meta: {
           ...request.params?._meta,
-          sessionId: this.passthroughServerTransport?.sessionId,
+          targetSessionId: this._passthroughClient.transport?.sessionId,
+          sourceSessionId: this._passthroughServer.transport?.sessionId,
           timestamp: new Date().toISOString(),
           source: "passthrough-server",
         },
@@ -129,7 +186,8 @@ export class PassthroughContext {
       ...result,
       _meta: {
         ...result._meta,
-        sessionId: this.passthroughClientTransport?.sessionId,
+        targetSessionId: this._passthroughClient.transport?.sessionId,
+        sourceSessionId: this._passthroughServer.transport?.sessionId,
         timestamp: new Date().toISOString(),
         source: "passthrough-server",
       },
@@ -337,7 +395,7 @@ export class PassthroughContext {
           ...notification.params,
           _meta: {
             ...notification.params?._meta,
-            sessionId: this.passthroughServerTransport?.sessionId,
+            sessionId: this._passthroughServer.transport?.sessionId,
             timestamp: new Date().toISOString(),
             source: "passthrough-server",
           },
@@ -416,7 +474,7 @@ export class PassthroughContext {
           ...notification.params,
           _meta: {
             ...notification.params?._meta,
-            sessionId: this.passthroughServerTransport?.sessionId,
+            sessionId: this._passthroughServer.transport?.sessionId,
             timestamp: new Date().toISOString(),
             source: "passthrough-server",
           },
@@ -500,6 +558,102 @@ export class PassthroughContext {
     if (clientTransport) {
       await this._passthroughClient.connect(clientTransport);
     }
+  }
+
+  /**
+   * Send a request through the source (server) transport
+   * @private
+   */
+  private async _sourceRequest<T extends z.ZodSchema<object>>(
+    request: Request,
+    resultSchema: T,
+    options?: RequestOptions,
+  ): Promise<z.infer<T>> {
+    if (!this._passthroughServer.transport) {
+      throw new McpError(
+        MCP_ERROR_CODES.REQUEST_REJECTED,
+        "No server transport connected. Cannot send request through source interface.",
+      );
+    }
+    return this._passthroughServer.request(request, resultSchema, options);
+  }
+
+  /**
+   * Send a notification through the source (server) transport
+   * @private
+   */
+  private async _sourceNotification(notification: Notification): Promise<void> {
+    if (!this._passthroughServer.transport) {
+      throw new McpError(
+        MCP_ERROR_CODES.REQUEST_REJECTED,
+        "No server transport connected. Cannot send notification through source interface.",
+      );
+    }
+    return this._passthroughServer.notification(notification);
+  }
+
+  /**
+   * Send a ping through the source (server) transport
+   * @private
+   */
+  private async _sourcePing(options?: RequestOptions): Promise<EmptyResult> {
+    return this._sourceRequest({ method: "ping" }, EmptyResultSchema, options);
+  }
+
+  /**
+   * Send a request through the target (client) transport
+   * @private
+   */
+  private async _targetRequest<T extends z.ZodSchema<object>>(
+    request: Request,
+    resultSchema: T,
+    options?: RequestOptions,
+  ): Promise<z.infer<T>> {
+    if (!this._passthroughClient.transport) {
+      throw new McpError(
+        MCP_ERROR_CODES.REQUEST_REJECTED,
+        "No client transport connected. Cannot send request through target interface.",
+      );
+    }
+    return this._passthroughClient.request(request, resultSchema, options);
+  }
+
+  /**
+   * Send a notification through the target (client) transport
+   * @private
+   */
+  private async _targetNotification(notification: Notification): Promise<void> {
+    if (!this._passthroughClient.transport) {
+      throw new McpError(
+        MCP_ERROR_CODES.REQUEST_REJECTED,
+        "No client transport connected. Cannot send notification through target interface.",
+      );
+    }
+    return this._passthroughClient.notification(notification);
+  }
+
+  /**
+   * Send a ping through the target (client) transport
+   * @private
+   */
+  private async _targetPing(options?: RequestOptions): Promise<EmptyResult> {
+    return this._targetRequest({ method: "ping" }, EmptyResultSchema, options);
+  }
+
+  /**
+   * Get the source (server) transport instance
+   * @private
+   */
+  private _sourceTransport(): Transport | undefined {
+    return this._passthroughServer.transport;
+  }
+
+  /**
+   * Get the target (client) transport instance
+   * @private
+   */
+  private _targetTransport(): Transport | undefined {
+    return this._passthroughClient.transport;
   }
 
   /**

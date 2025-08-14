@@ -1,15 +1,16 @@
 # @civic/passthrough-mcp-server
 
-A Model Context Protocol (MCP) server that acts as a passthrough proxy with protocol-level hook middleware support for validating and modifying tool calls.
+A Model Context Protocol (MCP) server that acts as a passthrough proxy with protocol-level hook middleware support and **direct transport communication interfaces**.
 
 ## Features
 
 - **Bidirectional Protocol Handling**: Seamlessly routes messages between clients and upstream servers
+- **🆕 Direct Transport Communication**: New TransportInterface with `source` and `target` interfaces for bypassing passthrough flow
 - **Protocol-Level Hook System**: tRPC-based hook system for request/response interception and modification at the MCP protocol level
-- **Session Isolation**: Each client connection gets its own isolated session context
+- **Session Isolation**: Each client connection gets its own isolated session context with `targetSessionId` and `sourceSessionId`
 - **Transport Abstraction**: Support for multiple transport types (HTTP streaming, stdio, custom)
 - **Graceful Shutdown**: Proper cleanup and cascading transport closure
-- **Type Safety**: Full TypeScript support with comprehensive type definitions
+- **Type Safety**: Full TypeScript support with comprehensive type definitions and generics
 - **Extensible Architecture**: Easy to extend with custom transports and hooks
 - **MCP Authorization spec compliant**: Properly handles authentication and authorization
 - **Comprehensive test coverage** with modular, testable architecture
@@ -194,6 +195,126 @@ await context.connect(serverTransport, clientTransport);
 
 // Clean up when done
 await context.close();
+```
+
+## New in v0.7.2: Direct Transport Communication
+
+**TransportInterface** provides direct access to connected transports, enabling advanced use cases beyond the standard passthrough flow:
+
+```typescript
+import { PassthroughContext, type TransportInterface } from '@civic/passthrough-mcp-server';
+
+const context = new PassthroughContext();
+await context.connect(serverTransport, clientTransport);
+
+// Direct communication with connected clients
+const toolsList = await context.source.request(
+  { method: "tools/list", params: {} },
+  ListToolsResultSchema
+);
+
+// Direct communication with target server  
+await context.target.notification({
+  method: "status/update",
+  params: { status: "ready" }
+});
+
+// Direct ping capabilities
+await context.source.ping();  // Ping connected clients
+await context.target.ping();  // Ping target server
+```
+
+**Key Benefits:**
+- **Bypass passthrough flow**: Direct server-to-client communication
+- **Custom implementations**: Build advanced ping handling, notifications, etc.
+- **Fine-grained control**: Access raw transport capabilities  
+- **Type safety**: Full TypeScript support with generics
+
+**Breaking Change in v0.7.2**: Metadata structure now includes both `targetSessionId` and `sourceSessionId` instead of single `sessionId`.
+
+### Direct Communication via Source and Target Interfaces
+
+PassthroughContext exposes `source` and `target` interfaces that allow direct communication with connected transports. Both interfaces implement the same `TransportInterface`:
+
+```typescript
+import { PassthroughContext, type TransportInterface } from '@civic/passthrough-mcp-server';
+import { ListToolsRequestSchema, ListToolsResultSchema } from '@modelcontextprotocol/sdk/types.js';
+
+const context = new PassthroughContext();
+await context.connect(serverTransport, clientTransport);
+
+// Send requests and notifications to connected clients (via source/server interface)
+const toolsList = await context.source.request(
+  { method: "tools/list", params: {} },
+  ListToolsResultSchema
+);
+
+await context.source.notification({
+  method: "tools/updated", 
+  params: { message: "Tools have been updated" }
+});
+
+// Send ping to connected clients
+await context.source.ping();
+
+// Get direct access to the server transport
+const serverTransport = context.source.transport();
+
+// Send requests and notifications to the target server (via target/client interface)  
+const targetTools = await context.target.request(
+  { method: "tools/list", params: {} },
+  ListToolsResultSchema
+);
+
+await context.target.notification({
+  method: "status/update",
+  params: { status: "ready" }
+});
+
+// Send ping to target server
+await context.target.ping();
+
+// Get direct access to the client transport
+const clientTransport = context.target.transport();
+```
+
+#### Error Handling
+
+Both interfaces throw `McpError` with code `REQUEST_REJECTED` when the respective transport is not connected:
+
+```typescript
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
+
+try {
+  // This will throw if no client transport is connected
+  await context.target.request(
+    { method: "tools/list", params: {} },
+    ListToolsResultSchema
+  );
+} catch (error) {
+  if (error instanceof McpError && error.code === "REQUEST_REJECTED") {
+    console.error("No client transport connected:", error.message);
+  }
+}
+```
+
+#### Interface Destructuring
+
+The interfaces maintain proper `this` binding when destructured:
+
+```typescript
+const { request: sourceRequest, notification: sourceNotify, ping: sourcePing, transport: sourceTransport } = context.source;
+const { request: targetRequest, notification: targetNotify, ping: targetPing, transport: targetTransport } = context.target;
+
+// These work correctly even when destructured
+await sourceRequest({ method: "test", params: {} }, TestSchema);
+await targetNotify({ method: "status", params: { ready: true } });
+await sourcePing();
+await targetPing();
+
+// Access to underlying transports
+const serverTransport = sourceTransport(); // Returns Transport | undefined
+const clientTransport = targetTransport(); // Returns Transport | undefined
 ```
 
 ### Target Configuration
@@ -425,7 +546,36 @@ Now clients can connect to the passthrough server on port 34000, and all request
 2. Validated by the guardrail hook
 3. Forwarded to the target server
 
-## Migration from v0.7.0
+## Migration Guide
+
+### Upgrading from v0.7.1 to v0.7.2
+
+**Breaking Change: Metadata Structure**
+
+The metadata structure in `_meta` has been updated to include both session IDs:
+
+**Before (v0.7.1):**
+```typescript
+// Hook accessing session ID
+const sessionId = request.params._meta?.sessionId;
+```
+
+**After (v0.7.2):**
+```typescript  
+// Hook accessing session IDs
+const targetSessionId = request.params._meta?.targetSessionId;  // Client transport session
+const sourceSessionId = request.params._meta?.sourceSessionId;  // Server transport session
+
+// For backward compatibility, use fallback pattern:
+const sessionId = targetSessionId || sourceSessionId || "default";
+```
+
+**New Capabilities:**
+- Access to `context.source` and `context.target` interfaces
+- Direct transport communication without passthrough flow
+- Enhanced ping functionality and custom implementations
+
+### Upgrading from v0.7.0 to v0.7.1
 
 If you're upgrading from v0.7.0, the configuration interface has been updated to use nested `source` and `target` objects:
 

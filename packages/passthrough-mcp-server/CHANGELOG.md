@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2025-08-14
+
+### Added
+- **TransportInterface**: New interface with `request()`, `notification()`, `ping()`, and `transport()` methods
+- **`context.source`**: Direct communication interface to connected clients  
+- **`context.target`**: Direct communication interface to target server
+- Export TransportInterface, SourceInterface, and TargetInterface types
+
+### Changed
+- **BREAKING**: `_meta.sessionId` → `_meta.targetSessionId` + `_meta.sourceSessionId`
+  - `targetSessionId`: Session ID of the target transport (client-side)  
+  - `sourceSessionId`: Session ID of the source transport (server-side)
+- Updated HTTP proxy integration to use new transport interfaces
+
+### Use Cases Enabled
+- Direct server-to-client communication bypassing passthrough flow
+- Custom ping implementations and fine-grained transport control
+- Advanced session management with separate source/target session handling
+
 ## [0.7.1] - 2025-08-13
 
 ### Changed

@@ -12,7 +12,6 @@ import type {
 } from "node:http";
 
 import { randomUUID } from "node:crypto";
-import { URL } from "node:url";
 import {
   StreamableHTTPServerTransport,
   type StreamableHTTPServerTransportOptions,
@@ -20,7 +19,6 @@ import {
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../../logger/logger.js";
 import { PassthroughContext } from "../../shared/passthroughContext.js";
-import { RequestContextAwareStreamableHTTPClientTransport } from "../../transports/requestContextAwareStreamableHTTPClientTransport.js";
 import type { Config } from "../config.js";
 import { createClientTransport, getTargetUrl } from "../transportFactory.js";
 import type { PassthroughProxy } from "../types.js";
@@ -79,8 +77,9 @@ export class HttpPassthroughProxy implements PassthroughProxy {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
       let serverTransport = sessionId
-        ? (this.sessionManager.getSession(sessionId)?.context
-            .passthroughServerTransport as StreamableHTTPServerTransport)
+        ? (this.sessionManager
+            .getSession(sessionId)
+            ?.context.source.transport() as StreamableHTTPServerTransport)
         : undefined;
 
       // Store the session
@@ -206,7 +205,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
         return;
       }
 
-      if (!session.context.passthroughServerTransport) {
+      if (!session.context.source.transport()) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({ error: "Non connected transport on session ID" }),
@@ -216,8 +215,7 @@ export class HttpPassthroughProxy implements PassthroughProxy {
 
       // TODO: How can proxyContext preserve the transport Type?
       await (
-        session.context
-          .passthroughServerTransport as StreamableHTTPServerTransport
+        session.context.source.transport() as StreamableHTTPServerTransport
       ).handleRequest(req, res);
     } catch (error) {
       logger.error(`Error handling MCP HTTP GET/DELETE request: ${error}`);
