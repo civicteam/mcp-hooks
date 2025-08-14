@@ -61,8 +61,11 @@ export { loadConfig } from "./proxy/config.js";
 // Export custom transports
 export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";
 
-// Export core passthrough classes
-export { PassthroughContext } from "./shared/passthroughContext.js";
+// Export core passthrough classes and interfaces
+export {
+  PassthroughContext,
+  type TransportInterface,
+} from "./shared/passthroughContext.js";
 
 // Export error constants
 export { MCP_ERROR_CODES, ERROR_MESSAGES } from "./error/errorCodes.js";

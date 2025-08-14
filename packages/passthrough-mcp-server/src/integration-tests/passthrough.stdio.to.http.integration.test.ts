@@ -280,9 +280,6 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // First initialize
     await initializeMcpConnection();
 
-    // Track when we receive a ping request from the server
-    let serverPingId: string | number | null = null;
-
     // Start the server ping and wait for it to complete
     const serverPingPromise = realMcpServer.server.ping();
 
@@ -294,7 +291,7 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     // Verify this is a request (should have method and id, but no result)
     expect(pingMessage).toHaveProperty("method", "ping");
 
-    serverPingId = (pingMessage as JSONRPCRequest).id;
+    const serverPingId = (pingMessage as JSONRPCRequest).id;
 
     // Respond to the ping with an empty result
     const pingResponse: JSONRPCMessage = {
@@ -314,12 +311,15 @@ describe("Passthrough Stdio-to-HTTP Integration Tests", () => {
     expect(pingResult).toEqual(
       expect.objectContaining({
         _meta: expect.objectContaining({
-          sessionId: expect.any(String),
+          targetSessionId: realServerTransport.sessionId,
           source: "passthrough-server",
           timestamp: expect.any(String),
         }),
       }),
     );
+
+    // Note: sourceSessionId is undefined for stdio transports as they don't have sessions
+    expect((pingResult as any)._meta.sourceSessionId).toBeUndefined();
 
     // Verify we handled the server ping correctly
     expect(serverPingId).not.toBeNull();

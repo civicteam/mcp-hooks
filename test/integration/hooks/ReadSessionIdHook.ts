@@ -28,7 +28,7 @@ export class ReadSessionIdHook extends AbstractHook {
     originalToolCall: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     // Get session ID from _meta
-    const sessionId = originalToolCall.params._meta?.sessionId;
+    const sessionId = originalToolCall.params._meta?.sourceSessionId;
 
     // Add session ID to the response
     const modifiedResponse: CallToolResult = {

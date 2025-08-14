@@ -270,11 +270,128 @@ describe("Passthrough Integration Tests", () => {
     expect(clientReply).toEqual(
       expect.objectContaining({
         _meta: expect.objectContaining({
-          sessionId: expect.any(String),
+          targetSessionId: realServerTransport.sessionId,
+          sourceSessionId: realClientTransport.sessionId,
           source: "passthrough-server",
           timestamp: expect.any(String),
         }),
       }),
     );
+  });
+
+  describe("Ping Use Case Integration Tests", () => {
+    it("should allow Real Client to ping THROUGH passthrough to Real Server end-to-end with clientID", async () => {
+      // Connect the client to the passthrough server
+      await realClient.connect(realClientTransport);
+
+      // Verify the session is established
+      const sessionId = realClientTransport.sessionId;
+      expect(sessionId).toBeDefined();
+
+      // Client pings through passthrough to real server
+      const pingResponse = await realClient.ping();
+
+      // Verify the ping response contains metadata from passthrough processing with actual session IDs
+      expect(pingResponse).toEqual(
+        expect.objectContaining({
+          _meta: expect.objectContaining({
+            targetSessionId: realServerTransport.sessionId,
+            sourceSessionId: realClientTransport.sessionId,
+            source: "passthrough-server",
+            timestamp: expect.any(String),
+          }),
+        }),
+      );
+
+      // Make sure the connection is still alive after the ping
+      const toolsResult = await realClient.request(
+        {
+          method: "tools/list",
+          params: {},
+        },
+        ListToolsResultSchema,
+      );
+      expect(toolsResult.tools).toBeDefined();
+    });
+
+    it("should allow Real Server to ping THROUGH passthrough to Real Client end-to-end with clientID", async () => {
+      // Connect the client to the passthrough server
+      await realClient.connect(realClientTransport);
+      // Give the streaming connection time to establish
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify the session is established
+      const sessionId = realClientTransport.sessionId;
+      expect(sessionId).toBeDefined();
+
+      // Real server pings through passthrough to real client
+      const pingResponse = await realMcpServer.server.ping();
+
+      // Verify the ping response contains metadata from passthrough processing with actual session IDs
+      expect(pingResponse).toEqual(
+        expect.objectContaining({
+          _meta: expect.objectContaining({
+            targetSessionId: realServerTransport.sessionId,
+            sourceSessionId: realClientTransport.sessionId,
+            source: "passthrough-server",
+            timestamp: expect.any(String),
+          }),
+        }),
+      );
+
+      // Make sure the connection is still alive after the ping
+      const toolsResult = await realClient.request(
+        {
+          method: "tools/list",
+          params: {},
+        },
+        ListToolsResultSchema,
+      );
+      expect(toolsResult.tools).toBeDefined();
+    });
+
+    it("should allow Passthrough Server to ping Source (Real Client) without reaching Real Server", async () => {
+      // Connect the client to the passthrough server
+      await realClient.connect(realClientTransport);
+      // Give the streaming connection time to establish
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Set up a spy on the real server to ensure it doesn't receive the ping
+      const pingResponse = await passthroughContext.source.ping();
+
+      // Verify the ping response is empty (successful ping)
+      expect(pingResponse).toEqual({});
+
+      // Verify the connection is still alive
+      const toolsResult = await realClient.request(
+        {
+          method: "tools/list",
+          params: {},
+        },
+        ListToolsResultSchema,
+      );
+      expect(toolsResult.tools).toBeDefined();
+    });
+
+    it("should allow Passthrough Server to ping Target (Real Server) without reaching Real Client", async () => {
+      // Connect the client to the passthrough server
+      await realClient.connect(realClientTransport);
+
+      // Use the passthrough context's target interface to ping the real server
+      const pingResponse = await passthroughContext.target.ping();
+
+      // Verify the ping response is empty (successful ping)
+      expect(pingResponse).toEqual({});
+
+      // Verify the connection is still alive
+      const toolsResult = await realClient.request(
+        {
+          method: "tools/list",
+          params: {},
+        },
+        ListToolsResultSchema,
+      );
+      expect(toolsResult.tools).toBeDefined();
+    });
   });
 });

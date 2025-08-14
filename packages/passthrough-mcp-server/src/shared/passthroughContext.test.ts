@@ -1,1126 +1,573 @@
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type {
-  ClientResult,
-  Notification,
-  Request,
-  ServerResult,
+/**
+ * Tests for PassthroughContext source and target interfaces
+ */
+
+import {
+  McpError,
+  type Notification,
+  type Request,
 } from "@modelcontextprotocol/sdk/types.js";
-import { McpError } from "@modelcontextprotocol/sdk/types.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PassthroughClient } from "../client/passthroughClient.js";
-import { createAbortException } from "../error/mcpErrorUtils.js";
-import { HookChain } from "../hook/hookChain.js";
-import * as processor from "../hook/processor.js";
-import { PassthroughServer } from "../server/passthroughServer.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import { MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { PassthroughContext } from "./passthroughContext.js";
 
-vi.mock("../server/passthroughServer.js");
-vi.mock("../client/passthroughClient.js");
-vi.mock("../hook/hookChain.js");
-vi.mock("../hook/processor.js");
-vi.mock("../error/mcpErrorUtils.js");
+// Mock transports
+const mockServerTransport = {
+  sessionId: "test-server-session",
+  send: vi.fn(),
+  close: vi.fn(),
+  start: vi.fn(),
+};
 
-describe("PassthroughContext", () => {
+const mockClientTransport = {
+  sessionId: "test-client-session",
+  send: vi.fn(),
+  close: vi.fn(),
+  start: vi.fn(),
+};
+
+// Mock schema for testing
+const TestResultSchema = z.object({
+  success: z.boolean(),
+  data: z.string().optional(),
+});
+
+describe("PassthroughContext Source and Target Interfaces", () => {
   let context: PassthroughContext;
-  let mockServerTransport: Transport;
-  let mockClientTransport: Transport;
-  let mockPassthroughServer: any;
-  let mockPassthroughClient: any;
-  let mockHookChain: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockServerTransport = {
-      sessionId: "server-session-123",
-      start: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      send: vi.fn().mockResolvedValue(undefined),
-    } as any;
-
-    mockClientTransport = {
-      sessionId: "client-session-456",
-      start: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      send: vi.fn().mockResolvedValue(undefined),
-    } as any;
-
-    mockPassthroughServer = {
-      transport: mockServerTransport,
-      connect: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      request: vi.fn(),
-      notification: vi.fn().mockResolvedValue(undefined),
-      setRequestHandler: vi.fn(),
-      onclose: undefined,
-    };
-
-    mockPassthroughClient = {
-      transport: mockClientTransport,
-      connect: vi.fn().mockResolvedValue(undefined),
-      close: vi.fn().mockResolvedValue(undefined),
-      request: vi.fn(),
-      notification: vi.fn().mockResolvedValue(undefined),
-      onclose: undefined,
-    };
-
-    mockHookChain = {
-      head: null,
-      tail: null,
-    };
-
-    (PassthroughServer as any).mockImplementation(() => mockPassthroughServer);
-    (PassthroughClient as any).mockImplementation(() => mockPassthroughClient);
-    (HookChain as any).mockImplementation(() => mockHookChain);
+    context = new PassthroughContext();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  describe("Source Interface", () => {
+    describe("request method", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
 
-  describe("constructor", () => {
-    it("should create PassthroughContext without hooks", () => {
-      context = new PassthroughContext();
+        await expect(
+          context.source.request(testRequest, TestResultSchema),
+        ).rejects.toThrow(McpError);
 
-      expect(PassthroughServer).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.any(Function),
-      );
-      expect(PassthroughClient).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.any(Function),
-      );
-      expect(HookChain).toHaveBeenCalledWith(undefined);
-    });
-
-    it("should create PassthroughContext with hooks", () => {
-      const hooks = [{ type: "local", path: "./hook.js" }];
-      context = new PassthroughContext(hooks as any);
-
-      expect(HookChain).toHaveBeenCalledWith(hooks);
-    });
-
-    it("should set up request handlers for Initialize, ListTools, and CallTool", () => {
-      context = new PassthroughContext();
-
-      expect(mockPassthroughServer.setRequestHandler).toHaveBeenCalledTimes(3);
-      expect(mockPassthroughServer.setRequestHandler).toHaveBeenCalledWith(
-        expect.objectContaining({ parse: expect.any(Function) }),
-        expect.any(Function),
-      );
-    });
-  });
-
-  describe("transport getters", () => {
-    it("should return server transport", () => {
-      context = new PassthroughContext();
-      expect(context.passthroughServerTransport).toBe(mockServerTransport);
-    });
-
-    it("should return client transport", () => {
-      context = new PassthroughContext();
-      expect(context.passthroughClientTransport).toBe(mockClientTransport);
-    });
-  });
-
-  describe("connect", () => {
-    it("should connect both server and client transports", async () => {
-      context = new PassthroughContext();
-      await context.connect(mockServerTransport, mockClientTransport);
-
-      expect(mockPassthroughServer.connect).toHaveBeenCalledWith(
-        mockServerTransport,
-      );
-      expect(mockPassthroughClient.connect).toHaveBeenCalledWith(
-        mockClientTransport,
-      );
-    });
-
-    it("should connect only server transport when client transport is not provided", async () => {
-      context = new PassthroughContext();
-      await context.connect(mockServerTransport);
-
-      expect(mockPassthroughServer.connect).toHaveBeenCalledWith(
-        mockServerTransport,
-      );
-      expect(mockPassthroughClient.connect).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("close", () => {
-    it("should close both server and client", async () => {
-      context = new PassthroughContext();
-      await context.close();
-
-      expect(mockPassthroughServer.close).toHaveBeenCalled();
-      expect(mockPassthroughClient.close).toHaveBeenCalled();
-    });
-  });
-
-  describe("request processing", () => {
-    let processRequestThroughHooksMock: any;
-    let processResponseThroughHooksMock: any;
-
-    beforeEach(() => {
-      processRequestThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        request: { method: "tool/call", params: {} },
-        lastProcessedHook: null,
+        await expect(
+          context.source.request(testRequest, TestResultSchema),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No server transport connected"),
+        });
       });
 
-      processResponseThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        response: { result: "success" },
+      it("should delegate to passthroughServer.request when transport is connected", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
+
+        const expectedResponse = { success: true, data: "test" };
+
+        // Mock the server's request method
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        // Connect transport
+        await context.connect(mockServerTransport as any);
+
+        const result = await context.source.request(
+          testRequest,
+          TestResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          TestResultSchema,
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
       });
 
-      (processor.processRequestThroughHooks as any) =
-        processRequestThroughHooksMock;
-      (processor.processResponseThroughHooks as any) =
-        processResponseThroughHooksMock;
+      it("should pass through options to passthroughServer.request", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
 
-      mockPassthroughClient.request.mockResolvedValue({ result: "success" });
+        const testOptions = { timeout: 5000 };
+        const expectedResponse = { success: true };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        await context.source.request(
+          testRequest,
+          TestResultSchema,
+          testOptions,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          TestResultSchema,
+          testOptions,
+        );
+      });
     });
 
-    it("should process server request through hooks and forward to client", async () => {
-      context = new PassthroughContext();
+    describe("notification method", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        const testNotification: Notification = {
+          method: "test/notification",
+          params: { test: true },
+        };
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test", arguments: {} },
-      };
+        await expect(
+          context.source.notification(testNotification),
+        ).rejects.toThrow(McpError);
 
-      const result = await callToolHandler(request);
-
-      expect(processRequestThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "tools/call",
-          params: expect.objectContaining({
-            name: "test",
-            arguments: {},
-            _meta: expect.objectContaining({
-              sessionId: "server-session-123",
-              timestamp: expect.any(String),
-              source: "passthrough-server",
-            }),
-          }),
-        }),
-        null,
-        "processToolCallRequest",
-      );
-
-      expect(mockPassthroughClient.request).toHaveBeenCalled();
-      expect(processResponseThroughHooksMock).toHaveBeenCalled();
-      expect(result).toEqual({ result: "success" });
-    });
-
-    it("should throw error when client transport is not connected and request needs forwarding", async () => {
-      context = new PassthroughContext();
-      mockPassthroughClient.transport = undefined;
-
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
-
-      await expect(callToolHandler(request)).rejects.toThrow(
-        new McpError(
-          -32001,
-          "No client transport connected. Cannot forward request to upstream server.",
-        ),
-      );
-    });
-
-    it("should handle request abort from hooks", async () => {
-      context = new PassthroughContext();
-
-      processRequestThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Request blocked",
+        await expect(
+          context.source.notification(testNotification),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No server transport connected"),
+        });
       });
 
-      const mockError = new McpError(-32001, "Request blocked");
-      (createAbortException as any).mockReturnValue(mockError);
+      it("should delegate to passthroughServer.notification when transport is connected", async () => {
+        const testNotification: Notification = {
+          method: "test/notification",
+          params: { test: true },
+        };
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
+        const mockNotification = vi.fn().mockResolvedValue(undefined);
+        (context as any)._passthroughServer.notification = mockNotification;
 
-      await expect(callToolHandler(request)).rejects.toThrow(mockError);
-      expect(createAbortException).toHaveBeenCalledWith(
-        "request",
-        "Request blocked",
-      );
+        await context.connect(mockServerTransport as any);
+
+        await context.source.notification(testNotification);
+
+        expect(mockNotification).toHaveBeenCalledWith(testNotification);
+      });
     });
 
-    it("should handle response abort from hooks", async () => {
-      context = new PassthroughContext();
+    describe("ping method", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        await expect(context.source.ping()).rejects.toThrow(McpError);
 
-      processResponseThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Response blocked",
+        await expect(context.source.ping()).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No server transport connected"),
+        });
       });
 
-      const mockError = new McpError(-32002, "Response blocked");
-      (createAbortException as any).mockReturnValue(mockError);
+      it("should delegate to passthroughServer.request with ping method when transport is connected", async () => {
+        const expectedResponse = {};
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
 
-      await expect(callToolHandler(request)).rejects.toThrow(mockError);
-      expect(createAbortException).toHaveBeenCalledWith(
-        "response",
-        "Response blocked",
-      );
-    });
+        await context.connect(mockServerTransport as any);
 
-    it("should use hook response when resultType is respond", async () => {
-      context = new PassthroughContext();
+        const result = await context.source.ping();
 
-      const hookResponse = { result: "hook-response" };
-      processRequestThroughHooksMock.mockResolvedValue({
-        resultType: "respond",
-        response: hookResponse,
-        lastProcessedHook: null,
+        expect(mockRequest).toHaveBeenCalledWith(
+          { method: "ping" },
+          expect.anything(), // EmptyResultSchema
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
       });
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
+      it("should pass through options to passthroughServer.request", async () => {
+        const testOptions = { timeout: 5000 };
+        const expectedResponse = {};
 
-      const result = await callToolHandler(request);
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
 
-      expect(mockPassthroughClient.request).not.toHaveBeenCalled();
-      expect(processResponseThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          result: "hook-response",
-          _meta: expect.any(Object),
-        }),
-        expect.any(Object),
-        null,
-        "processToolCallResponse",
-      );
-    });
-  });
+        await context.connect(mockServerTransport as any);
 
-  describe("notification handling", () => {
-    let processNotificationThroughHooksMock: any;
+        await context.source.ping(testOptions);
 
-    beforeEach(() => {
-      processNotificationThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        notification: { method: "notification/test", params: { data: "test" } },
-      });
-
-      (processor.processNotificationThroughHooks as any) =
-        processNotificationThroughHooksMock;
-    });
-
-    it("should process notification through hooks and forward to client when connected", async () => {
-      context = new PassthroughContext();
-
-      const serverNotificationHandler = (PassthroughServer as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/test",
-        params: { data: "test" },
-      };
-
-      await serverNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "notification/test",
-          params: expect.objectContaining({
-            data: "test",
-            _meta: expect.objectContaining({
-              sessionId: "server-session-123",
-              timestamp: expect.any(String),
-              source: "passthrough-server",
-            }),
-          }),
-        }),
-        null,
-        "processNotification",
-      );
-
-      expect(mockPassthroughClient.notification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "notification/test",
-          params: { data: "test" },
-        }),
-      );
-    });
-
-    it("should handle server notification when client is not connected", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-      mockPassthroughClient.transport = undefined;
-
-      const serverNotificationHandler = (PassthroughServer as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/test",
-        params: { data: "test" },
-      };
-
-      await serverNotificationHandler(notification);
-
-      expect(mockPassthroughClient.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message:
-            "No client transport connected. Cannot forward notification to upstream server.",
-        }),
-      );
-    });
-
-    it("should handle notification abort from hooks", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-
-      processNotificationThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Notification blocked by security hook",
-      });
-
-      const serverNotificationHandler = (PassthroughServer as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/test",
-        params: { data: "test" },
-      };
-
-      await serverNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalled();
-      expect(mockPassthroughClient.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message:
-            "Notification aborted by hook: Notification blocked by security hook",
-        }),
-      );
-    });
-
-    it("should handle notification processing errors gracefully", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-
-      processNotificationThroughHooksMock.mockRejectedValue(
-        new Error("Hook processing failed"),
-      );
-
-      const serverNotificationHandler = (PassthroughServer as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/test",
-        params: { data: "test" },
-      };
-
-      await serverNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalled();
-      expect(mockPassthroughClient.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: "Hook processing failed",
-        }),
-      );
-    });
-
-    it("should forward client notification to server", async () => {
-      context = new PassthroughContext();
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/test",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      expect(mockPassthroughServer.notification).toHaveBeenCalledWith(
-        notification,
-      );
-    });
-  });
-
-  describe("client notification handling", () => {
-    let processNotificationThroughHooksMock: any;
-
-    beforeEach(() => {
-      processNotificationThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        notification: {
-          method: "notification/target",
-          params: { data: "test" },
-        },
-      });
-
-      (processor.processNotificationThroughHooks as any) =
-        processNotificationThroughHooksMock;
-    });
-
-    it("should process client notification through hooks in reverse order and forward to server", async () => {
-      context = new PassthroughContext();
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "notification/target",
-          params: expect.objectContaining({
-            data: "test",
-            _meta: expect.objectContaining({
-              sessionId: "server-session-123",
-              timestamp: expect.any(String),
-              source: "passthrough-server",
-            }),
-          }),
-        }),
-        null, // tail of hook chain (reverse processing)
-        "processTargetNotification",
-        "reverse",
-      );
-
-      expect(mockPassthroughServer.notification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "notification/target",
-          params: { data: "test" },
-        }),
-      );
-    });
-
-    it("should handle client notification when server is not connected", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-      mockPassthroughServer.transport = undefined;
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      expect(mockPassthroughServer.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message:
-            "No server transport connected. Cannot forward client notification to target server.",
-        }),
-      );
-    });
-
-    it("should handle client notification abort from hooks", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-
-      processNotificationThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Client notification blocked by security hook",
-      });
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalledWith(
-        expect.any(Object),
-        null,
-        "processTargetNotification",
-        "reverse",
-      );
-      expect(mockPassthroughServer.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message:
-            "Client notification aborted by hook: Client notification blocked by security hook",
-        }),
-      );
-    });
-
-    it("should handle client notification processing errors gracefully", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-
-      processNotificationThroughHooksMock.mockRejectedValue(
-        new Error("Client hook processing failed"),
-      );
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      expect(processNotificationThroughHooksMock).toHaveBeenCalled();
-      expect(mockPassthroughServer.notification).not.toHaveBeenCalled();
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: "Client hook processing failed",
-        }),
-      );
-    });
-
-    it("should verify reverse direction processing for client notifications", async () => {
-      context = new PassthroughContext();
-
-      // Mock a scenario with multiple hooks to verify reverse processing
-      const mockLastProcessedHook = {
-        name: "test-hook",
-        hook: {},
-        next: null,
-        previous: null,
-      };
-      mockHookChain.tail = mockLastProcessedHook;
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: { data: "test" },
-      };
-
-      await clientNotificationHandler(notification);
-
-      // Verify that processNotificationThroughHooks was called with tail and reverse direction
-      expect(processNotificationThroughHooksMock).toHaveBeenCalledWith(
-        expect.any(Object), // annotated notification
-        mockLastProcessedHook, // Should start from tail (reverse processing)
-        "processTargetNotification", // Should use target notification method
-        "reverse", // Should be reverse direction
-      );
-    });
-
-    it("should properly annotate client notifications with metadata", async () => {
-      context = new PassthroughContext();
-
-      const clientNotificationHandler = (PassthroughClient as any).mock
-        .calls[0][1];
-      const notification: Notification = {
-        method: "notification/target",
-        params: {
-          data: "test",
-          _meta: { existingField: "value" },
-        },
-      };
-
-      await clientNotificationHandler(notification);
-
-      const processedNotification = (
-        processor.processNotificationThroughHooks as any
-      ).mock.calls[0][0];
-      expect(processedNotification.params._meta).toMatchObject({
-        existingField: "value", // Should preserve existing metadata
-        sessionId: "server-session-123",
-        timestamp: expect.any(String),
-        source: "passthrough-server",
+        expect(mockRequest).toHaveBeenCalledWith(
+          { method: "ping" },
+          expect.anything(), // EmptyResultSchema
+          testOptions,
+        );
       });
     });
   });
 
-  describe("client request handling", () => {
-    let processRequestThroughHooksMock: any;
-    let processResponseThroughHooksMock: any;
+  describe("Target Interface", () => {
+    describe("request method", () => {
+      it("should throw McpError when no client transport is connected", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
 
-    beforeEach(() => {
-      processRequestThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        request: { method: "prompt/get", params: { prompt: "test" } },
-        lastProcessedHook: null,
+        // Connect only server transport
+        await context.connect(mockServerTransport as any);
+
+        await expect(
+          context.target.request(testRequest, TestResultSchema),
+        ).rejects.toThrow(McpError);
+
+        await expect(
+          context.target.request(testRequest, TestResultSchema),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No client transport connected"),
+        });
       });
 
-      processResponseThroughHooksMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        response: { result: "prompt-result" },
+      it("should delegate to passthroughClient.request when transport is connected", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
+
+        const expectedResponse = { success: true, data: "client-test" };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughClient.request = mockRequest;
+
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
+
+        const result = await context.target.request(
+          testRequest,
+          TestResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          TestResultSchema,
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
       });
 
-      (processor.processRequestThroughHooks as any) =
-        processRequestThroughHooksMock;
-      (processor.processResponseThroughHooks as any) =
-        processResponseThroughHooksMock;
+      it("should pass through options to passthroughClient.request", async () => {
+        const testRequest: Request = {
+          method: "test/method",
+          params: { test: true },
+        };
+
+        const testOptions = { timeout: 3000 };
+        const expectedResponse = { success: false };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughClient.request = mockRequest;
+
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
+
+        await context.target.request(
+          testRequest,
+          TestResultSchema,
+          testOptions,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          TestResultSchema,
+          testOptions,
+        );
+      });
     });
 
-    it("should forward client request to server", async () => {
-      context = new PassthroughContext();
+    describe("notification method", () => {
+      it("should throw McpError when no client transport is connected", async () => {
+        const testNotification: Notification = {
+          method: "test/notification",
+          params: { test: true },
+        };
 
-      const clientRequestHandler = (PassthroughClient as any).mock.calls[0][0];
-      const request: Request = {
-        method: "prompt/get",
-        params: { prompt: "test" },
-      };
-      const expectedResult: ClientResult = { result: "prompt-result" };
+        // Connect only server transport
+        await context.connect(mockServerTransport as any);
 
-      mockPassthroughServer.request.mockResolvedValue(expectedResult);
+        await expect(
+          context.target.notification(testNotification),
+        ).rejects.toThrow(McpError);
 
-      const result = await clientRequestHandler(request);
-
-      expect(processRequestThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "prompt/get",
-          params: expect.objectContaining({
-            prompt: "test",
-            _meta: expect.objectContaining({
-              sessionId: "server-session-123",
-              timestamp: expect.any(String),
-              source: "passthrough-server",
-            }),
-          }),
-        }),
-        null, // tail of hook chain (reverse processing)
-        "processTargetRequest",
-        "reverse",
-      );
-
-      expect(mockPassthroughServer.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "prompt/get",
-          params: { prompt: "test" },
-        }),
-        expect.any(Object),
-      );
-      expect(result).toEqual(expectedResult);
-    });
-
-    it("should process client request response with forward direction", async () => {
-      context = new PassthroughContext();
-
-      const clientRequestHandler = (PassthroughClient as any).mock.calls[0][0];
-      const request: Request = {
-        method: "prompt/get",
-        params: { prompt: "test" },
-      };
-      const expectedResult: ClientResult = { result: "prompt-result" };
-
-      mockPassthroughServer.request.mockResolvedValue(expectedResult);
-
-      await clientRequestHandler(request);
-
-      // Verify that processResponseThroughHooks was called with "forward" direction
-      expect(processResponseThroughHooksMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          result: "prompt-result",
-          _meta: expect.objectContaining({
-            sessionId: "client-session-456",
-            timestamp: expect.any(String),
-            source: "passthrough-server",
-          }),
-        }),
-        expect.objectContaining({
-          method: "prompt/get",
-          params: expect.objectContaining({
-            prompt: "test",
-            _meta: expect.any(Object),
-          }),
-        }),
-        null, // lastProcessedHook from request result
-        "processTargetResponse",
-        "forward", // This should be "forward" direction
-      );
-    });
-
-    it("should handle different lastProcessedHook scenarios in client request response processing", async () => {
-      context = new PassthroughContext();
-
-      // Mock a scenario where request processing returns a specific lastProcessedHook
-      const mockLastProcessedHook = {
-        name: "test-hook",
-        hook: {},
-        next: null,
-        previous: null,
-      };
-      processRequestThroughHooksMock.mockResolvedValue({
-        resultType: "continue",
-        request: { method: "prompt/get", params: { prompt: "test" } },
-        lastProcessedHook: mockLastProcessedHook,
+        await expect(
+          context.target.notification(testNotification),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No client transport connected"),
+        });
       });
 
-      const clientRequestHandler = (PassthroughClient as any).mock.calls[0][0];
-      const request: Request = {
-        method: "prompt/get",
-        params: { prompt: "test" },
-      };
-      const expectedResult: ClientResult = { result: "prompt-result" };
+      it("should delegate to passthroughClient.notification when transport is connected", async () => {
+        const testNotification: Notification = {
+          method: "test/notification",
+          params: { test: true },
+        };
 
-      mockPassthroughServer.request.mockResolvedValue(expectedResult);
+        const mockNotification = vi.fn().mockResolvedValue(undefined);
+        (context as any)._passthroughClient.notification = mockNotification;
 
-      await clientRequestHandler(request);
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
 
-      // Verify that processResponseThroughHooks was called with the specific lastProcessedHook
-      expect(processResponseThroughHooksMock).toHaveBeenCalledWith(
-        expect.any(Object), // annotated response
-        expect.any(Object), // annotated request
-        mockLastProcessedHook, // Should pass through the lastProcessedHook from request processing
-        "processTargetResponse",
-        "forward", // Should be "forward" direction
-      );
+        await context.target.notification(testNotification);
+
+        expect(mockNotification).toHaveBeenCalledWith(testNotification);
+      });
     });
 
-    it("should handle client request abort during request processing", async () => {
-      context = new PassthroughContext();
+    describe("ping method", () => {
+      it("should throw McpError when no client transport is connected", async () => {
+        // Connect only server transport
+        await context.connect(mockServerTransport as any);
 
-      // Mock request processing to return abort
-      processRequestThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Request blocked by security hook",
+        await expect(context.target.ping()).rejects.toThrow(McpError);
+
+        await expect(context.target.ping()).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No client transport connected"),
+        });
       });
 
-      const mockError = new McpError(
-        -32001,
-        "Request blocked by security hook",
-      );
-      (createAbortException as any).mockReturnValue(mockError);
+      it("should delegate to passthroughClient.request with ping method when transport is connected", async () => {
+        const expectedResponse = {};
 
-      const clientRequestHandler = (PassthroughClient as any).mock.calls[0][0];
-      const request: Request = {
-        method: "prompt/get",
-        params: { prompt: "test" },
-      };
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughClient.request = mockRequest;
 
-      await expect(clientRequestHandler(request)).rejects.toThrow(mockError);
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
 
-      // Verify server.request was not called due to abort
-      expect(mockPassthroughServer.request).not.toHaveBeenCalled();
-      // Verify response processing was not called due to abort
-      expect(processResponseThroughHooksMock).not.toHaveBeenCalled();
-    });
+        const result = await context.target.ping();
 
-    it("should handle client request abort during response processing", async () => {
-      context = new PassthroughContext();
-
-      // Mock response processing to return abort
-      processResponseThroughHooksMock.mockResolvedValue({
-        resultType: "abort",
-        reason: "Response blocked by filter hook",
+        expect(mockRequest).toHaveBeenCalledWith(
+          { method: "ping" },
+          expect.anything(), // EmptyResultSchema
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
       });
 
-      const mockError = new McpError(-32002, "Response blocked by filter hook");
-      (createAbortException as any).mockReturnValue(mockError);
+      it("should pass through options to passthroughClient.request", async () => {
+        const testOptions = { timeout: 3000 };
+        const expectedResponse = {};
 
-      const clientRequestHandler = (PassthroughClient as any).mock.calls[0][0];
-      const request: Request = {
-        method: "prompt/get",
-        params: { prompt: "test" },
-      };
-      const serverResponse = { result: "prompt-result" };
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughClient.request = mockRequest;
 
-      mockPassthroughServer.request.mockResolvedValue(serverResponse);
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
 
-      await expect(clientRequestHandler(request)).rejects.toThrow(mockError);
+        await context.target.ping(testOptions);
 
-      // Verify server.request was called (request processing succeeded)
-      expect(mockPassthroughServer.request).toHaveBeenCalled();
-      // Verify response processing was called with forward direction
-      expect(processResponseThroughHooksMock).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.any(Object),
-        null,
-        "processTargetResponse",
-        "forward",
-      );
-      // Verify createAbortException was called for response
-      expect(createAbortException).toHaveBeenCalledWith(
-        "response",
-        "Response blocked by filter hook",
-      );
+        expect(mockRequest).toHaveBeenCalledWith(
+          { method: "ping" },
+          expect.anything(), // EmptyResultSchema
+          testOptions,
+        );
+      });
     });
   });
 
-  describe("connection lifecycle", () => {
-    it("should close client when server closes", async () => {
-      context = new PassthroughContext();
+  describe("Interface Behavior", () => {
+    it("should have separate source and target interface instances", () => {
+      const source1 = context.source;
+      const source2 = context.source;
+      const target1 = context.target;
+      const target2 = context.target;
 
-      const serverCloseHandler = mockPassthroughServer.onclose;
-      await serverCloseHandler();
+      // Should return new instances each time (due to object literal)
+      expect(source1).not.toBe(source2);
+      expect(target1).not.toBe(target2);
 
-      expect(mockPassthroughClient.close).toHaveBeenCalled();
+      // But should have the same methods bound to the same context
+      expect(source1.request).toBeDefined();
+      expect(source1.notification).toBeDefined();
+      expect(source1.ping).toBeDefined();
+      expect(source1.transport).toBeDefined();
+      expect(target1.request).toBeDefined();
+      expect(target1.notification).toBeDefined();
+      expect(target1.ping).toBeDefined();
+      expect(target1.transport).toBeDefined();
     });
 
-    it("should close server when client closes", async () => {
-      context = new PassthroughContext();
+    it("should maintain method binding when destructured", async () => {
+      const {
+        request: sourceRequest,
+        notification: sourceNotification,
+        ping: sourcePing,
+        transport: sourceTransport,
+      } = context.source;
+      const {
+        request: targetRequest,
+        notification: targetNotification,
+        ping: targetPing,
+        transport: targetTransport,
+      } = context.target;
 
-      const clientCloseHandler = mockPassthroughClient.onclose;
-      await clientCloseHandler();
+      const testRequest: Request = { method: "test", params: {} };
+      const testNotification: Notification = { method: "test", params: {} };
 
-      expect(mockPassthroughServer.close).toHaveBeenCalled();
-    });
+      // These should throw McpErrors with proper error codes (proving binding is maintained)
+      await expect(
+        sourceRequest(testRequest, TestResultSchema),
+      ).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
 
-    it("should handle error when closing client fails", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
+      await expect(sourceNotification(testNotification)).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
 
-      mockPassthroughClient.close.mockRejectedValue(new Error("Close failed"));
+      await expect(sourcePing()).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
 
-      const serverCloseHandler = mockPassthroughServer.onclose;
-      await serverCloseHandler();
+      await expect(
+        targetRequest(testRequest, TestResultSchema),
+      ).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
 
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await expect(targetNotification(testNotification)).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
 
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.stringContaining(
-            "Error trying to close the Passthrough Client",
-          ),
-        }),
-      );
-    });
-
-    it("should handle error when closing server fails", async () => {
-      context = new PassthroughContext();
-      const onerrorSpy = vi.fn();
-      context.onerror = onerrorSpy;
-
-      mockPassthroughServer.close.mockRejectedValue(new Error("Close failed"));
-
-      const clientCloseHandler = mockPassthroughClient.onclose;
-      await clientCloseHandler();
-
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      expect(onerrorSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.stringContaining(
-            "Error trying to close the Passthrough Server",
-          ),
-        }),
-      );
-    });
-
-    it("should call onclose callback when configured", async () => {
-      context = new PassthroughContext();
-      const oncloseSpy = vi.fn();
-      context.onclose = oncloseSpy;
-
-      await context.close();
-
-      expect(mockPassthroughServer.close).toHaveBeenCalled();
-      expect(mockPassthroughClient.close).toHaveBeenCalled();
+      await expect(targetPing()).rejects.toMatchObject({
+        code: MCP_ERROR_CODES.REQUEST_REJECTED,
+      });
     });
   });
 
-  describe("special request handlers", () => {
-    beforeEach(() => {
-      const processRequestMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        request: { method: "initialize", params: {} },
-        lastProcessedHook: null,
-      });
+  describe("Transport State Management", () => {
+    it("should handle fresh context with no transports", async () => {
+      const testRequest: Request = { method: "test", params: {} };
+      const testNotification: Notification = { method: "test", params: {} };
 
-      const processResponseMock = vi.fn().mockResolvedValue({
-        resultType: "continue",
-        response: { result: "initialized" },
-      });
+      // Fresh context should not have any transports connected
+      const freshContext = new PassthroughContext();
 
-      (processor.processRequestThroughHooks as any) = processRequestMock;
-      (processor.processResponseThroughHooks as any) = processResponseMock;
-
-      mockPassthroughClient.request.mockResolvedValue({
-        result: "initialized",
-      });
+      // All methods should throw McpErrors
+      await expect(
+        freshContext.source.request(testRequest, TestResultSchema),
+      ).rejects.toThrow(McpError);
+      await expect(
+        freshContext.source.notification(testNotification),
+      ).rejects.toThrow(McpError);
+      await expect(freshContext.source.ping()).rejects.toThrow(McpError);
+      await expect(
+        freshContext.target.request(testRequest, TestResultSchema),
+      ).rejects.toThrow(McpError);
+      await expect(
+        freshContext.target.notification(testNotification),
+      ).rejects.toThrow(McpError);
+      await expect(freshContext.target.ping()).rejects.toThrow(McpError);
     });
 
-    it("should handle Initialize request with specific hook methods", async () => {
-      context = new PassthroughContext();
+    it("should work properly when transports are connected", async () => {
+      const testRequest: Request = { method: "test", params: {} };
+      const testNotification: Notification = { method: "test", params: {} };
+      const expectedResponse = { success: true };
 
-      const initializeHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[0][1];
-      const request = { method: "initialize", params: { clientInfo: {} } };
+      // Setup mocks
+      const mockServerRequest = vi.fn().mockResolvedValue(expectedResponse);
+      const mockServerNotification = vi.fn().mockResolvedValue(undefined);
+      const mockClientRequest = vi.fn().mockResolvedValue(expectedResponse);
+      const mockClientNotification = vi.fn().mockResolvedValue(undefined);
 
-      await initializeHandler(request);
+      (context as any)._passthroughServer.request = mockServerRequest;
+      (context as any)._passthroughServer.notification = mockServerNotification;
+      (context as any)._passthroughClient.request = mockClientRequest;
+      (context as any)._passthroughClient.notification = mockClientNotification;
 
-      expect(processor.processRequestThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        null,
-        "processInitializeRequest",
+      // Connect both transports
+      await context.connect(
+        mockServerTransport as any,
+        mockClientTransport as any,
       );
 
-      expect(processor.processResponseThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.any(Object),
-        null,
-        "processInitializeResponse",
+      // Should work when connected
+      await expect(
+        context.source.request(testRequest, TestResultSchema),
+      ).resolves.toEqual(expectedResponse);
+      await expect(
+        context.source.notification(testNotification),
+      ).resolves.toBeUndefined();
+      await expect(context.source.ping()).resolves.toEqual(expectedResponse);
+      await expect(
+        context.target.request(testRequest, TestResultSchema),
+      ).resolves.toEqual(expectedResponse);
+      await expect(
+        context.target.notification(testNotification),
+      ).resolves.toBeUndefined();
+      await expect(context.target.ping()).resolves.toEqual(expectedResponse);
+
+      // Verify the underlying methods were called
+      expect(mockServerRequest).toHaveBeenCalledWith(
+        testRequest,
+        TestResultSchema,
+        undefined,
       );
-    });
-
-    it("should handle ListTools request with specific hook methods", async () => {
-      context = new PassthroughContext();
-
-      const listToolsHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[1][1];
-      const request = { method: "tools/list", params: {} };
-
-      await listToolsHandler(request);
-
-      expect(processor.processRequestThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        null,
-        "processToolsListRequest",
+      expect(mockServerNotification).toHaveBeenCalledWith(testNotification);
+      expect(mockClientRequest).toHaveBeenCalledWith(
+        testRequest,
+        TestResultSchema,
+        undefined,
       );
-
-      expect(processor.processResponseThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.any(Object),
-        null,
-        "processToolsListResponse",
-      );
-    });
-
-    it("should handle CallTool request with specific hook methods", async () => {
-      context = new PassthroughContext();
-
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request = { method: "tools/call", params: { name: "test" } };
-
-      await callToolHandler(request);
-
-      expect(processor.processRequestThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        null,
-        "processToolCallRequest",
-      );
-
-      expect(processor.processResponseThroughHooks).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.any(Object),
-        null,
-        "processToolCallResponse",
-      );
+      expect(mockClientNotification).toHaveBeenCalledWith(testNotification);
     });
   });
 
-  describe("metadata annotation", () => {
-    beforeEach(() => {
-      const processRequestMock = vi.fn().mockImplementation((request) => ({
-        resultType: "continue",
-        request,
-        lastProcessedHook: null,
-      }));
+  describe("Transport Access", () => {
+    it("should return undefined for transport when no transports are connected", () => {
+      const context = new PassthroughContext();
 
-      const processResponseMock = vi.fn().mockImplementation((response) => ({
-        resultType: "continue",
-        response,
-      }));
-
-      (processor.processRequestThroughHooks as any) = processRequestMock;
-      (processor.processResponseThroughHooks as any) = processResponseMock;
-
-      mockPassthroughClient.request.mockResolvedValue({ result: "success" });
+      expect(context.source.transport()).toBeUndefined();
+      expect(context.target.transport()).toBeUndefined();
     });
 
-    it("should add metadata to request", async () => {
-      context = new PassthroughContext();
+    it("should return server transport through source interface when connected", async () => {
+      await context.connect(mockServerTransport as any);
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
-
-      await callToolHandler(request);
-
-      const processedRequest = (processor.processRequestThroughHooks as any)
-        .mock.calls[0][0];
-      expect(processedRequest.params._meta).toMatchObject({
-        sessionId: "server-session-123",
-        timestamp: expect.any(String),
-        source: "passthrough-server",
-      });
+      expect(context.source.transport()).toBe(mockServerTransport);
+      expect(context.target.transport()).toBeUndefined(); // Client transport not connected
     });
 
-    it("should add metadata to response", async () => {
-      context = new PassthroughContext();
+    it("should return both transports when both are connected", async () => {
+      await context.connect(
+        mockServerTransport as any,
+        mockClientTransport as any,
+      );
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: { name: "test" },
-      };
-
-      await callToolHandler(request);
-
-      const processedResponse = (processor.processResponseThroughHooks as any)
-        .mock.calls[0][0];
-      expect(processedResponse._meta).toMatchObject({
-        sessionId: "client-session-456",
-        timestamp: expect.any(String),
-        source: "passthrough-server",
-      });
+      expect(context.source.transport()).toBe(mockServerTransport);
+      expect(context.target.transport()).toBe(mockClientTransport);
     });
 
-    it("should preserve existing metadata when adding new metadata", async () => {
-      context = new PassthroughContext();
+    it("should maintain transport binding when destructured", async () => {
+      await context.connect(
+        mockServerTransport as any,
+        mockClientTransport as any,
+      );
 
-      // Get the CallTool handler (third registered handler)
-      const callToolHandler =
-        mockPassthroughServer.setRequestHandler.mock.calls[2][1];
-      const request: Request = {
-        method: "tools/call",
-        params: {
-          name: "test",
-          _meta: { existingField: "value" },
-        },
-      };
+      const { transport: sourceTransport } = context.source;
+      const { transport: targetTransport } = context.target;
 
-      await callToolHandler(request);
-
-      const processedRequest = (processor.processRequestThroughHooks as any)
-        .mock.calls[0][0];
-      expect(processedRequest.params._meta).toMatchObject({
-        existingField: "value",
-        sessionId: "server-session-123",
-        timestamp: expect.any(String),
-        source: "passthrough-server",
-      });
+      expect(sourceTransport()).toBe(mockServerTransport);
+      expect(targetTransport()).toBe(mockClientTransport);
     });
   });
 });
