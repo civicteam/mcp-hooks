@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated to align with renamed interfaces in @civic/hook-common v0.3.1
+- Updated to align with renamed interfaces in @civic/hook-common v0.4.0
 - No functional changes, only type import updates
 
 ## [0.3.0] - 2025-08-13

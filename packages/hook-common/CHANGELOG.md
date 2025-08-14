@@ -23,8 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TargetRequestResponse` → `TargetRequestHookResult`
   - `TargetResponseResponse` → `TargetResponseHookResult`
   - `NotificationResponse` → `NotificationHookResult`
+- **BREAKING**: LocalHookClient no longer catches exceptions from hook methods
+  - Exceptions now propagate to the caller for higher-level handling
+  - Removed all try-catch blocks and error logging from LocalHookClient
 - Improved naming consistency across the entire hook interface
-- No functional changes, only type naming improvements
 
 ## [0.3.0] - 2025-08-13
 

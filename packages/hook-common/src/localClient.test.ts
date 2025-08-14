@@ -1,14 +1,14 @@
-import {
-  AbstractHook,
-  type CallToolRequestHookResult,
-  type CallToolResponseHookResult,
-  LocalHookClient,
-} from "@civic/hook-common";
 import type {
   CallToolRequest,
   CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it } from "vitest";
+import { AbstractHook } from "./AbstractHook.js";
+import { LocalHookClient } from "./localClient.js";
+import type {
+  CallToolRequestHookResult,
+  CallToolResponseHookResult,
+} from "./types.js";
 
 // Test hook that logs to an array
 class TestLoggingHook extends AbstractHook {
@@ -135,7 +135,7 @@ describe("LocalHookClient", () => {
     expect((response as any).reason).toBe("Dangerous operation blocked");
   });
 
-  it("should handle hook errors gracefully", async () => {
+  it("should propagate hook errors", async () => {
     // Create a hook that throws an error
     class ErrorHook extends AbstractHook {
       get name(): string {
@@ -158,10 +158,9 @@ describe("LocalHookClient", () => {
       },
     };
 
-    // Should return continue response on error
-    const response = await client.processCallToolRequest(request);
-
-    expect(response.resultType).toBe("continue");
-    expect((response as any).request).toEqual(request);
+    // Should propagate the error
+    await expect(client.processCallToolRequest(request)).rejects.toThrow(
+      "Hook error",
+    );
   });
 });
