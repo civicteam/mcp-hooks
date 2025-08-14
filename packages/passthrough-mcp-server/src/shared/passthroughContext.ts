@@ -339,7 +339,7 @@ export class PassthroughContext {
       request,
       InitializeResultSchema,
       "processInitializeRequest",
-      "processInitializeResponse",
+      "processInitializeResult",
     );
   }
 
@@ -349,8 +349,8 @@ export class PassthroughContext {
     return this.processServerRequest(
       request,
       ListToolsResultSchema,
-      "processToolsListRequest",
-      "processToolsListResponse",
+      "processListToolsRequest",
+      "processListToolsResult",
     );
   }
 
@@ -360,8 +360,8 @@ export class PassthroughContext {
     return this.processServerRequest(
       request,
       CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
-      "processToolCallRequest",
-      "processToolCallResponse",
+      "processCallToolRequest",
+      "processCallToolResult",
     );
   }
 
@@ -378,7 +378,7 @@ export class PassthroughContext {
       request,
       ResultSchema,
       "processOtherRequest",
-      "processOtherResponse",
+      "processOtherResult",
     );
   }
 
@@ -452,7 +452,7 @@ export class PassthroughContext {
       request,
       ResultSchema,
       "processTargetRequest",
-      "processTargetResponse",
+      "processTargetResult",
     );
   }
 

@@ -39,7 +39,7 @@ const baseRouter = t.router({
   /**
    * Process an incoming tool call request
    */
-  processToolCallRequest: t.procedure
+  processCallToolRequest: t.procedure
     .input(CallToolRequestSchema)
     .output(CallToolRequestHookResultSchema)
     .mutation(async ({ input }) => {
@@ -49,11 +49,11 @@ const baseRouter = t.router({
   /**
    * Process a tool call response
    */
-  processToolCallResponse: t.procedure
+  processCallToolResult: t.procedure
     .input(
       z.object({
         response: z.any(),
-        originalToolCall: CallToolRequestSchema,
+        originalCallToolRequest: CallToolRequestSchema,
       }),
     )
     .output(CallToolResponseHookResultSchema)
@@ -69,17 +69,17 @@ const toolsListRouter = t.router({
   /**
    * Process a tools/list request
    */
-  processToolsListRequest: t.procedure
+  processListToolsRequest: t.procedure
     .input(ListToolsRequestSchema)
     .output(ListToolsRequestHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processToolsListRequest not implemented");
+      throw new Error("processListToolsRequest not implemented");
     }),
 
   /**
    * Process a tools/list response
    */
-  processToolsListResponse: t.procedure
+  processListToolsResult: t.procedure
     .input(
       z.object({
         response: ListToolsResultSchema,
@@ -88,7 +88,7 @@ const toolsListRouter = t.router({
     )
     .output(ListToolsResponseHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processToolsListResponse not implemented");
+      throw new Error("processListToolsResult not implemented");
     }),
 
   /**
@@ -98,7 +98,7 @@ const toolsListRouter = t.router({
     .input(
       z.object({
         error: z.any(),
-        originalToolCall: CallToolRequestSchema,
+        originalCallToolRequest: CallToolRequestSchema,
       }),
     )
     .output(z.unknown())
@@ -124,7 +124,7 @@ const initializeRouter = t.router({
   /**
    * Process initialize responses
    */
-  processInitializeResponse: t.procedure
+  processInitializeResult: t.procedure
     .input(
       z.object({
         response: InitializeResultSchema,
@@ -133,7 +133,7 @@ const initializeRouter = t.router({
     )
     .output(InitializeResponseHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processInitializeResponse not implemented");
+      throw new Error("processInitializeResult not implemented");
     }),
 });
 
@@ -154,7 +154,7 @@ const targetAndNotificationRouter = t.router({
   /**
    * Process a response from the client NOT covered by a dedicated handler
    */
-  processOtherResponse: t.procedure
+  processOtherResult: t.procedure
     .input(
       z.object({
         response: ResultSchema,
@@ -163,7 +163,7 @@ const targetAndNotificationRouter = t.router({
     )
     .output(ResponseHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processOtherResponse not implemented");
+      throw new Error("processOtherResult not implemented");
     }),
 
   /**
@@ -179,7 +179,7 @@ const targetAndNotificationRouter = t.router({
   /**
    * Process a target response
    */
-  processTargetResponse: t.procedure
+  processTargetResult: t.procedure
     .input(
       z.object({
         response: ResultSchema,
@@ -188,7 +188,7 @@ const targetAndNotificationRouter = t.router({
     )
     .output(ResponseHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processTargetResponse not implemented");
+      throw new Error("processTargetResult not implemented");
     }),
 
   /**
@@ -231,57 +231,57 @@ export function createHookRouter(hook: Hook) {
   // biome-ignore lint/suspicious/noExplicitAny: tRPC procedures need flexible typing
   const procedures: any = {};
 
-  // Add processToolCallRequest if the hook implements it
-  if (hook.processToolCallRequest) {
-    procedures.processToolCallRequest = t.procedure
+  // Add processCallToolRequest if the hook implements it
+  if (hook.processCallToolRequest) {
+    procedures.processCallToolRequest = t.procedure
       .input(CallToolRequestSchema)
       .output(CallToolRequestHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processToolCallRequest) {
-          throw new Error("processToolCallRequest not implemented");
+        if (!hook.processCallToolRequest) {
+          throw new Error("processCallToolRequest not implemented");
         }
-        return await hook.processToolCallRequest(input);
+        return await hook.processCallToolRequest(input);
       });
   }
 
-  // Add processToolCallResponse if the hook implements it
-  if (hook.processToolCallResponse) {
-    procedures.processToolCallResponse = t.procedure
+  // Add processCallToolResult if the hook implements it
+  if (hook.processCallToolResult) {
+    procedures.processCallToolResult = t.procedure
       .input(
         z.object({
           response: z.any(),
-          originalToolCall: CallToolRequestSchema,
+          originalCallToolRequest: CallToolRequestSchema,
         }),
       )
       .output(CallToolResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processToolCallResponse) {
-          throw new Error("processToolCallResponse not implemented");
+        if (!hook.processCallToolResult) {
+          throw new Error("processCallToolResult not implemented");
         }
-        return await hook.processToolCallResponse(
+        return await hook.processCallToolResult(
           input.response,
-          input.originalToolCall,
+          input.originalCallToolRequest,
         );
       });
   }
 
-  if (hook.processToolsListRequest) {
-    procedures.processToolsListRequest = t.procedure
+  if (hook.processListToolsRequest) {
+    procedures.processListToolsRequest = t.procedure
       .input(ListToolsRequestSchema)
       .output(ListToolsRequestHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processToolsListRequest) {
-          throw new Error("processToolsListRequest not implemented");
+        if (!hook.processListToolsRequest) {
+          throw new Error("processListToolsRequest not implemented");
         }
-        return await hook.processToolsListRequest(input);
+        return await hook.processListToolsRequest(input);
       });
   }
 
-  if (hook.processToolsListResponse) {
-    procedures.processToolsListResponse = t.procedure
+  if (hook.processListToolsResult) {
+    procedures.processListToolsResult = t.procedure
       .input(
         z.object({
           response: ListToolsResultSchema,
@@ -291,10 +291,10 @@ export function createHookRouter(hook: Hook) {
       .output(ListToolsResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processToolsListResponse) {
-          throw new Error("processToolsListResponse not implemented");
+        if (!hook.processListToolsResult) {
+          throw new Error("processListToolsResult not implemented");
         }
-        return await hook.processToolsListResponse(
+        return await hook.processListToolsResult(
           input.response,
           input.originalRequest,
         );
@@ -315,9 +315,9 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
-  // Add processInitializeResponse if the hook implements it
-  if (hook.processInitializeResponse) {
-    procedures.processInitializeResponse = t.procedure
+  // Add processInitializeResult if the hook implements it
+  if (hook.processInitializeResult) {
+    procedures.processInitializeResult = t.procedure
       .input(
         z.object({
           response: InitializeResultSchema,
@@ -327,10 +327,10 @@ export function createHookRouter(hook: Hook) {
       .output(InitializeResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processInitializeResponse) {
-          throw new Error("processInitializeResponse not implemented");
+        if (!hook.processInitializeResult) {
+          throw new Error("processInitializeResult not implemented");
         }
-        return await hook.processInitializeResponse(
+        return await hook.processInitializeResult(
           input.response,
           input.originalRequest,
         );
@@ -351,9 +351,9 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
-  // Add processOtherResponse if the hook implements it
-  if (hook.processOtherResponse) {
-    procedures.processOtherResponse = t.procedure
+  // Add processOtherResult if the hook implements it
+  if (hook.processOtherResult) {
+    procedures.processOtherResult = t.procedure
       .input(
         z.object({
           response: ResultSchema,
@@ -363,10 +363,10 @@ export function createHookRouter(hook: Hook) {
       .output(ResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processOtherResponse) {
-          throw new Error("processOtherResponse not implemented");
+        if (!hook.processOtherResult) {
+          throw new Error("processOtherResult not implemented");
         }
-        return await hook.processOtherResponse(
+        return await hook.processOtherResult(
           input.response,
           input.originalRequest,
         );
@@ -387,9 +387,9 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
-  // Add processTargetResponse if the hook implements it
-  if (hook.processTargetResponse) {
-    procedures.processTargetResponse = t.procedure
+  // Add processTargetResult if the hook implements it
+  if (hook.processTargetResult) {
+    procedures.processTargetResult = t.procedure
       .input(
         z.object({
           response: ResultSchema,
@@ -399,10 +399,10 @@ export function createHookRouter(hook: Hook) {
       .output(ResponseHookResultSchema)
       .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
-        if (!hook.processTargetResponse) {
-          throw new Error("processTargetResponse not implemented");
+        if (!hook.processTargetResult) {
+          throw new Error("processTargetResult not implemented");
         }
-        return await hook.processTargetResponse(
+        return await hook.processTargetResult(
           input.response,
           input.originalRequest,
         );

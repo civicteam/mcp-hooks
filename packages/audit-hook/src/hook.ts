@@ -28,26 +28,26 @@ export class AuditHook implements Hook {
   /**
    * Process an incoming tool call request
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     const sessionId =
-      (toolCall.params._meta as { sessionId?: string })?.sessionId || "unknown";
+      (request.params._meta as { sessionId?: string })?.sessionId || "unknown";
 
     // Create and log audit entry
     const auditEntry: AuditEntry = {
       timestamp: new Date().toISOString(),
       sessionId,
-      tool: toolCall.params.name,
+      tool: request.params.name,
       arguments:
-        typeof toolCall.params.arguments === "object" &&
-        toolCall.params.arguments !== null
-          ? (toolCall.params.arguments as Record<string, unknown>)
-          : { value: toolCall.params.arguments },
+        typeof request.params.arguments === "object" &&
+        request.params.arguments !== null
+          ? (request.params.arguments as Record<string, unknown>)
+          : { value: request.params.arguments },
       metadata: {
         source: "request",
         transportType: "tRPC",
-        ...toolCall.params._meta,
+        ...request.params._meta,
       },
     };
 
@@ -57,26 +57,26 @@ export class AuditHook implements Hook {
     // Always allow the request to proceed without modification
     return {
       resultType: "continue",
-      request: toolCall,
+      request,
     };
   }
 
   /**
    * Process a tool call response
    */
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     const sessionId =
-      (originalToolCall.params._meta as { sessionId?: string })?.sessionId ||
-      "unknown";
+      (originalCallToolRequest.params._meta as { sessionId?: string })
+        ?.sessionId || "unknown";
 
     // Create and log audit entry
     const auditEntry: AuditEntry = {
       timestamp: new Date().toISOString(),
       sessionId,
-      tool: originalToolCall.params.name,
+      tool: originalCallToolRequest.params.name,
       arguments: {}, // No arguments for response
       response, // Include the full response data in dedicated field
       metadata: {

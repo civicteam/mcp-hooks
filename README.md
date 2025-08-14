@@ -239,7 +239,7 @@ class MyHook extends AbstractHook {
     return "my-hook";
   }
 
-  async processToolCallRequest(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult> {
+  async processCallToolRequest(request: CallToolRequest): Promise<ToolCallRequestHookResult> {
     // Your logic here
     console.log(`Processing: ${toolCall.params.name}`);
     
@@ -329,11 +329,11 @@ All hooks implement this simple interface:
 ```typescript
 interface Hook {
   name: string;
-  processToolCallRequest?(toolCall: CallToolRequest): Promise<ToolCallRequestHookResult>;
-  processToolCallResponse?(response: CallToolResult, originalToolCall: CallToolRequest): Promise<ToolCallResponseHookResult>;
+  processCallToolRequest?(request: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  processCallToolResult?(response: CallToolResult, originalCallToolRequest: CallToolRequest): Promise<ToolCallResponseHookResult>;
   processToolsList?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
-  processToolsListResponse?(response: ListToolsResult, originalRequest: ListToolsRequest): Promise<ListToolsResponseHookResult>;
-  processToolCallTransportError?(error: unknown, originalToolCall: CallToolRequest): Promise<ToolCallTransportErrorHookResult>;
+  processListToolsResult?(response: ListToolsResult, originalRequest: ListToolsRequest): Promise<ListToolsResponseHookResult>;
+  processToolCallTransportError?(error: unknown, originalCallToolRequest: CallToolRequest): Promise<ToolCallTransportErrorHookResult>;
   processToolsListTransportError?(error: unknown, originalRequest: ListToolsRequest): Promise<ListToolsTransportErrorHookResult>;
 }
 ```

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-08-14
+
+### Changed
+
+- **BREAKING**: Renamed all hook result interfaces to align with consistent naming conventions:
+  - `CallToolRequestResponse` → `CallToolRequestHookResult`
+  - `CallToolResponseResponse` → `CallToolResponseHookResult`
+  - `ListToolsRequestResponse` → `ListToolsRequestHookResult`
+  - `ListToolsResponseResponse` → `ListToolsResponseHookResult`
+  - `InitializeRequestResponse` → `InitializeRequestHookResult`
+  - `InitializeResponseResponse` → `InitializeResponseHookResult`
+  - `OtherRequestResponse` → `OtherRequestHookResult`
+  - `OtherResponseResponse` → `OtherResponseHookResult`
+  - `TargetRequestResponse` → `TargetRequestHookResult`
+  - `TargetResponseResponse` → `TargetResponseHookResult`
+  - `NotificationResponse` → `NotificationHookResult`
+- Improved naming consistency across the entire hook interface
+- No functional changes, only type naming improvements
+
 ## [0.3.0] - 2025-08-13
 
 ### Added

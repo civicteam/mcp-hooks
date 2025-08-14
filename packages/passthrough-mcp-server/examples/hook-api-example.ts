@@ -29,24 +29,24 @@ class ValidationHook extends AbstractHook {
 
   private allowedTools = ["search", "calculate", "format"];
 
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<ToolCallRequestHookResult> {
     // Check if tool is allowed
-    if (!this.allowedTools.includes(toolCall.params.name)) {
+    if (!this.allowedTools.includes(request.params.name)) {
       return {
         resultType: "abort",
-        reason: `Tool '${toolCall.params.name}' is not allowed`,
+        reason: `Tool '${request.params.name}' is not allowed`,
       };
     }
 
     // All validations passed
-    return { resultType: "continue", request: toolCall };
+    return { resultType: "continue", request };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<ToolCallResponseHookResult> {
     return { resultType: "continue", response };
   }
@@ -56,7 +56,7 @@ class ValidationHook extends AbstractHook {
  * Example integration showing how to use the hook API
  */
 async function processToolCallWithHooks(
-  toolCall: CallToolRequest,
+  request: CallToolRequest,
 ): Promise<unknown> {
   // Create hook clients from definitions
   const hooks: Hook[] = createHookClients([
@@ -68,8 +68,8 @@ async function processToolCallWithHooks(
   const requestResult = await processRequestThroughHooks<
     CallToolRequest,
     CallToolResult,
-    "processToolCallRequest"
-  >(toolCall, hooks, "processToolCallRequest");
+    "processCallToolRequest"
+  >(request, hooks, "processCallToolRequest");
 
   if (requestResult.resultType === "abort") {
     logger.error(`Request rejected: ${requestResult.reason}`);
@@ -91,13 +91,13 @@ async function processToolCallWithHooks(
   const responseResult = await processResponseThroughHooks<
     CallToolRequest,
     CallToolResult,
-    "processToolCallResponse"
+    "processCallToolResult"
   >(
     response as CallToolResult,
     requestResult.request,
     hooks,
     requestResult.lastProcessedIndex,
-    "processToolCallResponse",
+    "processCallToolResult",
   );
 
   if (responseResult.resultType === "abort") {
@@ -123,13 +123,13 @@ class ToolService {
     this.hooks = createHookClients(hookDefinitions);
   }
 
-  async execute(toolCall: CallToolRequest): Promise<unknown> {
+  async execute(request: CallToolRequest): Promise<unknown> {
     // Apply request hooks
     const requestResult = await processRequestThroughHooks<
       CallToolRequest,
       CallToolResult,
-      "processToolCallRequest"
-    >(toolCall, this.hooks, "processToolCallRequest");
+      "processCallToolRequest"
+    >(request, this.hooks, "processCallToolRequest");
 
     if (requestResult.resultType === "abort") {
       throw new Error(`Request rejected: ${requestResult.reason}`);
@@ -146,13 +146,13 @@ class ToolService {
     const responseResult = await processResponseThroughHooks<
       CallToolRequest,
       CallToolResult,
-      "processToolCallResponse"
+      "processCallToolResult"
     >(
       response as CallToolResult,
       requestResult.request,
       this.hooks,
       requestResult.lastProcessedIndex,
-      "processToolCallResponse",
+      "processCallToolResult",
     );
 
     if (responseResult.resultType === "abort") {
@@ -162,14 +162,14 @@ class ToolService {
     return responseResult.response;
   }
 
-  private async executeInternal(toolCall: CallToolRequest): Promise<unknown> {
+  private async executeInternal(request: CallToolRequest): Promise<unknown> {
     // Your actual tool execution logic here
-    logger.info(`Executing tool: ${toolCall.params.name}`);
+    logger.info(`Executing tool: ${request.params.name}`);
     return {
       content: [
         {
           type: "text",
-          text: `Executed ${toolCall.params.name}`,
+          text: `Executed ${request.params.name}`,
         },
       ],
     };
@@ -177,11 +177,11 @@ class ToolService {
 }
 
 // Helper function to simulate tool execution
-async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
-  logger.info(`Executing tool: ${toolCall.params.name}`);
+async function executeToolCall(request: CallToolRequest): Promise<unknown> {
+  logger.info(`Executing tool: ${request.params.name}`);
 
   // Simulate different tool responses
-  switch (toolCall.params.name) {
+  switch (request.params.name) {
     case "search":
       return {
         content: [
@@ -192,7 +192,7 @@ async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
                 { title: "Result 1", url: "https://example.com/1" },
                 { title: "Result 2", url: "https://example.com/2" },
               ],
-              query: (toolCall.params.arguments as { query: string }).query,
+              query: (request.params.arguments as { query: string }).query,
             }),
           },
         ],
@@ -205,7 +205,7 @@ async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
             type: "text",
             text: JSON.stringify({
               result: 42,
-              expression: (toolCall.params.arguments as { expression: string })
+              expression: (request.params.arguments as { expression: string })
                 .expression,
             }),
           },
@@ -217,7 +217,7 @@ async function executeToolCall(toolCall: CallToolRequest): Promise<unknown> {
         content: [
           {
             type: "text",
-            text: `Executed ${toolCall.params.name}`,
+            text: `Executed ${request.params.name}`,
           },
         ],
       };

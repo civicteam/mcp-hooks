@@ -38,7 +38,7 @@ export class AuthenticationHeaderHook extends AbstractHook {
     this.apiKey = apiKey;
   }
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     // Add authentication header
@@ -58,7 +58,7 @@ export class AuthenticationHeaderHook extends AbstractHook {
     };
   }
 
-  async processToolsListRequest(
+  async processListToolsRequest(
     request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult> {
     // Add authentication header for list requests too
@@ -95,7 +95,7 @@ export class ConditionalRoutingHook extends AbstractHook {
     this.routingRules = routingRules;
   }
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     const toolName = request.params.name;
@@ -134,7 +134,7 @@ export class PathRewritingHook extends AbstractHook {
     this.pathMappings = pathMappings;
   }
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     if (!request.req?.path) {
@@ -181,7 +181,7 @@ export class HeaderFilteringHook extends AbstractHook {
     this.sensitiveHeaders = sensitiveHeaders;
   }
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     if (!request.req?.headers) {
@@ -219,7 +219,7 @@ export class CombinedManipulationHook extends AbstractHook {
     return "combined-manipulation-hook";
   }
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     const toolName = request.params.name;
@@ -292,7 +292,7 @@ async function main() {
     },
   };
 
-  const authResult = await authHook.processToolCallRequest(authRequest);
+  const authResult = await authHook.processCallToolRequest(authRequest);
   logger.info(`\nAuth Hook Result: ${JSON.stringify(authResult, null, 2)}`);
 
   // Example 2: Conditional Routing
@@ -316,7 +316,7 @@ async function main() {
   };
 
   const routingResult =
-    await routingHook.processToolCallRequest(routingRequest);
+    await routingHook.processCallToolRequest(routingRequest);
   logger.info(
     `\nRouting Hook Result: ${JSON.stringify(routingResult, null, 2)}`,
   );
@@ -340,7 +340,7 @@ async function main() {
     },
   };
 
-  const pathResult = await pathHook.processToolCallRequest(pathRequest);
+  const pathResult = await pathHook.processCallToolRequest(pathRequest);
   logger.info(`\nPath Hook Result: ${JSON.stringify(pathResult, null, 2)}`);
 
   // Example 4: Header Filtering
@@ -368,7 +368,7 @@ async function main() {
     },
   };
 
-  const filterResult = await filterHook.processToolCallRequest(filterRequest);
+  const filterResult = await filterHook.processCallToolRequest(filterRequest);
   logger.info(`\nFilter Hook Result: ${JSON.stringify(filterResult, null, 2)}`);
 }
 

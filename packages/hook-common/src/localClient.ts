@@ -38,24 +38,24 @@ export class LocalHookClient implements Hook {
   /**
    * Process a tool call through the hook
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     try {
       // Check if hook supports this method
-      if (!this.hook.processToolCallRequest) {
+      if (!this.hook.processCallToolRequest) {
         return {
           resultType: "continue",
-          request: toolCall,
+          request,
         };
       }
-      return await this.hook.processToolCallRequest(toolCall);
+      return await this.hook.processCallToolRequest(request);
     } catch (error) {
       console.error(`Hook ${this.name} request processing failed:`, error);
       // On error, continue with unmodified request
       return {
         resultType: "continue",
-        request: toolCall,
+        request,
       };
     }
   }
@@ -63,21 +63,21 @@ export class LocalHookClient implements Hook {
   /**
    * Process a response through the hook
    */
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     try {
       // Check if hook supports this method
-      if (!this.hook.processToolCallResponse) {
+      if (!this.hook.processCallToolResult) {
         return {
           resultType: "continue",
           response: response,
         };
       }
-      return await this.hook.processToolCallResponse(
+      return await this.hook.processCallToolResult(
         response,
-        originalToolCall,
+        originalCallToolRequest,
       );
     } catch (error) {
       console.error(`Hook ${this.name} response processing failed:`, error);
@@ -92,18 +92,18 @@ export class LocalHookClient implements Hook {
   /**
    * Process a tools/list request through the hook
    */
-  async processToolsListRequest(
+  async processListToolsRequest(
     request: ListToolsRequest,
   ): Promise<ListToolsRequestHookResult> {
     try {
       // Check if hook supports tools/list processing
-      if (!this.hook.processToolsListRequest) {
+      if (!this.hook.processListToolsRequest) {
         return {
           resultType: "continue",
           request: request,
         };
       }
-      return await this.hook.processToolsListRequest(request);
+      return await this.hook.processListToolsRequest(request);
     } catch (error) {
       console.error(
         `Hook ${this.name} tools/list request processing failed:`,
@@ -120,22 +120,19 @@ export class LocalHookClient implements Hook {
   /**
    * Process a tools/list response through the hook
    */
-  async processToolsListResponse(
+  async processListToolsResult(
     response: ListToolsResult,
     originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult> {
     try {
       // Check if hook supports tools/list response processing
-      if (!this.hook.processToolsListResponse) {
+      if (!this.hook.processListToolsResult) {
         return {
           resultType: "continue",
           response: response,
         };
       }
-      return await this.hook.processToolsListResponse(
-        response,
-        originalRequest,
-      );
+      return await this.hook.processListToolsResult(response, originalRequest);
     } catch (error) {
       console.error(
         `Hook ${this.name} tools/list response processing failed:`,
@@ -180,22 +177,19 @@ export class LocalHookClient implements Hook {
   /**
    * Process an initialize response through the hook
    */
-  async processInitializeResponse(
+  async processInitializeResult(
     response: InitializeResult,
     originalRequest: InitializeRequest,
   ): Promise<InitializeResponseHookResult> {
     try {
       // Check if hook supports initialize response processing
-      if (!this.hook.processInitializeResponse) {
+      if (!this.hook.processInitializeResult) {
         return {
           resultType: "continue",
           response,
         };
       }
-      return await this.hook.processInitializeResponse(
-        response,
-        originalRequest,
-      );
+      return await this.hook.processInitializeResult(response, originalRequest);
     } catch (error) {
       console.error(
         `Hook ${this.name} initialize response processing failed:`,
@@ -238,19 +232,19 @@ export class LocalHookClient implements Hook {
   /**
    * Process a response from the client NOT covered by a dedicated handler
    */
-  async processOtherResponse(
+  async processOtherResult(
     response: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult> {
     try {
       // Check if hook supports other response processing
-      if (!this.hook.processOtherResponse) {
+      if (!this.hook.processOtherResult) {
         return {
           resultType: "continue",
           response,
         };
       }
-      return await this.hook.processOtherResponse(response, originalRequest);
+      return await this.hook.processOtherResult(response, originalRequest);
     } catch (error) {
       console.error(
         `Hook ${this.name} other response processing failed:`,
@@ -293,19 +287,19 @@ export class LocalHookClient implements Hook {
   /**
    * Process a target response through the hook
    */
-  async processTargetResponse(
+  async processTargetResult(
     response: Result,
     originalRequest: Request,
   ): Promise<ResponseHookResult> {
     try {
       // Check if hook supports target response processing
-      if (!this.hook.processTargetResponse) {
+      if (!this.hook.processTargetResult) {
         return {
           resultType: "continue",
           response,
         };
       }
-      return await this.hook.processTargetResponse(response, originalRequest);
+      return await this.hook.processTargetResult(response, originalRequest);
     } catch (error) {
       console.error(
         `Hook ${this.name} target response processing failed:`,

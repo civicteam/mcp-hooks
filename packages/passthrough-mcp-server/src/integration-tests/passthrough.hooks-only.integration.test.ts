@@ -47,7 +47,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       get name() {
         return "ToolsHook";
       },
-      async processToolsListRequest(request: any) {
+      async processListToolsRequest(request: any) {
         return {
           resultType: "respond",
           response: {
@@ -66,7 +66,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
           },
         };
       },
-      async processToolCallRequest(request: any) {
+      async processCallToolRequest(request: any) {
         if (request.params.name === "greet") {
           return {
             resultType: "respond",
@@ -85,7 +85,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
           request,
         };
       },
-      async processToolCallResponse(response: any, originalRequest: any) {
+      async processCallToolResult(response: any, originalRequest: any) {
         // Just pass through the response for this test
         return {
           resultType: "continue",

@@ -40,7 +40,7 @@ export class ApiKeyHook extends AbstractHook {
   /**
    * Process an incoming tool call request to add API key header
    */
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     return this.addApiKeyHeader(request);
@@ -49,7 +49,7 @@ export class ApiKeyHook extends AbstractHook {
   /**
    * Process a tools/list request to add API key header
    */
-  async processToolsListRequest(
+  async processListToolsRequest(
     request: ListToolsRequestWithContext,
   ): Promise<ListToolsRequestHookResult> {
     return this.addApiKeyHeader(request);

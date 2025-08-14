@@ -51,26 +51,26 @@ export class LocalToolsHook extends AbstractHook {
    * If the tool is a local tool, execute it and return a "respond" response
    * Otherwise, return "continue" to pass through to the remote server
    */
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     // Check if this tool call is for one of our local tools
     const localTool = this.tools.find(
-      (tool) => tool.name === toolCall.params.name,
+      (tool) => tool.name === request.params.name,
     );
 
     if (!localTool) {
       // Not a local tool, continue to remote server
       return {
         resultType: "continue",
-        request: toolCall,
+        request,
       };
     }
 
     try {
       // execute the local tool
       const result = await localTool.cb(
-        toolCall.params.arguments as ZodRawShape,
+        request.params.arguments as ZodRawShape,
         {
           signal: AbortSignal.timeout(this.timeoutMs),
           requestId: "",
@@ -108,11 +108,11 @@ export class LocalToolsHook extends AbstractHook {
   /**
    * Process a tools/list response to add local tools to the list
    */
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
     originalRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
-    // Local tools are handled in processToolCallRequest,
+    // Local tools are handled in processCallToolRequest,
     // so we always continue with the response as-is
     return {
       resultType: "continue",
@@ -120,7 +120,7 @@ export class LocalToolsHook extends AbstractHook {
     };
   }
 
-  async processToolsListResponse(
+  async processListToolsResult(
     response: ListToolsResult,
     originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult> {

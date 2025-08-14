@@ -53,13 +53,13 @@ class MockHook implements Hook {
   }
 
   // Default implementations that satisfy the interface
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
     originalRequest: CallToolRequestWithContext,
   ): Promise<CallToolResponseHookResult> {
@@ -79,8 +79,8 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, null, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, null, "processCallToolRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook).toBe(null);
@@ -96,7 +96,7 @@ describe("Hook Processor", () => {
         });
 
         const mockHook = new MockHook("test-hook");
-        mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
+        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
         } satisfies CallToolRequestHookResult);
@@ -105,12 +105,12 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("test-hook");
-        expect(mockHook.processToolCallRequest).toHaveBeenCalledWith(toolCall);
+        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(toolCall);
       });
 
       it("should handle hook rejection", async () => {
@@ -120,7 +120,7 @@ describe("Hook Processor", () => {
         });
 
         const mockHook = new MockHook("security-hook");
-        mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
+        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Destructive operation",
         } satisfies CallToolRequestHookResult);
@@ -129,8 +129,8 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("security-hook");
@@ -146,36 +146,36 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook1.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
         } satisfies CallToolRequestHookResult);
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Blocked by hook2",
         } satisfies CallToolRequestHookResult);
 
         const hook3 = new MockHook("hook3");
-        hook3.processToolCallRequest = vi.fn();
+        hook3.processCallToolRequest = vi.fn();
 
         const chain = new HookChain([hook1, hook2, hook3]);
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("hook2");
-        expect(hook1.processToolCallRequest).toHaveBeenCalled();
-        expect(hook2.processToolCallRequest).toHaveBeenCalled();
-        expect(hook3.processToolCallRequest).not.toHaveBeenCalled();
+        expect(hook1.processCallToolRequest).toHaveBeenCalled();
+        expect(hook2.processCallToolRequest).toHaveBeenCalled();
+        expect(hook3.processCallToolRequest).not.toHaveBeenCalled();
       });
 
       it("should allow hooks to modify request", async () => {
-        const originalToolCall = createToolCall({
+        const originalCallToolRequest = createToolCall({
           name: "fetch",
           arguments: { url: "http://example.com" },
         });
@@ -186,7 +186,7 @@ describe("Hook Processor", () => {
         });
 
         const mockHook = new MockHook("modifier-hook");
-        mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
+        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: modifiedToolCall,
         } satisfies CallToolRequestHookResult);
@@ -195,8 +195,8 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(originalToolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(originalCallToolRequest, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("continue");
         if (result.resultType === "continue") {
@@ -212,10 +212,10 @@ describe("Hook Processor", () => {
 
         const hook1 = new MockHook("hook1");
         // Delete the method to simulate a hook that doesn't implement it
-        (hook1 as any).processToolCallRequest = undefined;
+        (hook1 as any).processCallToolRequest = undefined;
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: toolCall,
         } satisfies CallToolRequestHookResult);
@@ -224,11 +224,11 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(result.lastProcessedHook?.name).toBe("hook2");
-        expect(hook2.processToolCallRequest).toHaveBeenCalled();
+        expect(hook2.processCallToolRequest).toHaveBeenCalled();
       });
 
       it("should handle direct response from hook", async () => {
@@ -242,7 +242,7 @@ describe("Hook Processor", () => {
         };
 
         const mockHook = new MockHook("cache-hook");
-        mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
+        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "respond",
           response: mockResponse,
         } as CallToolRequestHookResult);
@@ -251,8 +251,8 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("respond");
         expect(result.lastProcessedHook?.name).toBe("cache-hook");
@@ -279,14 +279,14 @@ describe("Hook Processor", () => {
         const responseCallOrder: string[] = [];
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallRequest = vi.fn().mockImplementation(async () => {
+        hook1.processCallToolRequest = vi.fn().mockImplementation(async () => {
           requestCallOrder.push("hook1-request");
           return {
             resultType: "continue",
             request: toolCall,
           } satisfies CallToolRequestHookResult;
         });
-        hook1.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook1.processCallToolResult = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook1-response");
           return {
             resultType: "continue",
@@ -295,14 +295,14 @@ describe("Hook Processor", () => {
         });
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockImplementation(async () => {
+        hook2.processCallToolRequest = vi.fn().mockImplementation(async () => {
           requestCallOrder.push("hook2-request");
           return {
             resultType: "respond",
             response: directResponse,
           } satisfies CallToolRequestHookResult;
         });
-        hook2.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook2.processCallToolResult = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook2-response");
           return {
             resultType: "continue",
@@ -311,14 +311,14 @@ describe("Hook Processor", () => {
         });
 
         const hook3 = new MockHook("hook3");
-        hook3.processToolCallRequest = vi.fn().mockImplementation(async () => {
+        hook3.processCallToolRequest = vi.fn().mockImplementation(async () => {
           requestCallOrder.push("hook3-request");
           return {
             resultType: "continue",
             request: toolCall,
           } satisfies CallToolRequestHookResult;
         });
-        hook3.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook3.processCallToolResult = vi.fn().mockImplementation(async () => {
           responseCallOrder.push("hook3-response");
           return {
             resultType: "continue",
@@ -332,29 +332,29 @@ describe("Hook Processor", () => {
         const requestResult = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(toolCall, chain.head, "processToolCallRequest");
+          "processCallToolRequest"
+        >(toolCall, chain.head, "processCallToolRequest");
 
         expect(requestResult.resultType).toBe("respond");
         expect(requestResult.lastProcessedHook?.name).toBe("hook2");
         expect(requestCallOrder).toEqual(["hook1-request", "hook2-request"]);
-        expect(hook3.processToolCallRequest).not.toHaveBeenCalled();
+        expect(hook3.processCallToolRequest).not.toHaveBeenCalled();
 
         // Process response - should only process hooks that saw the request (hook2 and hook1)
         const responseResult = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
+          "processCallToolResult"
         >(
           directResponse,
           toolCall,
           requestResult.lastProcessedHook,
-          "processToolCallResponse",
+          "processCallToolResult",
         );
 
         // Verify only hook2 and hook1 processed the response (in reverse order)
         expect(responseCallOrder).toEqual(["hook2-response", "hook1-response"]);
-        expect(hook3.processToolCallResponse).not.toHaveBeenCalled();
+        expect(hook3.processCallToolResult).not.toHaveBeenCalled();
 
         // Verify hook1 was able to modify the response
         expect(responseResult.resultType).toBe("continue");
@@ -370,7 +370,7 @@ describe("Hook Processor", () => {
 
         // Create a hook that supports tools list
         class ToolsListHook extends MockHook {
-          async processToolsListRequest(
+          async processListToolsRequest(
             request: ListToolsRequest,
           ): Promise<ListToolsRequestHookResult> {
             return { resultType: "continue", request };
@@ -378,7 +378,7 @@ describe("Hook Processor", () => {
         }
 
         const mockHook = new ToolsListHook("test-hook");
-        mockHook.processToolsListRequest = vi.fn().mockResolvedValue({
+        mockHook.processListToolsRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request,
         } satisfies ListToolsRequestHookResult);
@@ -387,12 +387,12 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           ListToolsRequest,
           ListToolsResult,
-          "processToolsListRequest"
-        >(request, chain.head, "processToolsListRequest");
+          "processListToolsRequest"
+        >(request, chain.head, "processListToolsRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("test-hook");
-        expect(mockHook.processToolsListRequest).toHaveBeenCalledWith(request);
+        expect(mockHook.processListToolsRequest).toHaveBeenCalledWith(request);
       });
     });
   });
@@ -408,8 +408,8 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, toolCall, null, "processToolCallResponse");
+          "processCallToolResult"
+        >(response, toolCall, null, "processCallToolResult");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook).toBe(null);
@@ -426,7 +426,7 @@ describe("Hook Processor", () => {
         const callOrder: string[] = [];
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook1.processCallToolResult = vi.fn().mockImplementation(async () => {
           callOrder.push("hook1");
           return {
             resultType: "continue",
@@ -435,7 +435,7 @@ describe("Hook Processor", () => {
         });
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook2.processCallToolResult = vi.fn().mockImplementation(async () => {
           callOrder.push("hook2");
           return {
             resultType: "continue",
@@ -444,7 +444,7 @@ describe("Hook Processor", () => {
         });
 
         const hook3 = new MockHook("hook3");
-        hook3.processToolCallResponse = vi.fn().mockImplementation(async () => {
+        hook3.processCallToolResult = vi.fn().mockImplementation(async () => {
           callOrder.push("hook3");
           return {
             resultType: "continue",
@@ -457,8 +457,8 @@ describe("Hook Processor", () => {
         await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, toolCall, chain.tail, "processToolCallResponse");
+          "processCallToolResult"
+        >(response, toolCall, chain.tail, "processCallToolResult");
 
         expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
       });
@@ -470,7 +470,7 @@ describe("Hook Processor", () => {
         const toolCall = createToolCall({ name: "fetch", arguments: {} });
 
         const mockHook = new MockHook("filter-hook");
-        mockHook.processToolCallResponse = vi.fn().mockResolvedValue({
+        mockHook.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Sensitive content",
         } satisfies CallToolResponseHookResult);
@@ -479,8 +479,8 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, toolCall, chain.head, "processToolCallResponse");
+          "processCallToolResult"
+        >(response, toolCall, chain.head, "processCallToolResult");
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("filter-hook");
@@ -499,7 +499,7 @@ describe("Hook Processor", () => {
         const toolCall = createToolCall({ name: "fetch", arguments: {} });
 
         const mockHook = new MockHook("modifier-hook");
-        mockHook.processToolCallResponse = vi.fn().mockResolvedValue({
+        mockHook.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: modifiedResponse,
         } satisfies CallToolResponseHookResult);
@@ -508,8 +508,8 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(originalResponse, toolCall, chain.head, "processToolCallResponse");
+          "processCallToolResult"
+        >(originalResponse, toolCall, chain.head, "processCallToolResult");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("modifier-hook");
@@ -528,7 +528,7 @@ describe("Hook Processor", () => {
 
         // Create a hook that supports tools list
         class ToolsListHook extends MockHook {
-          async processToolsListResponse(
+          async processListToolsResult(
             response: ListToolsResult,
             originalRequest: ListToolsRequest,
           ): Promise<ListToolsResponseHookResult> {
@@ -537,7 +537,7 @@ describe("Hook Processor", () => {
         }
 
         const mockHook = new ToolsListHook("test-hook");
-        mockHook.processToolsListResponse = vi.fn().mockResolvedValue({
+        mockHook.processListToolsResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response,
         } satisfies ListToolsResponseHookResult);
@@ -546,11 +546,11 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           ListToolsRequest,
           ListToolsResult,
-          "processToolsListResponse"
-        >(response, request, chain.head, "processToolsListResponse");
+          "processListToolsResult"
+        >(response, request, chain.head, "processListToolsResult");
 
         expect(result.resultType).toBe("continue");
-        expect(mockHook.processToolsListResponse).toHaveBeenCalledWith(
+        expect(mockHook.processListToolsResult).toHaveBeenCalledWith(
           response,
           request,
         );
@@ -569,8 +569,8 @@ describe("Hook Processor", () => {
       const requestResult = await processRequestThroughHooks<
         CallToolRequest,
         CallToolResult,
-        "processToolCallRequest"
-      >(toolCall, null, "processToolCallRequest");
+        "processCallToolRequest"
+      >(toolCall, null, "processCallToolRequest");
 
       expect(requestResult.resultType).toBe("continue");
       expect(requestResult.lastProcessedHook).toBe(null);
@@ -582,12 +582,12 @@ describe("Hook Processor", () => {
       const responseResult = await processResponseThroughHooks<
         CallToolRequest,
         CallToolResult,
-        "processToolCallResponse"
+        "processCallToolResult"
       >(
         response,
         toolCall,
         requestResult.lastProcessedHook,
-        "processToolCallResponse",
+        "processCallToolResult",
       );
 
       expect(responseResult.resultType).toBe("continue");
@@ -604,7 +604,7 @@ describe("Hook Processor", () => {
         const request = createToolCall({ name: "fetch", arguments: {} });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallRequest = vi.fn().mockImplementation(
+        hook1.processCallToolRequest = vi.fn().mockImplementation(
           (req) =>
             ({
               resultType: "continue",
@@ -616,7 +616,7 @@ describe("Hook Processor", () => {
         );
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockImplementation(
+        hook2.processCallToolRequest = vi.fn().mockImplementation(
           (req) =>
             ({
               resultType: "continue",
@@ -633,14 +633,14 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(request, chain.tail, "processToolCallRequest", "reverse");
+          "processCallToolRequest"
+        >(request, chain.tail, "processCallToolRequest", "reverse");
 
         expect(result.resultType).toBe("continue");
 
         // hook2 should be called first (reverse order)
-        expect(hook2.processToolCallRequest).toHaveBeenCalledWith(request);
-        expect(hook1.processToolCallRequest).toHaveBeenCalledWith(
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook1.processCallToolRequest).toHaveBeenCalledWith(
           expect.objectContaining({
             params: expect.objectContaining({ hook2: true }),
           }),
@@ -657,7 +657,7 @@ describe("Hook Processor", () => {
         const request = createToolCall({ name: "fetch", arguments: {} });
 
         const mockHook = new MockHook("test-hook");
-        mockHook.processToolCallRequest = vi.fn().mockResolvedValue({
+        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: {
             ...request,
@@ -669,11 +669,11 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(request, chain.tail, "processToolCallRequest", "reverse");
+          "processCallToolRequest"
+        >(request, chain.tail, "processCallToolRequest", "reverse");
 
         expect(result.resultType).toBe("continue");
-        expect(mockHook.processToolCallRequest).toHaveBeenCalledWith(request);
+        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(request);
         if (result.resultType === "continue") {
           expect(result.request.params).toHaveProperty("modified", true);
         }
@@ -683,13 +683,13 @@ describe("Hook Processor", () => {
         const request = createToolCall({ name: "fetch", arguments: {} });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook1.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request,
         });
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Blocked by hook2",
         });
@@ -698,14 +698,14 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(request, chain.tail, "processToolCallRequest", "reverse");
+          "processCallToolRequest"
+        >(request, chain.tail, "processCallToolRequest", "reverse");
 
         expect(result.resultType).toBe("abort");
         // hook2 should be called first and abort
-        expect(hook2.processToolCallRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
         // hook1 should not be called due to abort
-        expect(hook1.processToolCallRequest).not.toHaveBeenCalled();
+        expect(hook1.processCallToolRequest).not.toHaveBeenCalled();
         if (result.resultType === "abort") {
           expect(result.reason).toBe("Blocked by hook2");
         }
@@ -716,10 +716,10 @@ describe("Hook Processor", () => {
         const mockResponse = { content: [{ type: "text", text: "cached" }] };
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallRequest = vi.fn();
+        hook1.processCallToolRequest = vi.fn();
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "respond",
           response: mockResponse,
         });
@@ -728,12 +728,12 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(request, chain.tail, "processToolCallRequest", "reverse");
+          "processCallToolRequest"
+        >(request, chain.tail, "processCallToolRequest", "reverse");
 
         expect(result.resultType).toBe("respond");
-        expect(hook2.processToolCallRequest).toHaveBeenCalledWith(request);
-        expect(hook1.processToolCallRequest).not.toHaveBeenCalled();
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook1.processCallToolRequest).not.toHaveBeenCalled();
         if (result.resultType === "respond") {
           expect(result.response).toEqual(mockResponse);
         }
@@ -743,10 +743,10 @@ describe("Hook Processor", () => {
         const request = createToolCall({ name: "fetch", arguments: {} });
 
         const hook1 = new MockHook("hook1");
-        // Don't implement processToolCallRequest
+        // Don't implement processCallToolRequest
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallRequest = vi.fn().mockResolvedValue({
+        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
           resultType: "continue",
           request: {
             ...request,
@@ -758,11 +758,11 @@ describe("Hook Processor", () => {
         const result = await processRequestThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallRequest"
-        >(request, chain.tail, "processToolCallRequest", "reverse");
+          "processCallToolRequest"
+        >(request, chain.tail, "processCallToolRequest", "reverse");
 
         expect(result.resultType).toBe("continue");
-        expect(hook2.processToolCallRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
         if (result.resultType === "continue") {
           expect(result.request.params).toHaveProperty("hook2", true);
         }
@@ -779,7 +779,7 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallResponse = vi.fn().mockImplementation(
+        hook1.processCallToolResult = vi.fn().mockImplementation(
           (resp) =>
             ({
               resultType: "continue",
@@ -791,7 +791,7 @@ describe("Hook Processor", () => {
         );
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallResponse = vi.fn().mockImplementation(
+        hook2.processCallToolResult = vi.fn().mockImplementation(
           (resp) =>
             ({
               resultType: "continue",
@@ -808,17 +808,17 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, request, chain.head, "processToolCallResponse", "forward");
+          "processCallToolResult"
+        >(response, request, chain.head, "processCallToolResult", "forward");
 
         expect(result.resultType).toBe("continue");
 
         // hook1 should be called first (forward order)
-        expect(hook1.processToolCallResponse).toHaveBeenCalledWith(
+        expect(hook1.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
         );
-        expect(hook2.processToolCallResponse).toHaveBeenCalledWith(
+        expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           expect.objectContaining({
             content: [{ type: "text", text: "modified-by-hook1" }],
           }),
@@ -840,7 +840,7 @@ describe("Hook Processor", () => {
         });
 
         const mockHook = new MockHook("test-hook");
-        mockHook.processToolCallResponse = vi.fn().mockResolvedValue({
+        mockHook.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: {
             ...response,
@@ -852,11 +852,11 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, request, chain.head, "processToolCallResponse", "forward");
+          "processCallToolResult"
+        >(response, request, chain.head, "processCallToolResult", "forward");
 
         expect(result.resultType).toBe("continue");
-        expect(mockHook.processToolCallResponse).toHaveBeenCalledWith(
+        expect(mockHook.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
         );
@@ -874,29 +874,29 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallResponse = vi.fn().mockResolvedValue({
+        hook1.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "abort",
           reason: "Response blocked by hook1",
         });
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallResponse = vi.fn();
+        hook2.processCallToolResult = vi.fn();
 
         const chain = new HookChain([hook1, hook2]);
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, request, chain.head, "processToolCallResponse", "forward");
+          "processCallToolResult"
+        >(response, request, chain.head, "processCallToolResult", "forward");
 
         expect(result.resultType).toBe("abort");
         // hook1 should be called first and abort
-        expect(hook1.processToolCallResponse).toHaveBeenCalledWith(
+        expect(hook1.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
         );
         // hook2 should not be called due to abort
-        expect(hook2.processToolCallResponse).not.toHaveBeenCalled();
+        expect(hook2.processCallToolResult).not.toHaveBeenCalled();
         if (result.resultType === "abort") {
           expect(result.reason).toBe("Response blocked by hook1");
         }
@@ -909,10 +909,10 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        // Don't implement processToolCallResponse
+        // Don't implement processCallToolResult
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallResponse = vi.fn().mockResolvedValue({
+        hook2.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: {
             ...response,
@@ -924,11 +924,11 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, request, chain.head, "processToolCallResponse", "forward");
+          "processCallToolResult"
+        >(response, request, chain.head, "processCallToolResult", "forward");
 
         expect(result.resultType).toBe("continue");
-        expect(hook2.processToolCallResponse).toHaveBeenCalledWith(
+        expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
         );
@@ -948,8 +948,8 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
-        >(response, request, null, "processToolCallResponse", "forward");
+          "processCallToolResult"
+        >(response, request, null, "processCallToolResult", "forward");
 
         expect(result.resultType).toBe("continue");
         if (result.resultType === "continue") {
@@ -965,10 +965,10 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        hook1.processToolCallResponse = vi.fn();
+        hook1.processCallToolResult = vi.fn();
 
         const hook2 = new MockHook("hook2");
-        hook2.processToolCallResponse = vi.fn().mockResolvedValue({
+        hook2.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: {
             ...response,
@@ -977,7 +977,7 @@ describe("Hook Processor", () => {
         });
 
         const hook3 = new MockHook("hook3");
-        hook3.processToolCallResponse = vi.fn().mockResolvedValue({
+        hook3.processCallToolResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: {
             ...response,
@@ -991,24 +991,24 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processToolCallResponse"
+          "processCallToolResult"
         >(
           response,
           request,
           chain.head?.next,
-          "processToolCallResponse",
+          "processCallToolResult",
           "forward",
         );
 
         expect(result.resultType).toBe("continue");
         // hook1 should not be called (we started from hook2)
-        expect(hook1.processToolCallResponse).not.toHaveBeenCalled();
+        expect(hook1.processCallToolResult).not.toHaveBeenCalled();
         // hook2 and hook3 should be called
-        expect(hook2.processToolCallResponse).toHaveBeenCalledWith(
+        expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
         );
-        expect(hook3.processToolCallResponse).toHaveBeenCalled();
+        expect(hook3.processCallToolResult).toHaveBeenCalled();
         if (result.resultType === "continue") {
           expect(result.response.content).toEqual([
             { type: "text", text: "modified-by-hook3" },
@@ -1025,7 +1025,7 @@ describe("Hook Processor", () => {
         };
 
         const hook = new MockHook("tools-hook");
-        hook.processToolsListResponse = vi.fn().mockResolvedValue({
+        hook.processListToolsResult = vi.fn().mockResolvedValue({
           resultType: "continue",
           response: {
             tools: [
@@ -1039,11 +1039,11 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           ListToolsRequest,
           ListToolsResult,
-          "processToolsListResponse"
-        >(response, request, chain.head, "processToolsListResponse", "forward");
+          "processListToolsResult"
+        >(response, request, chain.head, "processListToolsResult", "forward");
 
         expect(result.resultType).toBe("continue");
-        expect(hook.processToolsListResponse).toHaveBeenCalledWith(
+        expect(hook.processListToolsResult).toHaveBeenCalledWith(
           response,
           request,
         );

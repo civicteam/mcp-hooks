@@ -10,13 +10,13 @@ class MockHook implements Hook {
     return this._name;
   }
 
-  async processToolCallRequest(request: any): Promise<any> {
+  async processCallToolRequest(request: any): Promise<any> {
     return { resultType: "continue", request };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: any,
-    originalToolCall: any,
+    originalCallToolRequest: any,
   ): Promise<any> {
     return { resultType: "continue", response };
   }

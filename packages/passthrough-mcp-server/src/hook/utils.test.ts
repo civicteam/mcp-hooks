@@ -37,15 +37,15 @@ vi.mock("../utils/logger.js", () => ({
 class MockHook implements Hook {
   constructor(public name: string) {}
 
-  async processToolCallRequest(
+  async processCallToolRequest(
     request: CallToolRequestWithContext,
   ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequestWithContext,
+    originalCallToolRequest: CallToolRequestWithContext,
   ): Promise<CallToolResponseHookResult> {
     return { resultType: "continue", response };
   }

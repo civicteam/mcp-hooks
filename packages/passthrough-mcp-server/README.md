@@ -438,8 +438,8 @@ The passthrough server provides a comprehensive API for applying hooks to reques
 
 ### Hook-Related Exports
 
-- `processToolCallRequestThroughHooks` - Process tool call requests through a chain of hooks
-- `processToolCallResponseThroughHooks` - Process tool call responses through hooks in reverse order
+- `processCallToolRequestThroughHooks` - Process tool call requests through a chain of hooks
+- `processCallToolResultThroughHooks` - Process tool call responses through hooks in reverse order
 - `processListToolsRequestThroughHooks` - Process list tools requests through hooks
 - `processListToolsResponseThroughHooks` - Process list tools responses through hooks
 - `createHookClient` - Create a hook client instance from a hook definition
@@ -476,7 +476,7 @@ To create a custom hook:
 
 1. Install `@civic/hook-common` as a dependency
 2. Extend the `AbstractHook` class and implement the `name` getter
-3. Override the hook methods you need (processToolCallRequest, processToolCallResponse, etc.)
+3. Override the hook methods you need (processCallToolRequest, processCallToolResult, etc.)
 4. For remote hooks: Create a tRPC server using `createHTTPServer` and `createHookRouter`
 5. For local hooks: Pass the hook instance directly to the hook chain
 

@@ -98,24 +98,24 @@ async function example4_withProgrammaticHooks() {
       return "LoggingHook";
     }
 
-    async processToolCallRequest(
-      toolCall: CallToolRequest,
+    async processCallToolRequest(
+      request: CallToolRequest,
     ): Promise<CallToolRequestHookResult> {
       logger.info(
-        `[${this.name}] Tool request: ${toolCall.params.name} ${JSON.stringify(toolCall.params.arguments)}`,
+        `[${this.name}] Tool request: ${request.params.name} ${JSON.stringify(request.params.arguments)}`,
       );
       return {
         resultType: "continue",
-        request: toolCall,
+        request,
       };
     }
 
-    async processToolCallResponse(
+    async processCallToolResult(
       response: CallToolResult,
-      originalToolCall: CallToolRequest,
+      originalCallToolRequest: CallToolRequest,
     ): Promise<CallToolResponseHookResult> {
       logger.info(
-        `[${this.name}] Tool response for ${originalToolCall.params.name}: ${JSON.stringify(response)}`,
+        `[${this.name}] Tool response for ${originalCallToolRequest.params.name}: ${JSON.stringify(response)}`,
       );
       return {
         resultType: "continue",
@@ -130,13 +130,13 @@ async function example4_withProgrammaticHooks() {
       return "ValidationHook";
     }
 
-    async processToolCallRequest(
-      toolCall: CallToolRequest,
+    async processCallToolRequest(
+      request: CallToolRequest,
     ): Promise<CallToolRequestHookResult> {
       // Block dangerous operations
       if (
-        toolCall.params.name.toLowerCase().includes("delete") ||
-        toolCall.params.name.toLowerCase().includes("remove")
+        request.params.name.toLowerCase().includes("delete") ||
+        request.params.name.toLowerCase().includes("remove")
       ) {
         return {
           resultType: "abort",
@@ -146,7 +146,7 @@ async function example4_withProgrammaticHooks() {
 
       return {
         resultType: "continue",
-        request: toolCall,
+        request,
       };
     }
   }

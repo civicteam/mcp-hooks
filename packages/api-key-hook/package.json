@@ -1,6 +1,6 @@
 {
   "name": "@civic/api-key-hook",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP hook that adds API key authentication headers to requests",
   "author": "Civic",
   "license": "MIT",

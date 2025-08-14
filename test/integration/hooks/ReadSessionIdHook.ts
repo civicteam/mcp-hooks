@@ -14,21 +14,21 @@ export class ReadSessionIdHook extends AbstractHook {
     return "ReadSessionIdHook";
   }
 
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
-      request: toolCall,
+      request,
     };
   }
 
-  async processToolCallResponse(
+  async processCallToolResult(
     response: CallToolResult,
-    originalToolCall: CallToolRequest,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     // Get session ID from _meta
-    const sessionId = originalToolCall.params._meta?.sourceSessionId;
+    const sessionId = originalCallToolRequest.params._meta?.sourceSessionId;
 
     // Add session ID to the response
     const modifiedResponse: CallToolResult = {

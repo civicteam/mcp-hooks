@@ -24,14 +24,14 @@ export class CallCounterHook extends AbstractHook {
     return "CallCounterHook";
   }
 
-  async processToolCallRequest(
-    toolCall: CallToolRequest,
+  async processCallToolRequest(
+    request: CallToolRequest,
   ): Promise<CallToolRequestHookResult> {
     // Get session ID from _meta
-    const sessionId = toolCall.params._meta?.sourceSessionId || "default";
+    const sessionId = request.params._meta?.sourceSessionId || "default";
 
     console.log(
-      `[CallCounterHook] Session ${sessionId}: ${toolCall.params.name}`,
+      `[CallCounterHook] Session ${sessionId}: ${request.params.name}`,
     );
 
     // Increment count for this session
@@ -39,35 +39,35 @@ export class CallCounterHook extends AbstractHook {
     this.sessionCounts.set(sessionId, currentCount);
 
     console.log(
-      `[CallCounterHook] Session ${sessionId} - Request #${currentCount}: ${toolCall.params.name}`,
+      `[CallCounterHook] Session ${sessionId} - Request #${currentCount}: ${request.params.name}`,
     );
 
     // Store the count in the tool call for use in processResponse
-    toolCall.params._meta = {
-      ...toolCall.params._meta,
+    request.params._meta = {
+      ...request.params._meta,
       _hookData: { sessionCount: currentCount },
     };
 
     return {
       resultType: "continue",
-      request: toolCall,
+      request,
     };
   }
 
-  async processToolCallResponse(
-    response: CallToolResult,
-    originalToolCall: CallToolRequest,
+  async processCallToolResult(
+    result: CallToolResult,
+    originalCallToolRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     // Get the session count from the modified tool call
     const sessionCount: number =
-      (originalToolCall as CallToolRequestWithHookData).params._meta?._hookData
-        .sessionCount || 0;
+      (originalCallToolRequest as CallToolRequestWithHookData).params._meta
+        ?._hookData.sessionCount || 0;
 
     // Add request count to the response
     const modifiedResponse: CallToolResult = {
-      ...response,
+      ...result,
       content: [
-        ...response.content,
+        ...result.content,
         {
           type: "text" as const,
           text: `[Hook: Request count is ${sessionCount}]`,
