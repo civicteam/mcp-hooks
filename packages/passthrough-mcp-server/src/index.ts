@@ -65,7 +65,13 @@ export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/r
 export {
   PassthroughContext,
   type TransportInterface,
+  type PassthroughContextOptions,
 } from "./shared/passthroughContext.js";
+
+export {
+  MetadataHelper,
+  type PassthroughMetadata,
+} from "./shared/metadataHelper.js";
 
 // Export error constants
 export { MCP_ERROR_CODES, ERROR_MESSAGES } from "./error/errorCodes.js";

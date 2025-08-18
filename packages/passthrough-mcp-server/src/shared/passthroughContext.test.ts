@@ -3,14 +3,20 @@
  */
 
 import {
+  type CallToolRequest,
+  type CallToolResult,
   McpError,
   type Notification,
   type Request,
+  type Result,
 } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { MCP_ERROR_CODES } from "../error/errorCodes.js";
-import { PassthroughContext } from "./passthroughContext.js";
+import {
+  PassthroughContext,
+  type PassthroughContextOptions,
+} from "./passthroughContext.js";
 
 // Mock transports
 const mockServerTransport = {
@@ -568,6 +574,320 @@ describe("PassthroughContext Source and Target Interfaces", () => {
 
       expect(sourceTransport()).toBe(mockServerTransport);
       expect(targetTransport()).toBe(mockClientTransport);
+    });
+  });
+});
+
+describe("PassthroughContext Metadata Options", () => {
+  let context: PassthroughContext;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("appendMetadataToRequest option", () => {
+    it("should add metadata to requests by default", async () => {
+      context = new PassthroughContext();
+
+      // Connect with mock transports
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      // Access private method through any type
+      const contextAny = context as any;
+      const request: Request = {
+        method: "test/method",
+        params: { test: true },
+      };
+
+      const result = contextAny.addMetaToRequest(request);
+
+      expect(result.params._meta).toBeDefined();
+      expect(result.params._meta.targetSessionId).toBe("client-123");
+      expect(result.params._meta.sourceSessionId).toBe("server-456");
+      expect(result.params._meta.timestamp).toBeDefined();
+      expect(result.params._meta.source).toBe("passthrough-server");
+    });
+
+    it("should add metadata when appendMetadataToRequest is true", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToRequest: true,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+      const request: Request = {
+        method: "test/method",
+        params: { test: true },
+      };
+
+      const result = contextAny.addMetaToRequest(request);
+
+      expect(result.params._meta).toBeDefined();
+      expect(result.params._meta.targetSessionId).toBe("client-123");
+      expect(result.params._meta.sourceSessionId).toBe("server-456");
+    });
+
+    it("should not add metadata when appendMetadataToRequest is false", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToRequest: false,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+      const request: Request = {
+        method: "test/method",
+        params: { test: true },
+      };
+
+      const result = contextAny.addMetaToRequest(request);
+
+      expect(result.params._meta).toBeUndefined();
+      expect(result.params.test).toBe(true);
+    });
+  });
+
+  describe("appendMetadataToResponse option", () => {
+    it("should add metadata to responses by default", async () => {
+      context = new PassthroughContext();
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+      const response: Result = {
+        success: true,
+        data: "test",
+      };
+
+      const result = contextAny.addMetaToResult(response);
+
+      expect(result._meta).toBeDefined();
+      expect(result._meta.targetSessionId).toBe("client-123");
+      expect(result._meta.sourceSessionId).toBe("server-456");
+      expect(result._meta.timestamp).toBeDefined();
+      expect(result._meta.source).toBe("passthrough-server");
+    });
+
+    it("should add metadata when appendMetadataToResponse is true", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToResponse: true,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+      const response: Result = {
+        success: true,
+        data: "test",
+      };
+
+      const result = contextAny.addMetaToResult(response);
+
+      expect(result._meta).toBeDefined();
+      expect(result._meta.targetSessionId).toBe("client-123");
+      expect(result._meta.sourceSessionId).toBe("server-456");
+    });
+
+    it("should not add metadata when appendMetadataToResponse is false", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToResponse: false,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+      const response: Result = {
+        success: true,
+        data: "test",
+      };
+
+      const result = contextAny.addMetaToResult(response);
+
+      expect(result._meta).toBeUndefined();
+      expect(result.success).toBe(true);
+      expect(result.data).toBe("test");
+    });
+  });
+
+  describe("appendMetadataToNotification option", () => {
+    it("should add metadata to notifications by default", async () => {
+      context = new PassthroughContext();
+
+      await context.connect({
+        ...mockServerTransport,
+        sessionId: "server-456",
+      } as any);
+
+      const contextAny = context as any;
+      const notification: Notification = {
+        method: "test/notification",
+        params: { test: true },
+      };
+
+      const result = contextAny._metadataHelper.addMetadataToNotification(
+        notification,
+        "server-456",
+      );
+
+      expect(result.params._meta).toBeDefined();
+      expect(result.params._meta.sessionId).toBe("server-456");
+      expect(result.params._meta.timestamp).toBeDefined();
+      expect(result.params._meta.source).toBe("passthrough-server");
+    });
+
+    it("should add metadata when appendMetadataToNotification is true", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToNotification: true,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      const contextAny = context as any;
+      const notification: Notification = {
+        method: "test/notification",
+        params: { test: true },
+      };
+
+      const result = contextAny._metadataHelper.addMetadataToNotification(
+        notification,
+        "server-456",
+      );
+
+      expect(result.params._meta).toBeDefined();
+      expect(result.params._meta.sessionId).toBe("server-456");
+    });
+
+    it("should not add metadata when appendMetadataToNotification is false", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToNotification: false,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      const contextAny = context as any;
+      const notification: Notification = {
+        method: "test/notification",
+        params: { test: true },
+      };
+
+      const result = contextAny._metadataHelper.addMetadataToNotification(
+        notification,
+        "server-456",
+      );
+
+      expect(result.params._meta).toBeUndefined();
+      expect(result.params.test).toBe(true);
+    });
+  });
+
+  describe("multiple options", () => {
+    it("should respect all metadata options when set to false", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToRequest: false,
+        appendMetadataToResponse: false,
+        appendMetadataToNotification: false,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+
+      // Test request
+      const request: Request = {
+        method: "test/method",
+        params: { test: true },
+      };
+      const requestResult = contextAny.addMetaToRequest(request);
+      expect(requestResult.params._meta).toBeUndefined();
+
+      // Test response
+      const response: Result = {
+        success: true,
+        data: "test",
+      };
+      const responseResult = contextAny.addMetaToResult(response);
+      expect(responseResult._meta).toBeUndefined();
+
+      // Test notification
+      const notification: Notification = {
+        method: "test/notification",
+        params: { test: true },
+      };
+      const notificationResult =
+        contextAny._metadataHelper.addMetadataToNotification(
+          notification,
+          "server-456",
+        );
+      expect(notificationResult.params._meta).toBeUndefined();
+    });
+
+    it("should allow selective metadata addition", async () => {
+      const options: PassthroughContextOptions = {
+        appendMetadataToRequest: true,
+        appendMetadataToResponse: false,
+        appendMetadataToNotification: true,
+      };
+      context = new PassthroughContext(undefined, options);
+
+      await context.connect(
+        { ...mockServerTransport, sessionId: "server-456" } as any,
+        { ...mockClientTransport, sessionId: "client-123" } as any,
+      );
+
+      const contextAny = context as any;
+
+      // Test request - should have metadata
+      const request: Request = {
+        method: "test/method",
+        params: { test: true },
+      };
+      const requestResult = contextAny.addMetaToRequest(request);
+      expect(requestResult.params._meta).toBeDefined();
+
+      // Test response - should NOT have metadata
+      const response: Result = {
+        success: true,
+        data: "test",
+      };
+      const responseResult = contextAny.addMetaToResult(response);
+      expect(responseResult._meta).toBeUndefined();
+
+      // Test notification - should have metadata
+      const notification: Notification = {
+        method: "test/notification",
+        params: { test: true },
+      };
+      const notificationResult =
+        contextAny._metadataHelper.addMetadataToNotification(
+          notification,
+          "server-456",
+        );
+      expect(notificationResult.params._meta).toBeDefined();
     });
   });
 });
