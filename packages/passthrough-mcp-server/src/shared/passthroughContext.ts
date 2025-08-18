@@ -42,6 +42,25 @@ import {
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { PassthroughServer } from "../server/passthroughServer.js";
+import { MetadataHelper } from "./metadataHelper.js";
+
+/**
+ * Options for configuring PassthroughContext behavior
+ */
+export interface PassthroughContextOptions {
+  /**
+   * Whether to append metadata to requests (default: true)
+   */
+  appendMetadataToRequest?: boolean;
+  /**
+   * Whether to append metadata to responses (default: true)
+   */
+  appendMetadataToResponse?: boolean;
+  /**
+   * Whether to append metadata to notifications (default: true)
+   */
+  appendMetadataToNotification?: boolean;
+}
 
 /**
  * Interface for transport communication (used for both source and target)
@@ -89,6 +108,8 @@ export class PassthroughContext {
   private _passthroughServer: PassthroughServer;
   private _passthroughClient: PassthroughClient;
   private _hookChain: HookChain;
+  private _metadataHelper: MetadataHelper;
+  private _options: Required<PassthroughContextOptions>;
 
   /**
    * Source interface for sending requests and notifications to connected clients
@@ -128,8 +149,24 @@ export class PassthroughContext {
    */
   onerror?: (error: Error) => void;
 
-  constructor(hooks?: HookDefinition[]) {
+  constructor(
+    hooks?: HookDefinition[],
+    options: PassthroughContextOptions = {},
+  ) {
+    // Set default options
+    this._options = {
+      appendMetadataToRequest: options.appendMetadataToRequest ?? true,
+      appendMetadataToResponse: options.appendMetadataToResponse ?? true,
+      appendMetadataToNotification:
+        options.appendMetadataToNotification ?? true,
+    };
+
     this._hookChain = new HookChain(hooks);
+    this._metadataHelper = new MetadataHelper(
+      this._options.appendMetadataToRequest,
+      this._options.appendMetadataToResponse,
+      this._options.appendMetadataToNotification,
+    );
 
     this._passthroughServer = new PassthroughServer(
       this._onServerRequest.bind(this),
@@ -166,32 +203,19 @@ export class PassthroughContext {
   private addMetaToRequest<TRequest extends Request>(
     request: TRequest,
   ): TRequest {
-    return {
-      ...request,
-      params: {
-        ...request.params,
-        _meta: {
-          ...request.params?._meta,
-          targetSessionId: this._passthroughClient.transport?.sessionId,
-          sourceSessionId: this._passthroughServer.transport?.sessionId,
-          timestamp: new Date().toISOString(),
-          source: "passthrough-server",
-        },
-      },
-    };
+    return this._metadataHelper.addMetadataToRequest(
+      request,
+      this._passthroughClient.transport?.sessionId,
+      this._passthroughServer.transport?.sessionId,
+    );
   }
 
   private addMetaToResult<TResult extends Result>(result: TResult): TResult {
-    return {
-      ...result,
-      _meta: {
-        ...result._meta,
-        targetSessionId: this._passthroughClient.transport?.sessionId,
-        sourceSessionId: this._passthroughServer.transport?.sessionId,
-        timestamp: new Date().toISOString(),
-        source: "passthrough-server",
-      },
-    };
+    return this._metadataHelper.addMetadataToResult(
+      result,
+      this._passthroughClient.transport?.sessionId,
+      this._passthroughServer.transport?.sessionId,
+    );
   }
 
   /**
@@ -389,18 +413,11 @@ export class PassthroughContext {
   private async _onServerNotification(notification: Notification) {
     try {
       // Add metadata to the notification
-      const annotatedNotification = {
-        ...notification,
-        params: {
-          ...notification.params,
-          _meta: {
-            ...notification.params?._meta,
-            sessionId: this._passthroughServer.transport?.sessionId,
-            timestamp: new Date().toISOString(),
-            source: "passthrough-server",
-          },
-        },
-      };
+      const annotatedNotification =
+        this._metadataHelper.addMetadataToNotification(
+          notification,
+          this._passthroughServer.transport?.sessionId,
+        );
 
       // Process notification through hooks
       const result = await processNotificationThroughHooks(
@@ -468,18 +485,11 @@ export class PassthroughContext {
   private async _onClientNotification(notification: Notification) {
     try {
       // Add metadata to the notification
-      const annotatedNotification = {
-        ...notification,
-        params: {
-          ...notification.params,
-          _meta: {
-            ...notification.params?._meta,
-            sessionId: this._passthroughServer.transport?.sessionId,
-            timestamp: new Date().toISOString(),
-            source: "passthrough-server",
-          },
-        },
-      };
+      const annotatedNotification =
+        this._metadataHelper.addMetadataToNotification(
+          notification,
+          this._passthroughServer.transport?.sessionId,
+        );
 
       // Process notification through hooks IN REVERSE ORDER (tail to head)
       const result = await processNotificationThroughHooks(

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2025-08-18
+
+### Added
+
+- **PassthroughContextOptions**: New configuration interface for controlling metadata behavior
+  - `appendMetadataToRequest`: Control whether metadata is added to requests (default: true)
+  - `appendMetadataToResponse`: Control whether metadata is added to responses (default: true)
+  - `appendMetadataToNotification`: Control whether metadata is added to notifications (default: true)
+- **MetadataHelper**: New utility class that centralizes all metadata operations
+- **PassthroughMetadata**: New interface defining the structure of metadata added to messages
+- PassthroughContext now accepts options as second parameter: `new PassthroughContext(hooks, options)`
+
+### Changed
+
+- Metadata addition is now configurable and conditional based on options
+- Refactored metadata logic from PassthroughContext into dedicated MetadataHelper class
+- All metadata options default to `true` for backward compatibility
+
 ## [0.8.0] - 2025-08-14
 
 ### Changed
