@@ -21,6 +21,7 @@ import type {
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   NotificationHookResult,
+  RequestExtra,
   RequestHookResult,
   ResponseHookResult,
 } from "./types.js";
@@ -86,9 +87,13 @@ export class RemoteHookClient implements Hook {
    */
   async processCallToolRequest(
     request: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     try {
-      return await this.client.processCallToolRequest.mutate(request);
+      return await this.client.processCallToolRequest.mutate({
+        request,
+        requestExtra,
+      });
     } catch (error) {
       return handleHookError(error, this.name, "processCallToolRequest", {
         resultType: "continue" as const,
@@ -103,11 +108,13 @@ export class RemoteHookClient implements Hook {
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     try {
       return await this.client.processCallToolResult.mutate({
         response,
         originalCallToolRequest,
+        originalRequestExtra,
       });
     } catch (error) {
       return handleHookError(error, this.name, "processCallToolResult", {
@@ -122,9 +129,13 @@ export class RemoteHookClient implements Hook {
    */
   async processListToolsRequest(
     request: ListToolsRequest,
+    requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult> {
     try {
-      return await this.client.processListToolsRequest.mutate(request);
+      return await this.client.processListToolsRequest.mutate({
+        request,
+        requestExtra,
+      });
     } catch (error) {
       return handleHookError(error, this.name, "processListToolsRequest", {
         resultType: "continue" as const,
@@ -139,11 +150,13 @@ export class RemoteHookClient implements Hook {
   async processListToolsResult(
     response: ListToolsResult,
     originalRequest: ListToolsRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult> {
     try {
       return await this.client.processListToolsResult.mutate({
         response,
         originalRequest,
+        originalRequestExtra,
       });
     } catch (error) {
       return handleHookError(error, this.name, "processListToolsResult", {
@@ -178,9 +191,13 @@ export class RemoteHookClient implements Hook {
    */
   async processInitializeRequest(
     request: InitializeRequest,
+    requestExtra: RequestExtra,
   ): Promise<InitializeRequestHookResult> {
     try {
-      return await this.client.processInitializeRequest.mutate(request);
+      return await this.client.processInitializeRequest.mutate({
+        request,
+        requestExtra,
+      });
     } catch (error) {
       return handleHookError(error, this.name, "processInitializeRequest", {
         resultType: "continue" as const,
@@ -195,11 +212,13 @@ export class RemoteHookClient implements Hook {
   async processInitializeResult(
     response: InitializeResult,
     originalRequest: InitializeRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<InitializeResponseHookResult> {
     try {
       return await this.client.processInitializeResult.mutate({
         response,
         originalRequest,
+        originalRequestExtra,
       });
     } catch (error) {
       return handleHookError(error, this.name, "processInitializeResult", {
@@ -212,9 +231,15 @@ export class RemoteHookClient implements Hook {
   /**
    * Process a target request through the hook
    */
-  async processTargetRequest(request: Request): Promise<RequestHookResult> {
+  async processTargetRequest(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult> {
     try {
-      return await this.client.processTargetRequest.mutate(request);
+      return await this.client.processTargetRequest.mutate({
+        request,
+        requestExtra,
+      });
     } catch (error) {
       return handleHookError(error, this.name, "processTargetRequest", {
         resultType: "continue" as const,
@@ -229,11 +254,13 @@ export class RemoteHookClient implements Hook {
   async processTargetResult(
     response: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     try {
       return await this.client.processTargetResult.mutate({
         response,
         originalRequest,
+        originalRequestExtra,
       });
     } catch (error) {
       return handleHookError(error, this.name, "processTargetResult", {

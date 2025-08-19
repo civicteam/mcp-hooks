@@ -6,8 +6,12 @@
 import type {
   MethodsWithRequestType,
   MethodsWithResponseType,
+  RequestExtra,
 } from "@civic/hook-common";
-import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  RequestHandlerExtra,
+  RequestOptions,
+} from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type CallToolRequest,
@@ -31,7 +35,6 @@ import {
   ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
-import { PassthroughClient } from "../client/passthroughClient.js";
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain } from "../hook/hookChain.js";
@@ -41,8 +44,8 @@ import {
   processResponseThroughHooks,
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
-import { PassthroughServer } from "../server/passthroughServer.js";
 import { MetadataHelper } from "./metadataHelper.js";
+import { PassthroughEndpoint } from "./passthroughEndpoint.js";
 
 /**
  * Options for configuring PassthroughContext behavior
@@ -105,8 +108,8 @@ export interface TransportInterface {
  * Provides a centralized place for transports to communicate and share state.
  */
 export class PassthroughContext {
-  private _passthroughServer: PassthroughServer;
-  private _passthroughClient: PassthroughClient;
+  private _passthroughServer: PassthroughEndpoint;
+  private _passthroughClient: PassthroughEndpoint;
   private _hookChain: HookChain;
   private _metadataHelper: MetadataHelper;
   private _options: Required<PassthroughContextOptions>;
@@ -168,11 +171,11 @@ export class PassthroughContext {
       this._options.appendMetadataToNotification,
     );
 
-    this._passthroughServer = new PassthroughServer(
+    this._passthroughServer = new PassthroughEndpoint(
       this._onServerRequest.bind(this),
       this._onServerNotification.bind(this),
     );
-    this._passthroughClient = new PassthroughClient(
+    this._passthroughClient = new PassthroughEndpoint(
       this._onClientRequest.bind(this),
       this._onClientNotification.bind(this),
     );
@@ -234,6 +237,7 @@ export class PassthroughContext {
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
   >(
     request: TRequest,
+    requestExtra: RequestExtra,
     responseSchema: TResponseSchema,
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
@@ -248,6 +252,7 @@ export class PassthroughContext {
       TRequestMethodName
     >(
       annotatedRequest,
+      requestExtra,
       this._hookChain.tail, // Start from tail instead of head
       hookRequestMethodName,
       "reverse", // Process in reverse direction
@@ -282,6 +287,7 @@ export class PassthroughContext {
     const responseResult = await processResponseThroughHooks(
       annotatedResponse,
       annotatedRequest,
+      requestExtra,
       requestResult.lastProcessedHook,
       hookResponseMethodName,
       "forward", // Process in reverse direction
@@ -302,6 +308,7 @@ export class PassthroughContext {
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
   >(
     request: TRequest,
+    requestExtra: RequestExtra,
     responseSchema: TResponseSchema,
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
@@ -314,7 +321,12 @@ export class PassthroughContext {
       TRequest,
       TResponse,
       TRequestMethodName
-    >(annotatedRequest, this._hookChain.head, hookRequestMethodName);
+    >(
+      annotatedRequest,
+      requestExtra,
+      this._hookChain.head,
+      hookRequestMethodName,
+    );
 
     let response: TResponse | undefined = undefined;
 
@@ -345,6 +357,7 @@ export class PassthroughContext {
     const responseResult = await processResponseThroughHooks(
       annotatedResponse,
       annotatedRequest,
+      requestExtra,
       requestResult.lastProcessedHook,
       hookResponseMethodName,
     );
@@ -358,9 +371,15 @@ export class PassthroughContext {
 
   private async _onServerInitializeRequest(
     request: InitializeRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<InitializeResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
     return this.processServerRequest(
       request,
+      requestExtra,
       InitializeResultSchema,
       "processInitializeRequest",
       "processInitializeResult",
@@ -369,9 +388,15 @@ export class PassthroughContext {
 
   private async _onServerListToolsRequest(
     request: ListToolsRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<ListToolsResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
     return this.processServerRequest(
       request,
+      requestExtra,
       ListToolsResultSchema,
       "processListToolsRequest",
       "processListToolsResult",
@@ -380,16 +405,25 @@ export class PassthroughContext {
 
   private async _onServerCallToolRequest(
     request: CallToolRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<CallToolResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
     return this.processServerRequest(
       request,
+      requestExtra,
       CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
       "processCallToolRequest",
       "processCallToolResult",
     );
   }
 
-  private async _onServerRequest(request: Request): Promise<Result> {
+  private async _onServerRequest(
+    request: Request,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<Result> {
     // all other calls are just forwarded to the client
     if (!this._passthroughClient.transport) {
       throw new McpError(
@@ -398,8 +432,13 @@ export class PassthroughContext {
       );
     }
 
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
     return this.processServerRequest(
       request,
+      requestExtra,
       ResultSchema,
       "processOtherRequest",
       "processOtherResult",
@@ -464,9 +503,17 @@ export class PassthroughContext {
    * - This is the "return journey" so hooks should process in reverse
    * - Maintains symmetry: server requests go head->tail, client requests go tail->head
    */
-  private async _onClientRequest(request: Request): Promise<Result> {
+  private async _onClientRequest(
+    request: Request,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<Result> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
     return this.processClientRequest(
       request,
+      requestExtra,
       ResultSchema,
       "processTargetRequest",
       "processTargetResult",

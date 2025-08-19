@@ -18,6 +18,7 @@ import type {
   ListToolsRequestWithContext,
   ListToolsResponseHookResult,
   NotificationHookResult,
+  RequestExtra,
   RequestHookResult,
   ResponseHookResult,
 } from "./types.js";
@@ -38,6 +39,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processCallToolRequest(
     request: CallToolRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
@@ -52,6 +54,7 @@ export abstract class AbstractHook implements Hook {
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     return {
       resultType: "continue",
@@ -65,6 +68,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processListToolsRequest?(
     request: ListToolsRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult> {
     return {
       resultType: "continue",
@@ -79,6 +83,7 @@ export abstract class AbstractHook implements Hook {
   async processListToolsResult?(
     response: ListToolsResult,
     originalRequest: ListToolsRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult> {
     return {
       resultType: "continue",
@@ -92,6 +97,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processInitializeRequest?(
     request: InitializeRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<InitializeRequestHookResult> {
     return {
       resultType: "continue",
@@ -106,6 +112,7 @@ export abstract class AbstractHook implements Hook {
   async processInitializeResult?(
     response: InitializeResult,
     originalRequest: InitializeRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<InitializeResponseHookResult> {
     return {
       resultType: "continue",
@@ -117,7 +124,10 @@ export abstract class AbstractHook implements Hook {
    * Process a request from the client NOT covered by a dedicated handler.
    * Default implementation passes through without modification.
    */
-  async processOtherRequest?(request: Request): Promise<RequestHookResult> {
+  async processOtherRequest?(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult> {
     return {
       resultType: "continue",
       request: request,
@@ -131,6 +141,7 @@ export abstract class AbstractHook implements Hook {
   async processOtherResult?(
     response: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     return {
       resultType: "continue",
@@ -142,7 +153,10 @@ export abstract class AbstractHook implements Hook {
    * Process a target request.
    * Default implementation passes through without modification.
    */
-  async processTargetRequest?(request: Request): Promise<RequestHookResult> {
+  async processTargetRequest?(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult> {
     return {
       resultType: "continue",
       request: request,
@@ -156,6 +170,7 @@ export abstract class AbstractHook implements Hook {
   async processTargetResult?(
     response: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     return {
       resultType: "continue",

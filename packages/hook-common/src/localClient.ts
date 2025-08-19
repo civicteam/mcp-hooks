@@ -24,6 +24,7 @@ import type {
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   NotificationHookResult,
+  RequestExtra,
   RequestHookResult,
   ResponseHookResult,
 } from "./types.js";
@@ -40,6 +41,7 @@ export class LocalHookClient implements Hook {
    */
   async processCallToolRequest(
     request: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     // Check if hook supports this method
     if (!this.hook.processCallToolRequest) {
@@ -48,7 +50,7 @@ export class LocalHookClient implements Hook {
         request,
       };
     }
-    return await this.hook.processCallToolRequest(request);
+    return await this.hook.processCallToolRequest(request, requestExtra);
   }
 
   /**
@@ -57,6 +59,7 @@ export class LocalHookClient implements Hook {
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     // Check if hook supports this method
     if (!this.hook.processCallToolResult) {
@@ -68,6 +71,7 @@ export class LocalHookClient implements Hook {
     return await this.hook.processCallToolResult(
       response,
       originalCallToolRequest,
+      originalRequestExtra,
     );
   }
 
@@ -76,6 +80,7 @@ export class LocalHookClient implements Hook {
    */
   async processListToolsRequest(
     request: ListToolsRequest,
+    requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult> {
     // Check if hook supports tools/list processing
     if (!this.hook.processListToolsRequest) {
@@ -84,7 +89,7 @@ export class LocalHookClient implements Hook {
         request: request,
       };
     }
-    return await this.hook.processListToolsRequest(request);
+    return await this.hook.processListToolsRequest(request, requestExtra);
   }
 
   /**
@@ -93,6 +98,7 @@ export class LocalHookClient implements Hook {
   async processListToolsResult(
     response: ListToolsResult,
     originalRequest: ListToolsRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult> {
     // Check if hook supports tools/list response processing
     if (!this.hook.processListToolsResult) {
@@ -101,7 +107,11 @@ export class LocalHookClient implements Hook {
         response: response,
       };
     }
-    return await this.hook.processListToolsResult(response, originalRequest);
+    return await this.hook.processListToolsResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
   }
 
   /**
@@ -109,6 +119,7 @@ export class LocalHookClient implements Hook {
    */
   async processInitializeRequest(
     request: InitializeRequest,
+    requestExtra: RequestExtra,
   ): Promise<InitializeRequestHookResult> {
     // Check if hook supports initialize request processing
     if (!this.hook.processInitializeRequest) {
@@ -117,7 +128,7 @@ export class LocalHookClient implements Hook {
         request,
       };
     }
-    return await this.hook.processInitializeRequest(request);
+    return await this.hook.processInitializeRequest(request, requestExtra);
   }
 
   /**
@@ -126,6 +137,7 @@ export class LocalHookClient implements Hook {
   async processInitializeResult(
     response: InitializeResult,
     originalRequest: InitializeRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<InitializeResponseHookResult> {
     // Check if hook supports initialize response processing
     if (!this.hook.processInitializeResult) {
@@ -134,13 +146,20 @@ export class LocalHookClient implements Hook {
         response,
       };
     }
-    return await this.hook.processInitializeResult(response, originalRequest);
+    return await this.hook.processInitializeResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
   }
 
   /**
    * Process a request from the client NOT covered by a dedicated handler
    */
-  async processOtherRequest(request: Request): Promise<RequestHookResult> {
+  async processOtherRequest(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult> {
     // Check if hook supports other request processing
     if (!this.hook.processOtherRequest) {
       return {
@@ -148,7 +167,7 @@ export class LocalHookClient implements Hook {
         request,
       };
     }
-    return await this.hook.processOtherRequest(request);
+    return await this.hook.processOtherRequest(request, requestExtra);
   }
 
   /**
@@ -157,6 +176,7 @@ export class LocalHookClient implements Hook {
   async processOtherResult(
     response: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     // Check if hook supports other response processing
     if (!this.hook.processOtherResult) {
@@ -165,13 +185,20 @@ export class LocalHookClient implements Hook {
         response,
       };
     }
-    return await this.hook.processOtherResult(response, originalRequest);
+    return await this.hook.processOtherResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
   }
 
   /**
    * Process a target request through the hook
    */
-  async processTargetRequest(request: Request): Promise<RequestHookResult> {
+  async processTargetRequest(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult> {
     // Check if hook supports target request processing
     if (!this.hook.processTargetRequest) {
       return {
@@ -179,7 +206,7 @@ export class LocalHookClient implements Hook {
         request,
       };
     }
-    return await this.hook.processTargetRequest(request);
+    return await this.hook.processTargetRequest(request, requestExtra);
   }
 
   /**
@@ -188,6 +215,7 @@ export class LocalHookClient implements Hook {
   async processTargetResult(
     response: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     // Check if hook supports target response processing
     if (!this.hook.processTargetResult) {
@@ -196,7 +224,11 @@ export class LocalHookClient implements Hook {
         response,
       };
     }
-    return await this.hook.processTargetResult(response, originalRequest);
+    return await this.hook.processTargetResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
   }
 
   /**

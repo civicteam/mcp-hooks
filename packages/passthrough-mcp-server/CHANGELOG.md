@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2025-08-19
+
+### Added
+
+- Support for `RequestExtra` parameter in all hook processing
+  - Passes `requestId` and `sessionId` from MCP protocol layer to hooks
+  - Enables request/response correlation and session tracking in hooks
+- Integration test demonstrating request/response tracking by `requestId`
+  - Shows how hooks can correlate requests with their responses
+  - Validates session consistency across multiple requests
+  - Demonstrates practical use cases for monitoring and logging
+
+### Changed
+
+- Updated to use @civic/hook-common v0.4.1 with `RequestExtra` support
+- Hook processor functions now accept and pass `RequestExtra` parameter
+- `PassthroughContext` creates `RequestExtra` from `RequestHandlerExtra`
+  - Uses `requestId` from the protocol layer
+  - Uses `sessionId` from `RequestHandlerExtra` for consistency
+- All hook method calls updated to include `RequestExtra` parameter
+
+### Technical Details
+
+- Request IDs are incremental within a session (0, 1, 2, ...)
+- Session IDs remain consistent throughout a client connection
+- Enables stateless request/response tracking in distributed systems
+- Supports advanced monitoring, rate limiting, and debugging capabilities
+
 ## [0.8.1] - 2025-08-18
 
 ### Added

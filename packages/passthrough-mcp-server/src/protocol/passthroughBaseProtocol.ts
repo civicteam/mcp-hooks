@@ -3,6 +3,7 @@ import {
   DEFAULT_REQUEST_TIMEOUT_MSEC,
   Protocol,
   type ProtocolOptions,
+  type RequestHandlerExtra,
   type RequestOptions,
 } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -41,7 +42,10 @@ export abstract class PassthroughBaseProtocol<
   }
 
   constructor(
-    requestHandler: (request: Request) => Promise<SendResultT>,
+    requestHandler: (
+      request: Request,
+      requestHandlerExtra: RequestHandlerExtra<SendRequestT, SendNotificationT>,
+    ) => Promise<SendResultT>,
     notificationHandler: (notification: Notification) => Promise<void>,
     options?: ProtocolOptions,
   ) {

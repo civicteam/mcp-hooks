@@ -548,6 +548,53 @@ Now clients can connect to the passthrough server on port 34000, and all request
 
 ## Migration Guide
 
+### Upgrading to v0.8.2
+
+**Breaking Change: Hook Interface Update**
+
+All hook methods now receive a `RequestExtra` parameter containing request tracking information:
+
+**Before (v0.8.1 and earlier):**
+```typescript
+class MyHook extends AbstractHook {
+  async processCallToolRequest(request: CallToolRequest) {
+    // Process request
+  }
+  
+  async processCallToolResult(response: CallToolResult, originalRequest: CallToolRequest) {
+    // Process response
+  }
+}
+```
+
+**After (v0.8.2):**
+```typescript
+class MyHook extends AbstractHook {
+  async processCallToolRequest(request: CallToolRequest, requestExtra: RequestExtra) {
+    console.log(`Request ID: ${requestExtra.requestId}`);
+    console.log(`Session ID: ${requestExtra.sessionId}`);
+    // Process request
+  }
+  
+  async processCallToolResult(
+    response: CallToolResult, 
+    originalRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ) {
+    // Use same requestId to correlate with request
+    console.log(`Response for request ${requestExtra.requestId}`);
+    // Process response
+  }
+}
+```
+
+This change enables:
+- Request/response correlation using `requestId`
+- Session-based tracking with `sessionId`
+- Stateless request tracking across distributed systems
+
+See @civic/hook-common v0.4.1 documentation for full details.
+
 ### Upgrading from v0.7.1 to v0.7.2
 
 **Breaking Change: Metadata Structure**

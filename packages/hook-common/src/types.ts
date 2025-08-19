@@ -14,6 +14,9 @@ import {
   type Notification,
   NotificationSchema,
   type Request,
+  RequestId,
+  RequestIdSchema,
+  RequestMeta,
   RequestSchema,
   type Result,
   ResultSchema,
@@ -247,6 +250,22 @@ export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
 export type NotificationHookResult = z.infer<
   typeof NotificationHookResultSchema
 >;
+
+export const RequestExtraSchema = z.object({
+  /**
+   * The session ID from the transport, if available.
+   */
+  sessionId: z.string().optional(),
+
+  /**
+   * The JSON-RPC ID of the request being handled.
+   * This can be useful for tracking or logging purposes.
+   */
+  requestId: RequestIdSchema,
+});
+
+export type RequestExtra = z.infer<typeof RequestExtraSchema>;
+
 /**
  * Hook interface that all hooks must implement
  */
@@ -261,6 +280,7 @@ export interface Hook {
    */
   processCallToolRequest?(
     request: CallToolRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult>;
 
   /**
@@ -269,6 +289,7 @@ export interface Hook {
   processCallToolResult?(
     result: CallToolResult,
     originalCallToolRequest: CallToolRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult>;
 
   /**
@@ -276,6 +297,7 @@ export interface Hook {
    */
   processListToolsRequest?(
     request: ListToolsRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult>;
 
   /**
@@ -284,6 +306,7 @@ export interface Hook {
   processListToolsResult?(
     result: ListToolsResult,
     originalListToolsRequest: ListToolsRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult>;
 
   /**
@@ -291,6 +314,7 @@ export interface Hook {
    */
   processInitializeRequest?(
     request: InitializeRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<InitializeRequestHookResult>;
 
   /**
@@ -299,12 +323,16 @@ export interface Hook {
   processInitializeResult?(
     result: InitializeResult,
     originalInitializeRequest: InitializeRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<InitializeResponseHookResult>;
 
   /**
    * Process a request from the client NOT covered by a dedicated handler (optional)
    */
-  processOtherRequest?(request: Request): Promise<RequestHookResult>;
+  processOtherRequest?(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult>;
 
   /**
    * Process a reponse from the client NOT covered by a dedicated handler (optional)
@@ -312,12 +340,16 @@ export interface Hook {
   processOtherResult?(
     result: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult>;
 
   /**
    * Process a target request (request coming from the target server back to the client) (optional)
    */
-  processTargetRequest?(request: Request): Promise<RequestHookResult>;
+  processTargetRequest?(
+    request: Request,
+    requestExtra: RequestExtra,
+  ): Promise<RequestHookResult>;
 
   /**
    * Process a target response (response going back to the target server) (optional)
@@ -325,6 +357,7 @@ export interface Hook {
   processTargetResult?(
     result: Result,
     originalRequest: Request,
+    originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult>;
 
   /**
@@ -400,7 +433,7 @@ export type GenericResponseHookResult<TResponse> =
 export type MethodsWithRequestType<TRequest> = Exclude<
   {
     [K in keyof Hook]: Hook[K] extends
-      | ((request: infer R) => unknown)
+      | ((request: infer R, requestExtra: RequestExtra) => unknown)
       | undefined
       ? R extends TRequest
         ? K
@@ -417,6 +450,7 @@ export type MethodsWithResponseType<TResponse, TRequest> = Exclude<
       | ((
           response: infer R,
           originalRequest: infer O,
+          originalRequestExtra: RequestExtra,
           ...args: unknown[]
         ) => unknown)
       | undefined

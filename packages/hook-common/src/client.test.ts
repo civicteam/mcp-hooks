@@ -12,7 +12,14 @@ import {
 import type {
   CallToolRequestHookResult,
   CallToolResponseHookResult,
+  RequestExtra,
 } from "./types.js";
+
+// Test helper for creating a mock RequestExtra
+const mockRequestExtra: RequestExtra = {
+  requestId: "test-request-id",
+  sessionId: "test-session-id",
+};
 
 // Mock tRPC client
 vi.mock("@trpc/client", () => ({
@@ -106,9 +113,15 @@ describe("RemoteHookClient", () => {
 
       mockProcessCallToolRequest.mockResolvedValue(expectedResponse);
 
-      const result = await hookClient.processCallToolRequest(request);
+      const result = await hookClient.processCallToolRequest(
+        request,
+        mockRequestExtra,
+      );
 
-      expect(mockProcessCallToolRequest).toHaveBeenCalledWith(request);
+      expect(mockProcessCallToolRequest).toHaveBeenCalledWith({
+        request,
+        requestExtra: mockRequestExtra,
+      });
       expect(result).toEqual(expectedResponse);
     });
 
@@ -131,9 +144,15 @@ describe("RemoteHookClient", () => {
 
       mockProcessCallToolRequest.mockResolvedValue(expectedResponse);
 
-      const result = await hookClient.processCallToolRequest(toolCall);
+      const result = await hookClient.processCallToolRequest(
+        toolCall,
+        mockRequestExtra,
+      );
 
-      expect(mockProcessCallToolRequest).toHaveBeenCalledWith(toolCall);
+      expect(mockProcessCallToolRequest).toHaveBeenCalledWith({
+        request: toolCall,
+        requestExtra: mockRequestExtra,
+      });
       expect(result).toEqual(expectedResponse);
     });
 
@@ -151,7 +170,10 @@ describe("RemoteHookClient", () => {
 
       mockProcessCallToolRequest.mockResolvedValue(abortResponse);
 
-      const result = await hookClient.processCallToolRequest(toolCall);
+      const result = await hookClient.processCallToolRequest(
+        toolCall,
+        mockRequestExtra,
+      );
 
       expect(result).toEqual(abortResponse);
     });
@@ -170,7 +192,10 @@ describe("RemoteHookClient", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      const result = await hookClient.processCallToolRequest(toolCall);
+      const result = await hookClient.processCallToolRequest(
+        toolCall,
+        mockRequestExtra,
+      );
 
       expect(consoleSpy).toHaveBeenCalledWith(
         "Hook test-hook processCallToolRequest failed:",
@@ -218,11 +243,13 @@ describe("RemoteHookClient", () => {
       const result = await hookClient.processCallToolResult(
         toolResponse,
         originalCallToolRequest,
+        mockRequestExtra,
       );
 
       expect(mockProcessCallToolResult).toHaveBeenCalledWith({
         response: toolResponse,
         originalCallToolRequest,
+        originalRequestExtra: mockRequestExtra,
       });
       expect(result).toEqual(expectedResponse);
     });
@@ -266,6 +293,7 @@ describe("RemoteHookClient", () => {
         const result = await hookClient.processCallToolResult(
           response,
           originalCallToolRequest,
+          mockRequestExtra,
         );
 
         expect((result as any).response).toEqual(response);
@@ -297,6 +325,7 @@ describe("RemoteHookClient", () => {
       const result = await hookClient.processCallToolResult(
         toolResponse,
         originalCallToolRequest,
+        mockRequestExtra,
       );
 
       expect(result).toEqual(abortResponse);
@@ -327,6 +356,7 @@ describe("RemoteHookClient", () => {
       const result = await hookClient.processCallToolResult(
         toolResponse,
         originalCallToolRequest,
+        mockRequestExtra,
       );
 
       expect(consoleSpy).toHaveBeenCalledWith(
