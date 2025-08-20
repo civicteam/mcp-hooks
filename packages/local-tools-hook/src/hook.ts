@@ -66,43 +66,27 @@ export class LocalToolsHook extends AbstractHook {
         request,
       };
     }
+    // execute the local tool
+    const result = await localTool.cb(request.params.arguments as ZodRawShape, {
+      signal: AbortSignal.timeout(this.timeoutMs),
+      requestId: "",
+      sendNotification: (notification: ServerNotification): Promise<void> => {
+        throw new Error("Function not implemented.");
+      },
+      sendRequest: <U extends z.ZodType<object>>(
+        request: ServerRequest,
+        resultSchema: U,
+        options?: RequestOptions,
+      ): Promise<z.TypeOf<U>> => {
+        throw new Error("Function not implemented.");
+      },
+    });
 
-    try {
-      // execute the local tool
-      const result = await localTool.cb(
-        request.params.arguments as ZodRawShape,
-        {
-          signal: AbortSignal.timeout(this.timeoutMs),
-          requestId: "",
-          sendNotification: (
-            notification: ServerNotification,
-          ): Promise<void> => {
-            throw new Error("Function not implemented.");
-          },
-          sendRequest: <U extends z.ZodType<object>>(
-            request: ServerRequest,
-            resultSchema: U,
-            options?: RequestOptions,
-          ): Promise<z.TypeOf<U>> => {
-            throw new Error("Function not implemented.");
-          },
-        },
-      );
-
-      // Return a "respond" response with the tool result
-      return {
-        resultType: "respond",
-        response: result,
-      };
-    } catch (error) {
-      // On error, return an error response
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      return {
-        resultType: "abort",
-        reason: errorMessage,
-      };
-    }
+    // Return a "respond" response with the tool result
+    return {
+      resultType: "respond",
+      response: result,
+    };
   }
 
   /**

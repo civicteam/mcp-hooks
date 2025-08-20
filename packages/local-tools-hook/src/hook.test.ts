@@ -127,12 +127,9 @@ describe("LocalToolsHook", () => {
         arguments: {},
       });
 
-      const result = await hookWithError.processCallToolRequest(toolCall);
-
-      expect(result.resultType).toBe("abort");
-      if (result.resultType === "abort") {
-        expect(result.reason).toContain("Tool execution failed");
-      }
+      await expect(
+        hookWithError.processCallToolRequest(toolCall),
+      ).rejects.toThrow("Tool execution failed");
     });
   });
 

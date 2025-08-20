@@ -17,14 +17,110 @@ import type {
   GenericRequestHookResult,
   GenericResponseHookResult,
   Hook,
+  HookChainError,
+  MethodsWithErrorType,
   MethodsWithRequestType,
   MethodsWithResponseType,
   NotificationHookResult,
   RequestExtra,
 } from "@civic/hook-common";
-import type { Notification } from "@modelcontextprotocol/sdk/types.js";
+import {
+  ErrorCode,
+  type Notification,
+} from "@modelcontextprotocol/sdk/types.js";
+import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../logger/logger.js";
 import type { LinkedListHook } from "./hookChain.js";
+
+/**
+ * Maps any error type to a HookChainError
+ *
+ * Handles:
+ * - McpError: Preserves error code and message
+ * - Error: Uses standard internal error code with message
+ * - HookChainError: Returns as-is
+ * - Other types: Converts to string with internal error code
+ *
+ * @param e The error to convert
+ * @returns A properly formatted HookChainError
+ */
+export function toHookChainError(e: unknown): HookChainError {
+  // If it's already a HookChainError, return as-is
+  if (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    "message" in e &&
+    typeof (e as Record<string, unknown>).code === "number" &&
+    typeof (e as Record<string, unknown>).message === "string"
+  ) {
+    return e as HookChainError;
+  }
+
+  // Handle McpError specifically
+  if (e instanceof McpError) {
+    return {
+      code: e.code,
+      message: e.message,
+      data: e.data,
+    };
+  }
+
+  // Handle standard Error
+  if (e instanceof Error) {
+    return {
+      code: ErrorCode.InternalError, // Internal error
+      message: e.message,
+      data: {
+        name: e.name,
+        stack: e.stack,
+      },
+    };
+  }
+
+  // Handle objects that might have error-like properties
+  if (typeof e === "object" && e !== null) {
+    const obj = e as Record<string, unknown>;
+    return {
+      code: typeof obj.code === "number" ? obj.code : -32603,
+      message: typeof obj.message === "string" ? obj.message : String(e),
+      data: e,
+    };
+  }
+
+  // Fallback for primitives and other types
+  return {
+    code: -32603, // Internal error
+    message: String(e),
+  };
+}
+
+/**
+ * Extended request hook result that includes abort case for backward compatibility
+ * Hooks throw errors, but the processor catches them and converts to abort
+ */
+export type ProcessorRequestHookResult<TRequest, TResponse> = (
+  | GenericRequestHookResult<TRequest, TResponse>
+  | { resultType: "abort"; error: HookChainError }
+) & {
+  lastProcessedHook: LinkedListHook | null;
+};
+
+/**
+ * Extended response hook result that includes abort case for backward compatibility
+ * Hooks throw errors, but the processor catches them and converts to abort
+ */
+export type ProcessorResponseHookResult<TResponse> =
+  | GenericResponseHookResult<TResponse>
+  | { resultType: "abort"; error: HookChainError };
+
+/**
+ * Extended Notification hook result that includes abort case for backward compatibility
+ * Hooks throw errors, but the processor catches them and converts to abort
+ */
+export type ProcessorNotificationHookResult =
+  | NotificationHookResult
+  | { resultType: "abort"; error: HookChainError };
 
 /**
  * Process a request through a chain of hooks
@@ -51,11 +147,7 @@ export async function processRequestThroughHooks<
   startHook: LinkedListHook | null, // null: empty hook-chain, can be head or tail
   methodName: TMethodName,
   direction: "forward" | "reverse" = "forward", // forward: head->tail, reverse: tail->head
-): Promise<
-  GenericRequestHookResult<TRequest, TResponse> & {
-    lastProcessedHook: LinkedListHook | null;
-  }
-> {
+): Promise<ProcessorRequestHookResult<TRequest, TResponse>> {
   let currentRequest = request;
   let currentHook = startHook;
 
@@ -74,6 +166,14 @@ export async function processRequestThroughHooks<
       logger.debug(
         `[Processor] Skipping hook ${hook.name} - no method ${methodName}`,
       );
+      // Move to next hook based on direction
+      if (direction === "forward" && currentHook.next) {
+        currentHook = currentHook.next;
+      } else if (direction === "reverse" && currentHook.previous) {
+        currentHook = currentHook.previous;
+      } else {
+        break;
+      }
       continue;
     }
 
@@ -84,28 +184,33 @@ export async function processRequestThroughHooks<
     // - Allows hooks to access their own properties/state via 'this'
     // Type assertion needed because TypeScript can't correlate the generic
     // methodName with the specific method signature at compile time
-    const hookResult = await (
-      hookMethod as (
-        request: TRequest,
-        requestExtra: RequestExtra,
-      ) => Promise<GenericRequestHookResult<TRequest, TResponse>>
-    ).call(hook, currentRequest, requestExtra);
+    try {
+      const hookResult = await (
+        hookMethod as (
+          request: TRequest,
+          requestExtra: RequestExtra,
+        ) => Promise<GenericRequestHookResult<TRequest, TResponse>>
+      ).call(hook, currentRequest, requestExtra);
 
-    if (hookResult.resultType === "continue") {
-      // Hook may have modified the request - use the updated version
-      currentRequest = hookResult.request;
-    } else if (hookResult.resultType === "respond") {
-      // Why early return with response:
-      // - Hook has provided a direct response, bypassing the actual server
-      // - Useful for caching, mocking, or synthetic responses
-      return { ...hookResult, lastProcessedHook: currentHook };
-    } else {
-      // abort case
-      // Why abort exists:
-      // - Security hooks need to block dangerous operations
-      // - Validation hooks need to reject malformed requests
-      // - Rate limiting hooks need to stop excessive requests
-      return { ...hookResult, lastProcessedHook: currentHook };
+      if (hookResult.resultType === "continue") {
+        // Hook may have modified the request - use the updated version
+        currentRequest = hookResult.request;
+      } else {
+        // hookResult.resultType === "respond"
+        // Why early return with response:
+        // - Hook has provided a direct response, bypassing the actual server
+        // - Useful for caching, mocking, or synthetic responses
+        return { ...hookResult, lastProcessedHook: currentHook };
+      }
+    } catch (e) {
+      // Convert thrown errors to abort result for backward compatibility
+      const error = toHookChainError(e);
+      logger.debug(`Hook ${hook.name} threw error: ${error.message}`);
+      return {
+        resultType: "abort",
+        error,
+        lastProcessedHook: currentHook,
+      };
     }
 
     // Move to next hook based on direction
@@ -126,7 +231,12 @@ export async function processRequestThroughHooks<
 }
 
 /**
- * Process a response through hooks in reverse order
+ * Process a response or exception through hooks in reverse order
+ *
+ * This function can handle both successful responses and errors/exceptions.
+ * When an error is provided, it attempts to call error processing methods first,
+ * and if a hook recovers from the error (returns a response), it switches to
+ * response processing for subsequent hooks.
  *
  * Why reverse order:
  * - Follows the middleware pattern (like Express.js or Koa)
@@ -140,24 +250,40 @@ export async function processRequestThroughHooks<
  * - Example: A caching hook needs the request URL to store the response
  * - Example: An audit hook needs to log request-response pairs together
  *
+ * @param responseOrError Either a response object or an error to process
+ * @param originalRequest The original request that led to this response/error
+ * @param originalRequestExtra Additional request context
+ * @param startHook The hook to start processing from
+ * @param responseMethodName The method name for processing responses
+ * @param errorMethodName The method name for processing errors (optional)
+ * @param direction Processing direction through the hook chain
  */
 export async function processResponseThroughHooks<
   TRequest,
   TResponse,
-  TMethodName extends MethodsWithResponseType<TResponse, TRequest>,
+  TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
+  TErrorMethodName extends MethodsWithErrorType<TRequest>,
 >(
-  response: TResponse,
+  response: TResponse | null,
+  error: HookChainError | null,
   originalRequest: TRequest,
   originalRequestExtra: RequestExtra,
-  startHook: LinkedListHook | null, // null : empty hook-chain
-  methodName: TMethodName,
-  direction: "forward" | "reverse" = "reverse", // forward: head->tail, reverse: tail->head
-): Promise<
-  GenericResponseHookResult<TResponse> & {
-    lastProcessedHook: LinkedListHook | null;
-  }
-> {
+  startHook: LinkedListHook | null,
+  responseMethodName: TResponseMethodName,
+  errorMethodName: TErrorMethodName,
+  direction: "forward" | "reverse" = "reverse",
+): Promise<ProcessorResponseHookResult<TResponse>> {
   let currentResponse = response;
+  let currentError = error;
+
+  if (!currentError && !currentResponse) {
+    currentError = {
+      code: ErrorCode.InternalError, // Internal error
+      message:
+        "processResponseThroughHooks was called without a response OR error",
+    };
+  }
+
   let currentHook = startHook;
 
   // Why iterate backwards from startIndex:
@@ -165,33 +291,61 @@ export async function processResponseThroughHooks<
   // - Maintains transformation nesting (unwrap in reverse order of wrapping)
   while (currentHook) {
     const hook = currentHook.hook;
-    const hookMethod = hook[methodName];
-
-    if (!hookMethod || typeof hookMethod !== "function") {
-      continue;
-    }
-
     // Type assertion needed because TypeScript can't correlate the generic
     // methodName with the specific method signature at compile time
-    const hookResult = await (
-      hookMethod as (
-        response: TResponse,
-        request: TRequest,
-        requestExtra: RequestExtra,
-      ) => Promise<GenericResponseHookResult<TResponse>>
-    ).call(hook, currentResponse, originalRequest, originalRequestExtra);
+    try {
+      const hookMethod = currentError
+        ? hook[errorMethodName]
+        : hook[responseMethodName];
 
-    if (hookResult.resultType === "continue") {
+      if (!hookMethod || typeof hookMethod !== "function") {
+        // Move to next hook
+        if (direction === "forward" && currentHook.next) {
+          currentHook = currentHook.next;
+        } else if (direction === "reverse" && currentHook.previous) {
+          currentHook = currentHook.previous;
+        } else {
+          break;
+        }
+        continue;
+      }
+
+      let hookResult: GenericResponseHookResult<TResponse>;
+      if (currentError) {
+        hookResult = await (
+          hookMethod as (
+            error: HookChainError,
+            request: TRequest,
+            requestExtra: RequestExtra,
+          ) => Promise<GenericResponseHookResult<TResponse>>
+        ).call(hook, currentError, originalRequest, originalRequestExtra);
+
+        if (hookResult.resultType === "continue") {
+          // continue with current error
+          throw currentError;
+        }
+      } else {
+        hookResult = await (
+          hookMethod as (
+            response: TResponse,
+            request: TRequest,
+            requestExtra: RequestExtra,
+          ) => Promise<GenericResponseHookResult<TResponse>>
+        ).call(
+          hook,
+          currentResponse as TResponse,
+          originalRequest,
+          originalRequestExtra,
+        );
+      }
+
+      // The functions can only return a new response or throw
       currentResponse = hookResult.response;
-    } else {
-      // abort - even responses can be rejected
-      // Why: A hook might detect sensitive data in response that shouldn't be exposed
-      return {
-        ...hookResult,
-        lastProcessedHook: currentHook,
-      } as GenericResponseHookResult<TResponse> & {
-        lastProcessedHook: LinkedListHook | null;
-      };
+      currentError = null;
+    } catch (e) {
+      // Convert thrown errors to abort result for backward compatibility
+      currentError = toHookChainError(e);
+      currentResponse = null;
     }
 
     if (direction === "forward" && currentHook.next) {
@@ -203,10 +357,15 @@ export async function processResponseThroughHooks<
     }
   }
 
+  if (currentResponse) {
+    return {
+      resultType: "continue",
+      response: currentResponse,
+    };
+  }
   return {
-    resultType: "continue",
-    response: currentResponse,
-    lastProcessedHook: currentHook,
+    resultType: "abort",
+    error: currentError as HookChainError,
   };
 }
 
@@ -236,7 +395,7 @@ export async function processNotificationThroughHooks<
   startHook: LinkedListHook | null,
   methodName: TMethodName,
   direction: "forward" | "reverse" = "forward", // forward: head->tail, reverse: tail->head
-): Promise<NotificationHookResult> {
+): Promise<ProcessorNotificationHookResult> {
   let currentNotification = notification;
   let currentHook = startHook;
 
@@ -253,7 +412,12 @@ export async function processNotificationThroughHooks<
       logger.debug(
         `[Processor] Skipping hook ${hook.name} - no method ${String(methodName)}`,
       );
-      currentHook = currentHook.next;
+      // Move to next hook based on direction
+      if (direction === "forward") {
+        currentHook = currentHook.next;
+      } else {
+        currentHook = currentHook.previous;
+      }
       continue;
     }
 
@@ -263,21 +427,20 @@ export async function processNotificationThroughHooks<
 
     // Type assertion needed because TypeScript can't correlate the generic
     // methodName with the specific method signature at compile time
-    const hookResult = await (
-      hookMethod as (
-        notification: Notification,
-      ) => Promise<NotificationHookResult>
-    ).call(hook, currentNotification);
+    try {
+      const hookResult = await (
+        hookMethod as (
+          notification: Notification,
+        ) => Promise<NotificationHookResult>
+      ).call(hook, currentNotification);
 
-    if (hookResult.resultType === "continue") {
-      // Hook may have modified the notification - use the updated version
       currentNotification = hookResult.notification;
-    } else {
-      // abort case - stop processing immediately
+    } catch (e) {
+      const error = toHookChainError(e);
       logger.debug(
-        `[Processor] Hook ${hook.name} aborted notification: ${hookResult.reason}`,
+        `[Processor] Hook ${hook.name} aborted notification: ${error.message}`,
       );
-      return { resultType: "abort", reason: hookResult.reason };
+      return { resultType: "abort", error };
     }
 
     if (direction === "forward") {

@@ -34,10 +34,7 @@ class ValidationHook extends AbstractHook {
   ): Promise<ToolCallRequestHookResult> {
     // Check if tool is allowed
     if (!this.allowedTools.includes(request.params.name)) {
-      return {
-        resultType: "abort",
-        reason: `Tool '${request.params.name}' is not allowed`,
-      };
+      throw new Error(`Tool '${request.params.name}' is not allowed`);
     }
 
     // All validations passed

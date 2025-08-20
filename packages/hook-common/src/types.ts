@@ -96,6 +96,19 @@ export type InitializeRequestWithContext = InitializeRequest & {
 };
 
 /**
+ * Generic error type for protocol-level errors
+ *
+ * This is basically an McpError
+ */
+export const HookChainErrorSchema = z.object({
+  code: z.number(),
+  message: z.string(),
+  data: z.unknown().optional(),
+});
+
+export type HookChainError = z.infer<typeof HookChainErrorSchema>;
+
+/**
  * Base schema for aborting hook processing
  *
  * Why: Hooks need a way to stop the request/response pipeline entirely.
@@ -103,15 +116,15 @@ export type InitializeRequestWithContext = InitializeRequest & {
  * or validation hooks that detect invalid requests. The abort pattern ensures
  * no further processing occurs and provides a clear reason to the caller.
  */
-const HookAbortSchema = z.object({
-  resultType: z.literal("abort"),
-  reason: z.string(),
-});
+// @deprecated. This is fully replaced by throwing McpErrors from Hooks.
+// const HookAbortSchema = z.object({
+//   resultType: z.literal("abort"),
+//   reason: z.string(),
+// });
 
 export const CallToolRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
@@ -128,7 +141,6 @@ export const CallToolRequestHookResultSchema = z.discriminatedUnion(
 export const CallToolResponseHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) response
     z.object({
       resultType: z.literal("continue"),
@@ -137,10 +149,100 @@ export const CallToolResponseHookResultSchema = z.discriminatedUnion(
   ],
 );
 
+export const CallToolErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: CallToolResultSchema,
+    }),
+  ],
+);
+
+export const ListToolsErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListToolsResultSchema,
+    }),
+  ],
+);
+
+export const InitializeErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: InitializeResultSchema,
+    }),
+  ],
+);
+
+export const OtherErrorHookResultSchema = z.discriminatedUnion("resultType", [
+  // continue the hook chain, passing this (potentially updated) error
+  z.object({
+    resultType: z.literal("continue"),
+  }),
+  // stop the error handling and replace the error with this response
+  z.object({
+    resultType: z.literal("respond"),
+    response: ResultSchema,
+  }),
+]);
+
+export const TargetErrorHookResultSchema = z.discriminatedUnion("resultType", [
+  // continue the hook chain, passing this (potentially updated) error
+  z.object({
+    resultType: z.literal("continue"),
+  }),
+  // stop the error handling and replace the error with this response
+  z.object({
+    resultType: z.literal("respond"),
+    response: ResultSchema,
+  }),
+]);
+
+export const NotificationErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // notifications don't have responses, so we can only continue
+  ],
+);
+
+export const TargetNotificationErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // notifications don't have responses, so we can only continue
+  ],
+);
+
 export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
@@ -157,7 +259,6 @@ export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
 export const ListToolsResponseHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) response
     z.object({
       resultType: z.literal("continue"),
@@ -169,7 +270,6 @@ export const ListToolsResponseHookResultSchema = z.discriminatedUnion(
 export const InitializeRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) request
     z.object({
       resultType: z.literal("continue"),
@@ -186,7 +286,6 @@ export const InitializeRequestHookResultSchema = z.discriminatedUnion(
 export const InitializeResponseHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
-    HookAbortSchema,
     // continue the hook chain, passing this (potentially updated) response
     z.object({
       resultType: z.literal("continue"),
@@ -196,7 +295,6 @@ export const InitializeResponseHookResultSchema = z.discriminatedUnion(
 );
 
 export const RequestHookResultSchema = z.discriminatedUnion("resultType", [
-  HookAbortSchema,
   // continue the hook chain, passing this (potentially updated) request
   z.object({
     resultType: z.literal("continue"),
@@ -210,7 +308,6 @@ export const RequestHookResultSchema = z.discriminatedUnion("resultType", [
 ]);
 
 export const ResponseHookResultSchema = z.discriminatedUnion("resultType", [
-  HookAbortSchema,
   // continue the hook chain, passing this (potentially updated) response
   z.object({
     resultType: z.literal("continue"),
@@ -219,7 +316,6 @@ export const ResponseHookResultSchema = z.discriminatedUnion("resultType", [
 ]);
 
 export const NotificationHookResultSchema = z.discriminatedUnion("resultType", [
-  HookAbortSchema,
   // continue the hook chain, passing this (potentially updated) notification
   z.object({
     resultType: z.literal("continue"),
@@ -232,6 +328,23 @@ export type CallToolRequestHookResult = z.infer<
 >;
 export type CallToolResponseHookResult = z.infer<
   typeof CallToolResponseHookResultSchema
+>;
+export type CallToolErrorHookResult = z.infer<
+  typeof CallToolErrorHookResultSchema
+>;
+export type ListToolsErrorHookResult = z.infer<
+  typeof ListToolsErrorHookResultSchema
+>;
+export type InitializeErrorHookResult = z.infer<
+  typeof InitializeErrorHookResultSchema
+>;
+export type OtherErrorHookResult = z.infer<typeof OtherErrorHookResultSchema>;
+export type TargetErrorHookResult = z.infer<typeof TargetErrorHookResultSchema>;
+export type NotificationErrorHookResult = z.infer<
+  typeof NotificationErrorHookResultSchema
+>;
+export type TargetNotificationErrorHookResult = z.infer<
+  typeof TargetNotificationErrorHookResultSchema
 >;
 export type ListToolsRequestHookResult = z.infer<
   typeof ListToolsRequestHookResultSchema
@@ -293,6 +406,14 @@ export interface Hook {
   ): Promise<CallToolResponseHookResult>;
 
   /**
+   * Process errors for tool calls (optional)
+   */
+  processCallToolError?(
+    error: HookChainError,
+    originalToolCall: CallToolRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<CallToolErrorHookResult>;
+  /**
    * Process a tools/list request (optional)
    */
   processListToolsRequest?(
@@ -308,6 +429,15 @@ export interface Hook {
     originalListToolsRequest: ListToolsRequestWithContext,
     originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult>;
+
+  /**
+   * Process errors for tools/list requests (optional)
+   */
+  processListToolsError?(
+    error: HookChainError,
+    originalRequest: ListToolsRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListToolsErrorHookResult>;
 
   /**
    * Process an initialize request (optional)
@@ -327,6 +457,15 @@ export interface Hook {
   ): Promise<InitializeResponseHookResult>;
 
   /**
+   * Process errors for initialize requests (optional)
+   */
+  processInitializeError?(
+    error: HookChainError,
+    originalRequest: InitializeRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<InitializeErrorHookResult>;
+
+  /**
    * Process a request from the client NOT covered by a dedicated handler (optional)
    */
   processOtherRequest?(
@@ -342,6 +481,15 @@ export interface Hook {
     originalRequest: Request,
     originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult>;
+
+  /**
+   * Process errors for other requests (optional)
+   */
+  processOtherError?(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<OtherErrorHookResult>;
 
   /**
    * Process a target request (request coming from the target server back to the client) (optional)
@@ -361,6 +509,15 @@ export interface Hook {
   ): Promise<ResponseHookResult>;
 
   /**
+   * Process errors for target requests (optional)
+   */
+  processTargetError?(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<TargetErrorHookResult>;
+
+  /**
    * Process a notification (notification from client to target server) (optional)
    */
   processNotification?(
@@ -368,11 +525,27 @@ export interface Hook {
   ): Promise<NotificationHookResult>;
 
   /**
+   * Process errors for notifications (optional)
+   */
+  processNotificationError?(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<NotificationErrorHookResult>;
+
+  /**
    * Process a target notification (notification from target server to client) (optional)
    */
   processTargetNotification?(
     notification: Notification,
   ): Promise<NotificationHookResult>;
+
+  /**
+   * Process errors for target notifications (optional)
+   */
+  processTargetNotificationError?(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<TargetNotificationErrorHookResult>;
 }
 
 /**
@@ -381,23 +554,21 @@ export interface Hook {
 
 /**
  * Generic type for request hook results
- * - abort: Stop processing with a reason
  * - continue: Continue with potentially modified request
  * - respond: Return response directly without forwarding
  */
 export type GenericRequestHookResult<TRequest, TResponse> =
-  | { resultType: "abort"; reason: string }
   | { resultType: "continue"; request: TRequest }
   | { resultType: "respond"; response: TResponse };
 
 /**
  * Generic type for response hook results
- * - abort: Stop processing with a reason
  * - continue: Continue with potentially modified response
  */
-export type GenericResponseHookResult<TResponse> =
-  | { resultType: "abort"; reason: string }
-  | { resultType: "continue"; response: TResponse };
+export type GenericResponseHookResult<TResponse> = {
+  resultType: "continue";
+  response: TResponse;
+};
 
 /**
  * Type helpers to find methods by parameter types
@@ -458,6 +629,25 @@ export type MethodsWithResponseType<TResponse, TRequest> = Exclude<
         ? O extends TRequest
           ? K
           : never
+        : never
+      : never;
+  }[keyof Hook],
+  undefined
+>;
+
+// Find transport error method names that accept a specific request type
+export type MethodsWithErrorType<TRequest> = Exclude<
+  {
+    [K in keyof Hook]: Hook[K] extends
+      | ((
+          error: HookChainError,
+          originalRequest: infer R,
+          originalRequestExtra: RequestExtra,
+          ...args: unknown[]
+        ) => unknown)
+      | undefined
+      ? R extends TRequest
+        ? K
         : never
       : never;
   }[keyof Hook],

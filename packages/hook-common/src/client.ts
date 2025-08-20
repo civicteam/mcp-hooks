@@ -13,17 +13,25 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { HookRouter } from "./router.js";
 import type {
+  CallToolErrorHookResult,
   CallToolRequestHookResult,
   CallToolResponseHookResult,
   Hook,
+  HookChainError,
+  InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  NotificationErrorHookResult,
   NotificationHookResult,
+  OtherErrorHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
+  TargetErrorHookResult,
+  TargetNotificationErrorHookResult,
 } from "./types.js";
 
 /**
@@ -40,7 +48,7 @@ export interface RemoteHookConfig {
  * @param hookName The name of the hook for logging
  * @param methodName The method that failed
  * @param fallbackResult The result to return when continuing
- * @returns The fallback result
+ * @returns The fallback result or throws the error
  */
 function handleHookError<T>(
   error: unknown,
@@ -54,9 +62,8 @@ function handleHookError<T>(
     return fallbackResult;
   }
 
-  // Log other errors
-  console.error(`Hook ${hookName} ${methodName} failed:`, error);
-  return fallbackResult;
+  // Propagate all other errors
+  throw error;
 }
 
 /**
@@ -162,26 +169,6 @@ export class RemoteHookClient implements Hook {
       return handleHookError(error, this.name, "processListToolsResult", {
         resultType: "continue" as const,
         response: response,
-      });
-    }
-  }
-
-  /**
-   * Process an exception through the hook
-   */
-  async processToolException(
-    error: unknown,
-    originalCallToolRequest: CallToolRequest,
-  ): Promise<unknown> {
-    try {
-      return await this.client.processToolException.mutate({
-        error,
-        originalCallToolRequest,
-      });
-    } catch (clientError) {
-      return handleHookError(clientError, this.name, "processToolException", {
-        resultType: "continue",
-        body: null,
       });
     }
   }
@@ -299,6 +286,159 @@ export class RemoteHookClient implements Hook {
         resultType: "continue" as const,
         notification: notification,
       });
+    }
+  }
+
+  /**
+   * Process errors for tool calls
+   */
+  async processCallToolError(
+    error: HookChainError,
+    originalToolCall: CallToolRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<CallToolErrorHookResult> {
+    try {
+      return await this.client.processCallToolError.mutate({
+        error,
+        originalToolCall,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(clientError, this.name, "processCallToolError", {
+        resultType: "continue" as const,
+      });
+    }
+  }
+
+  /**
+   * Process errors for tools/list requests
+   */
+  async processListToolsError(
+    error: HookChainError,
+    originalRequest: ListToolsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListToolsErrorHookResult> {
+    try {
+      return await this.client.processListToolsError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(clientError, this.name, "processListToolsError", {
+        resultType: "continue" as const,
+      });
+    }
+  }
+
+  /**
+   * Process errors for initialize requests
+   */
+  async processInitializeError(
+    error: HookChainError,
+    originalRequest: InitializeRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<InitializeErrorHookResult> {
+    try {
+      return await this.client.processInitializeError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(clientError, this.name, "processInitializeError", {
+        resultType: "continue" as const,
+      });
+    }
+  }
+
+  /**
+   * Process errors for other requests
+   */
+  async processOtherError(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<OtherErrorHookResult> {
+    try {
+      return await this.client.processOtherError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(clientError, this.name, "processOtherError", {
+        resultType: "continue" as const,
+      });
+    }
+  }
+
+  /**
+   * Process errors for target requests
+   */
+  async processTargetError(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<TargetErrorHookResult> {
+    try {
+      return await this.client.processTargetError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(clientError, this.name, "processTargetError", {
+        resultType: "continue" as const,
+      });
+    }
+  }
+
+  /**
+   * Process errors for notifications
+   */
+  async processNotificationError(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<NotificationErrorHookResult> {
+    try {
+      return await this.client.processNotificationError.mutate({
+        error,
+        originalNotification,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processNotificationError",
+        {
+          resultType: "continue" as const,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process errors for target notifications
+   */
+  async processTargetNotificationError(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<TargetNotificationErrorHookResult> {
+    try {
+      return await this.client.processTargetNotificationError.mutate({
+        error,
+        originalNotification,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processTargetNotificationError",
+        {
+          resultType: "continue" as const,
+        },
+      );
     }
   }
 }

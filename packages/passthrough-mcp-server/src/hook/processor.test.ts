@@ -1,8 +1,12 @@
 import type {
+  CallToolErrorHookResult,
   CallToolRequestHookResult,
   CallToolRequestWithContext,
   CallToolResponseHookResult,
   Hook,
+  HookChainError,
+  InitializeErrorHookResult,
+  ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   RequestExtra,
@@ -10,15 +14,19 @@ import type {
 import type {
   CallToolRequest,
   CallToolResult,
+  InitializeRequest,
+  InitializeResult,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types";
+import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it, vi } from "vitest";
 import { HookChain } from "./hookChain.js";
 import {
   processNotificationThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
+  toHookChainError,
 } from "./processor.js";
 
 // Mock RequestExtra for testing
@@ -147,10 +155,9 @@ describe("Hook Processor", () => {
         });
 
         const mockHook = new MockHook("security-hook");
-        mockHook.processCallToolRequest = vi.fn().mockResolvedValue({
-          resultType: "abort",
-          reason: "Destructive operation",
-        } satisfies CallToolRequestHookResult);
+        mockHook.processCallToolRequest = vi
+          .fn()
+          .mockRejectedValue(new Error("Destructive operation"));
 
         const chain = new HookChain([mockHook]);
         const result = await processRequestThroughHooks<
@@ -162,7 +169,7 @@ describe("Hook Processor", () => {
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("security-hook");
         if (result.resultType === "abort") {
-          expect(result.reason).toBe("Destructive operation");
+          expect(result.error.message).toBe("Destructive operation");
         }
       });
 
@@ -179,10 +186,9 @@ describe("Hook Processor", () => {
         } satisfies CallToolRequestHookResult);
 
         const hook2 = new MockHook("hook2");
-        hook2.processCallToolRequest = vi.fn().mockResolvedValue({
-          resultType: "abort",
-          reason: "Blocked by hook2",
-        } satisfies CallToolRequestHookResult);
+        hook2.processCallToolRequest = vi
+          .fn()
+          .mockRejectedValue(new Error("Blocked by hook2"));
 
         const hook3 = new MockHook("hook3");
         hook3.processCallToolRequest = vi.fn();
@@ -376,16 +382,19 @@ describe("Hook Processor", () => {
         const responseResult = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           directResponse,
+          null,
           toolCall,
           mockRequestExtra,
           requestResult.lastProcessedHook,
           "processCallToolResult",
+          "processCallToolError",
         );
 
-        // Verify only hook2 and hook1 processed the response (in reverse order)
+        // Should process from hook2 backward to hook1 (hook3 was not in the request path)
         expect(responseCallOrder).toEqual(["hook2-response", "hook1-response"]);
         expect(hook3.processCallToolResult).not.toHaveBeenCalled();
 
@@ -444,11 +453,19 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
-        >(response, toolCall, mockRequestExtra, null, "processCallToolResult");
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          response,
+          null,
+          toolCall,
+          mockRequestExtra,
+          null,
+          "processCallToolResult",
+          "processCallToolError",
+        );
 
         expect(result.resultType).toBe("continue");
-        expect(result.lastProcessedHook).toBe(null);
         if (result.resultType === "continue") {
           expect(result.response).toEqual(response);
         }
@@ -493,13 +510,16 @@ describe("Hook Processor", () => {
         await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           toolCall,
           mockRequestExtra,
           chain.tail,
           "processCallToolResult",
+          "processCallToolError",
         );
 
         expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
@@ -512,28 +532,29 @@ describe("Hook Processor", () => {
         const toolCall = createToolCall({ name: "fetch", arguments: {} });
 
         const mockHook = new MockHook("filter-hook");
-        mockHook.processCallToolResult = vi.fn().mockResolvedValue({
-          resultType: "abort",
-          reason: "Sensitive content",
-        } satisfies CallToolResponseHookResult);
+        mockHook.processCallToolResult = vi
+          .fn()
+          .mockRejectedValue(new Error("Sensitive content"));
 
         const chain = new HookChain([mockHook]);
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           toolCall,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
         );
 
         expect(result.resultType).toBe("abort");
-        expect(result.lastProcessedHook?.name).toBe("filter-hook");
         if (result.resultType === "abort") {
-          expect(result.reason).toBe("Sensitive content");
+          expect(result.error.message).toBe("Sensitive content");
         }
       });
 
@@ -556,17 +577,19 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           originalResponse,
+          null,
           toolCall,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
         );
 
         expect(result.resultType).toBe("continue");
-        expect(result.lastProcessedHook?.name).toBe("modifier-hook");
         if (result.resultType === "continue") {
           expect(result.response).toEqual(modifiedResponse);
         }
@@ -600,13 +623,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           ListToolsRequest,
           ListToolsResult,
-          "processListToolsResult"
+          "processListToolsResult",
+          "processListToolsError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processListToolsResult",
+          "processListToolsError",
         );
 
         expect(result.resultType).toBe("continue");
@@ -643,17 +669,19 @@ describe("Hook Processor", () => {
       const responseResult = await processResponseThroughHooks<
         CallToolRequest,
         CallToolResult,
-        "processCallToolResult"
+        "processCallToolResult",
+        "processCallToolError"
       >(
         response,
+        null,
         toolCall,
         mockRequestExtra,
         requestResult.lastProcessedHook,
         "processCallToolResult",
+        "processCallToolError",
       );
 
       expect(responseResult.resultType).toBe("continue");
-      expect(responseResult.lastProcessedHook).toBe(null);
       if (responseResult.resultType === "continue") {
         expect(responseResult.response).toEqual(response);
       }
@@ -878,6 +906,579 @@ describe("Hook Processor", () => {
     });
   });
 
+  describe("processResponseThroughHooks with error handling", () => {
+    describe("error/response state transitions", () => {
+      it("should handle error state through entire chain", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const error: HookChainError = {
+          code: -32603,
+          message: "Server error",
+        };
+
+        const hook1 = new MockHook("hook1");
+        hook1.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "continue",
+        } satisfies CallToolErrorHookResult);
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "continue",
+        } satisfies CallToolErrorHookResult);
+
+        const chain = new HookChain([hook1, hook2]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          null, // no response
+          error, // error state
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // Should call error handlers in reverse order
+        expect(hook2.processCallToolError).toHaveBeenCalledWith(
+          error,
+          request,
+          mockRequestExtra,
+        );
+        expect(hook1.processCallToolError).toHaveBeenCalledWith(
+          error,
+          request,
+          mockRequestExtra,
+        );
+
+        // Should end in error state since no hook recovered
+        expect(result.resultType).toBe("abort");
+        if (result.resultType === "abort") {
+          expect(result.error).toEqual(error);
+        }
+      });
+
+      it("should recover from error to response state", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const error: HookChainError = {
+          code: -32603,
+          message: "Server error",
+        };
+        const recoveredResponse: CallToolResult = {
+          content: [{ type: "text", text: "Recovered response" }],
+        };
+
+        const hook1 = new MockHook("hook1");
+        hook1.processCallToolResult = vi.fn().mockResolvedValue({
+          resultType: "continue",
+          response: recoveredResponse,
+        } satisfies CallToolResponseHookResult);
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "respond",
+          response: recoveredResponse,
+        } satisfies CallToolErrorHookResult);
+
+        const chain = new HookChain([hook1, hook2]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          null,
+          error,
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // hook2 should handle error and recover
+        expect(hook2.processCallToolError).toHaveBeenCalledWith(
+          error,
+          request,
+          mockRequestExtra,
+        );
+
+        // hook1 should process the recovered response
+        expect(hook1.processCallToolResult).toHaveBeenCalledWith(
+          recoveredResponse,
+          request,
+          mockRequestExtra,
+        );
+
+        // Should end in response state
+        expect(result.resultType).toBe("continue");
+        if (result.resultType === "continue") {
+          expect(result.response).toEqual(recoveredResponse);
+        }
+      });
+
+      it("should transition from response to error state when hook throws", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const response: CallToolResult = {
+          content: [{ type: "text", text: "Initial response" }],
+        };
+
+        const hook1 = new MockHook("hook1");
+        hook1.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "continue",
+        } satisfies CallToolErrorHookResult);
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolResult = vi
+          .fn()
+          .mockRejectedValue(new Error("Processing failed"));
+
+        const chain = new HookChain([hook1, hook2]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          response,
+          null,
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // hook2 should try to process response and throw
+        expect(hook2.processCallToolResult).toHaveBeenCalledWith(
+          response,
+          request,
+          mockRequestExtra,
+        );
+
+        // hook1 should receive the error
+        expect(hook1.processCallToolError).toHaveBeenCalledWith(
+          expect.objectContaining({
+            code: -32603,
+            message: "Processing failed",
+          }),
+          request,
+          mockRequestExtra,
+        );
+
+        // Should end in error state
+        expect(result.resultType).toBe("abort");
+        if (result.resultType === "abort") {
+          expect(result.error.message).toBe("Processing failed");
+        }
+      });
+
+      it("should handle multiple state transitions", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const initialResponse: CallToolResult = {
+          content: [{ type: "text", text: "Initial" }],
+        };
+        const recoveredResponse: CallToolResult = {
+          content: [{ type: "text", text: "Recovered" }],
+        };
+        const finalResponse: CallToolResult = {
+          content: [{ type: "text", text: "Final" }],
+        };
+
+        const hook1 = new MockHook("hook1");
+        hook1.processCallToolResult = vi.fn().mockResolvedValue({
+          resultType: "continue",
+          response: finalResponse,
+        } satisfies CallToolResponseHookResult);
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "respond",
+          response: recoveredResponse,
+        } satisfies CallToolErrorHookResult);
+
+        const hook3 = new MockHook("hook3");
+        hook3.processCallToolResult = vi
+          .fn()
+          .mockRejectedValue(new Error("Hook3 error"));
+
+        const chain = new HookChain([hook1, hook2, hook3]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          initialResponse,
+          null,
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // hook3: response -> error (throws)
+        expect(hook3.processCallToolResult).toHaveBeenCalledWith(
+          initialResponse,
+          request,
+          mockRequestExtra,
+        );
+
+        // hook2: error -> response (recovers)
+        expect(hook2.processCallToolError).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: "Hook3 error",
+          }),
+          request,
+          mockRequestExtra,
+        );
+
+        // hook1: response -> response (modifies)
+        expect(hook1.processCallToolResult).toHaveBeenCalledWith(
+          recoveredResponse,
+          request,
+          mockRequestExtra,
+        );
+
+        // Should end with final response
+        expect(result.resultType).toBe("continue");
+        if (result.resultType === "continue") {
+          expect(result.response).toEqual(finalResponse);
+        }
+      });
+
+      it("should skip hooks without appropriate methods", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const error: HookChainError = {
+          code: -32603,
+          message: "Test error",
+        };
+        const recoveredResponse: CallToolResult = {
+          content: [{ type: "text", text: "Recovered" }],
+        };
+
+        const hook1 = new MockHook("hook1");
+        // No error handler
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "respond",
+          response: recoveredResponse,
+        } satisfies CallToolErrorHookResult);
+
+        const hook3 = new MockHook("hook3");
+        // No response handler
+
+        const chain = new HookChain([hook1, hook2, hook3]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          null,
+          error,
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // hook3: no error handler, skipped
+        // hook2: handles error and recovers
+        expect(hook2.processCallToolError).toHaveBeenCalled();
+        // hook1: no response handler, skipped
+
+        expect(result.resultType).toBe("continue");
+        if (result.resultType === "continue") {
+          expect(result.response).toEqual(recoveredResponse);
+        }
+      });
+
+      it("should handle neither response nor error provided", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          null,
+          null,
+          request,
+          mockRequestExtra,
+          null,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // Should create an internal error
+        expect(result.resultType).toBe("abort");
+        if (result.resultType === "abort") {
+          expect(result.error.message).toContain(
+            "processResponseThroughHooks was called without a response OR error",
+          );
+        }
+      });
+
+      it("should process entire chain even with errors", async () => {
+        const request = createToolCall({ name: "test", arguments: {} });
+        const response: CallToolResult = {
+          content: [{ type: "text", text: "Initial" }],
+        };
+
+        const callOrder: string[] = [];
+
+        const hook1 = new MockHook("hook1");
+        hook1.processCallToolResult = vi.fn().mockImplementation(() => {
+          callOrder.push("hook1-response");
+          throw new Error("Hook1 error");
+        });
+        hook1.processCallToolError = vi.fn().mockImplementation(() => {
+          callOrder.push("hook1-error");
+          return { resultType: "continue" };
+        });
+
+        const hook2 = new MockHook("hook2");
+        hook2.processCallToolResult = vi.fn().mockImplementation(() => {
+          callOrder.push("hook2-response");
+          return {
+            resultType: "continue",
+            response: { content: [{ type: "text", text: "Hook2" }] },
+          };
+        });
+        hook2.processCallToolError = vi.fn().mockImplementation(() => {
+          callOrder.push("hook2-error");
+          return {
+            resultType: "respond",
+            response: { content: [{ type: "text", text: "Recovered" }] },
+          };
+        });
+
+        const hook3 = new MockHook("hook3");
+        hook3.processCallToolResult = vi.fn().mockImplementation(() => {
+          callOrder.push("hook3-response");
+          throw new Error("Hook3 error");
+        });
+
+        const chain = new HookChain([hook1, hook2, hook3]);
+
+        const result = await processResponseThroughHooks<
+          CallToolRequest,
+          CallToolResult,
+          "processCallToolResult",
+          "processCallToolError"
+        >(
+          response,
+          null,
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+          "processCallToolError",
+        );
+
+        // Verify entire chain was processed
+        expect(callOrder).toEqual([
+          "hook3-response", // throws
+          "hook2-error", // recovers
+          "hook1-response", // throws again
+        ]);
+
+        // Should end in error state
+        expect(result.resultType).toBe("abort");
+      });
+    });
+
+    describe("with different error types", () => {
+      it("should handle ListToolsError", async () => {
+        const request: ListToolsRequest = { method: "tools/list", params: {} };
+        const error: HookChainError = {
+          code: -32603,
+          message: "Failed to list tools",
+        };
+        const recoveredResponse: ListToolsResult = {
+          tools: [{ name: "fallback-tool", description: "Fallback" }],
+        };
+
+        const hook = new MockHook("tools-hook");
+        hook.processListToolsError = vi.fn().mockResolvedValue({
+          resultType: "respond",
+          response: recoveredResponse,
+        } satisfies ListToolsErrorHookResult);
+
+        const chain = new HookChain([hook]);
+
+        const result = await processResponseThroughHooks<
+          ListToolsRequest,
+          ListToolsResult,
+          "processListToolsResult",
+          "processListToolsError"
+        >(
+          null,
+          error,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processListToolsResult",
+          "processListToolsError",
+        );
+
+        expect(hook.processListToolsError).toHaveBeenCalledWith(
+          error,
+          request,
+          mockRequestExtra,
+        );
+
+        expect(result.resultType).toBe("continue");
+        if (result.resultType === "continue") {
+          expect(result.response).toEqual(recoveredResponse);
+        }
+      });
+
+      it("should handle InitializeError", async () => {
+        const request: InitializeRequest = {
+          method: "initialize",
+          params: {
+            protocolVersion: "1.0",
+            capabilities: {},
+            clientInfo: { name: "test", version: "1.0" },
+          },
+        };
+        const error: HookChainError = {
+          code: -32603,
+          message: "Initialization failed",
+        };
+        const recoveredResponse: InitializeResult = {
+          protocolVersion: "1.0",
+          capabilities: {},
+          serverInfo: { name: "fallback", version: "1.0" },
+        };
+
+        const hook = new MockHook("init-hook");
+        hook.processInitializeError = vi.fn().mockResolvedValue({
+          resultType: "respond",
+          response: recoveredResponse,
+        } satisfies InitializeErrorHookResult);
+
+        const chain = new HookChain([hook]);
+
+        const result = await processResponseThroughHooks<
+          InitializeRequest,
+          InitializeResult,
+          "processInitializeResult",
+          "processInitializeError"
+        >(
+          null,
+          error,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processInitializeResult",
+          "processInitializeError",
+        );
+
+        expect(hook.processInitializeError).toHaveBeenCalledWith(
+          error,
+          request,
+          mockRequestExtra,
+        );
+
+        expect(result.resultType).toBe("continue");
+        if (result.resultType === "continue") {
+          expect(result.response).toEqual(recoveredResponse);
+        }
+      });
+    });
+  });
+
+  describe("toHookChainError", () => {
+    it("should handle McpError", () => {
+      const mcpError = new McpError(-32603, "Test error", { extra: "data" });
+      const result = toHookChainError(mcpError);
+
+      expect(result.code).toBe(-32603);
+      expect(result.message).toBe("MCP error -32603: Test error");
+      expect(result.data).toEqual({ extra: "data" });
+    });
+
+    it("should handle standard Error", () => {
+      const error = new Error("Standard error");
+      const result = toHookChainError(error);
+
+      expect(result).toEqual({
+        code: -32603,
+        message: "Standard error",
+        data: {
+          name: "Error",
+          stack: expect.any(String),
+        },
+      });
+    });
+
+    it("should handle HookChainError passthrough", () => {
+      const hookError: HookChainError = {
+        code: -32000,
+        message: "Custom error",
+        data: { custom: "field" },
+      };
+      const result = toHookChainError(hookError);
+
+      expect(result).toBe(hookError);
+    });
+
+    it("should handle object with error-like properties", () => {
+      const errorLike = {
+        code: -32001,
+        message: "Error-like object",
+        someOtherProp: "value",
+      };
+      const result = toHookChainError(errorLike);
+
+      // Since it has code and message, it's treated as a HookChainError and returned as-is
+      expect(result).toBe(errorLike);
+      expect(result.code).toBe(-32001);
+      expect(result.message).toBe("Error-like object");
+    });
+
+    it("should handle primitives", () => {
+      const result = toHookChainError("string error");
+
+      expect(result).toEqual({
+        code: -32603,
+        message: "string error",
+      });
+    });
+
+    it("should handle null", () => {
+      const result = toHookChainError(null);
+
+      expect(result).toEqual({
+        code: -32603,
+        message: "null",
+      });
+    });
+
+    it("should handle undefined", () => {
+      const result = toHookChainError(undefined);
+
+      expect(result).toEqual({
+        code: -32603,
+        message: "undefined",
+      });
+    });
+  });
+
   describe("processResponseThroughHooks with forward direction", () => {
     describe("with CallToolResponse", () => {
       it("should process response through hooks in forward order", async () => {
@@ -916,13 +1517,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
@@ -969,13 +1573,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
@@ -999,39 +1606,45 @@ describe("Hook Processor", () => {
         });
 
         const hook1 = new MockHook("hook1");
-        hook1.processCallToolResult = vi.fn().mockResolvedValue({
-          resultType: "abort",
-          reason: "Response blocked by hook1",
-        });
+        hook1.processCallToolResult = vi
+          .fn()
+          .mockRejectedValue(new Error("Response blocked by hook1"));
 
         const hook2 = new MockHook("hook2");
-        hook2.processCallToolResult = vi.fn();
+        hook2.processCallToolError = vi.fn().mockResolvedValue({
+          resultType: "continue",
+        });
 
         const chain = new HookChain([hook1, hook2]);
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
-        expect(result.resultType).toBe("abort");
-        // hook1 should be called first and abort
+        // hook1 should be called first and throw
         expect(hook1.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
           mockRequestExtra,
         );
-        // hook2 should not be called due to abort
-        expect(hook2.processCallToolResult).not.toHaveBeenCalled();
+        // hook2 should receive the error since we process entire chain
+        expect(hook2.processCallToolError).toHaveBeenCalled();
+
+        // Should end in abort since no hook recovered from the error
+        expect(result.resultType).toBe("abort");
         if (result.resultType === "abort") {
-          expect(result.reason).toBe("Response blocked by hook1");
+          expect(result.error.message).toBe("Response blocked by hook1");
         }
       });
 
@@ -1057,13 +1670,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
@@ -1089,20 +1705,22 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           null,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
         expect(result.resultType).toBe("continue");
         if (result.resultType === "continue") {
           expect(result.response).toEqual(response);
-          expect(result.lastProcessedHook).toBe(null);
         }
       });
 
@@ -1139,13 +1757,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           CallToolRequest,
           CallToolResult,
-          "processCallToolResult"
+          "processCallToolResult",
+          "processCallToolError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head?.next,
           "processCallToolResult",
+          "processCallToolError",
           "forward",
         );
 
@@ -1189,13 +1810,16 @@ describe("Hook Processor", () => {
         const result = await processResponseThroughHooks<
           ListToolsRequest,
           ListToolsResult,
-          "processListToolsResult"
+          "processListToolsResult",
+          "processListToolsError"
         >(
           response,
+          null,
           request,
           mockRequestExtra,
           chain.head,
           "processListToolsResult",
+          "processListToolsError",
           "forward",
         );
 
@@ -1269,10 +1893,11 @@ describe("Hook Processor", () => {
       };
 
       const mockHook = new MockHook("blocking-hook");
-      mockHook.processNotification = vi.fn().mockResolvedValue({
-        resultType: "abort",
-        reason: "Notification blocked for security reasons",
-      });
+      mockHook.processNotification = vi
+        .fn()
+        .mockRejectedValue(
+          new Error("Notification blocked for security reasons"),
+        );
 
       const chain = new HookChain([mockHook]);
       const result = await processNotificationThroughHooks(
@@ -1283,7 +1908,9 @@ describe("Hook Processor", () => {
 
       expect(result.resultType).toBe("abort");
       if (result.resultType === "abort") {
-        expect(result.reason).toBe("Notification blocked for security reasons");
+        expect(result.error.message).toBe(
+          "Notification blocked for security reasons",
+        );
       }
     });
 
@@ -1334,10 +1961,9 @@ describe("Hook Processor", () => {
       };
 
       const hook1 = new MockHook("hook1");
-      hook1.processNotification = vi.fn().mockResolvedValue({
-        resultType: "abort",
-        reason: "Blocked by first hook",
-      });
+      hook1.processNotification = vi
+        .fn()
+        .mockRejectedValue(new Error("Blocked by first hook"));
 
       const hook2 = new MockHook("hook2");
       hook2.processNotification = vi.fn();
@@ -1493,10 +2119,9 @@ describe("Hook Processor", () => {
       hook1.processNotification = vi.fn();
 
       const hook2 = new MockHook("hook2");
-      hook2.processNotification = vi.fn().mockResolvedValue({
-        resultType: "abort",
-        reason: "Notification blocked by hook2",
-      });
+      hook2.processNotification = vi
+        .fn()
+        .mockRejectedValue(new Error("Notification blocked by hook2"));
 
       const chain = new HookChain([hook1, hook2]);
       const result = await processNotificationThroughHooks(
@@ -1512,7 +2137,7 @@ describe("Hook Processor", () => {
       // hook1 should not be called due to abort
       expect(hook1.processNotification).not.toHaveBeenCalled();
       if (result.resultType === "abort") {
-        expect(result.reason).toBe("Notification blocked by hook2");
+        expect(result.error.message).toBe("Notification blocked by hook2");
       }
     });
 
@@ -1684,10 +2309,9 @@ describe("Hook Processor", () => {
       };
 
       const hook1 = new MockHook("hook1");
-      hook1.processNotification = vi.fn().mockResolvedValue({
-        resultType: "abort",
-        reason: "Notification blocked by hook1",
-      });
+      hook1.processNotification = vi
+        .fn()
+        .mockRejectedValue(new Error("Notification blocked by hook1"));
 
       const hook2 = new MockHook("hook2");
       hook2.processNotification = vi.fn();
@@ -1706,7 +2330,7 @@ describe("Hook Processor", () => {
       // hook2 should not be called due to abort
       expect(hook2.processNotification).not.toHaveBeenCalled();
       if (result.resultType === "abort") {
-        expect(result.reason).toBe("Notification blocked by hook1");
+        expect(result.error.message).toBe("Notification blocked by hook1");
       }
     });
 

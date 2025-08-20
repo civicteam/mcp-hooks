@@ -13,16 +13,24 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
 import {
+  CallToolErrorHookResultSchema,
   CallToolRequestHookResultSchema,
   CallToolResponseHookResultSchema,
+  HookChainErrorSchema,
+  InitializeErrorHookResultSchema,
   InitializeRequestHookResultSchema,
   InitializeResponseHookResultSchema,
+  ListToolsErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
   ListToolsResponseHookResultSchema,
+  NotificationErrorHookResultSchema,
   NotificationHookResultSchema,
+  OtherErrorHookResultSchema,
   RequestExtraSchema,
   RequestHookResultSchema,
   ResponseHookResultSchema,
+  TargetErrorHookResultSchema,
+  TargetNotificationErrorHookResultSchema,
 } from "./types.js";
 import type { Hook } from "./types.js";
 
@@ -67,6 +75,22 @@ const baseRouter = t.router({
     .mutation(async ({ input }) => {
       throw new Error("processResponse not implemented");
     }),
+
+  /**
+   * Process errors for tool calls
+   */
+  processCallToolError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalToolCall: CallToolRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(CallToolErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processCallToolError not implemented");
+    }),
 });
 
 /**
@@ -105,18 +129,19 @@ const toolsListRouter = t.router({
     }),
 
   /**
-   * Process an exception during tool execution
+   * Process errors for tools/list requests
    */
-  processToolException: t.procedure
+  processListToolsError: t.procedure
     .input(
       z.object({
-        error: z.any(),
-        originalCallToolRequest: CallToolRequestSchema,
+        error: HookChainErrorSchema,
+        originalRequest: ListToolsRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
       }),
     )
-    .output(z.unknown())
+    .output(ListToolsErrorHookResultSchema)
     .mutation(async ({ input }) => {
-      throw new Error("processToolException not implemented");
+      throw new Error("processListToolsError not implemented");
     }),
 });
 
@@ -153,6 +178,22 @@ const initializeRouter = t.router({
     .output(InitializeResponseHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processInitializeResult not implemented");
+    }),
+
+  /**
+   * Process errors for initialize requests
+   */
+  processInitializeError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: InitializeRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(InitializeErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processInitializeError not implemented");
     }),
 });
 
@@ -192,6 +233,22 @@ const targetAndNotificationRouter = t.router({
     }),
 
   /**
+   * Process errors for other requests
+   */
+  processOtherError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: RequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(OtherErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processOtherError not implemented");
+    }),
+
+  /**
    * Process a target request
    */
   processTargetRequest: t.procedure
@@ -223,6 +280,22 @@ const targetAndNotificationRouter = t.router({
     }),
 
   /**
+   * Process errors for target requests
+   */
+  processTargetError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: RequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(TargetErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processTargetError not implemented");
+    }),
+
+  /**
    * Process a notification
    */
   processNotification: t.procedure
@@ -233,6 +306,21 @@ const targetAndNotificationRouter = t.router({
     }),
 
   /**
+   * Process errors for notifications
+   */
+  processNotificationError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalNotification: NotificationSchema,
+      }),
+    )
+    .output(NotificationErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processNotificationError not implemented");
+    }),
+
+  /**
    * Process a target notification
    */
   processTargetNotification: t.procedure
@@ -240,6 +328,21 @@ const targetAndNotificationRouter = t.router({
     .output(NotificationHookResultSchema)
     .mutation(async ({ input }) => {
       throw new Error("processTargetNotification not implemented");
+    }),
+
+  /**
+   * Process errors for target notifications
+   */
+  processTargetNotificationError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalNotification: NotificationSchema,
+      }),
+    )
+    .output(TargetNotificationErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processTargetNotificationError not implemented");
     }),
 });
 
@@ -308,6 +411,30 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
+  // Add processCallToolError if the hook implements it
+  if (hook.processCallToolError) {
+    procedures.processCallToolError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalToolCall: CallToolRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(CallToolErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processCallToolError) {
+          throw new Error("processCallToolError not implemented");
+        }
+        return await hook.processCallToolError(
+          input.error,
+          input.originalToolCall,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
   if (hook.processListToolsRequest) {
     procedures.processListToolsRequest = t.procedure
       .input(
@@ -346,6 +473,30 @@ export function createHookRouter(hook: Hook) {
         }
         return await hook.processListToolsResult(
           input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processListToolsError if the hook implements it
+  if (hook.processListToolsError) {
+    procedures.processListToolsError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: ListToolsRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListToolsErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListToolsError) {
+          throw new Error("processListToolsError not implemented");
+        }
+        return await hook.processListToolsError(
+          input.error,
           input.originalRequest,
           input.originalRequestExtra,
         );
@@ -398,6 +549,30 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
+  // Add processInitializeError if the hook implements it
+  if (hook.processInitializeError) {
+    procedures.processInitializeError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: InitializeRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(InitializeErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processInitializeError) {
+          throw new Error("processInitializeError not implemented");
+        }
+        return await hook.processInitializeError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
   // Add processOtherRequest if the hook implements it
   if (hook.processOtherRequest) {
     procedures.processOtherRequest = t.procedure
@@ -438,6 +613,30 @@ export function createHookRouter(hook: Hook) {
         }
         return await hook.processOtherResult(
           input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processOtherError if the hook implements it
+  if (hook.processOtherError) {
+    procedures.processOtherError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: RequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(OtherErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processOtherError) {
+          throw new Error("processOtherError not implemented");
+        }
+        return await hook.processOtherError(
+          input.error,
           input.originalRequest,
           input.originalRequestExtra,
         );
@@ -490,6 +689,30 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
+  // Add processTargetError if the hook implements it
+  if (hook.processTargetError) {
+    procedures.processTargetError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: RequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(TargetErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processTargetError) {
+          throw new Error("processTargetError not implemented");
+        }
+        return await hook.processTargetError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
   // Add processNotification if the hook implements it
   if (hook.processNotification) {
     procedures.processNotification = t.procedure
@@ -504,6 +727,28 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
+  // Add processNotificationError if the hook implements it
+  if (hook.processNotificationError) {
+    procedures.processNotificationError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalNotification: NotificationSchema,
+        }),
+      )
+      .output(NotificationErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processNotificationError) {
+          throw new Error("processNotificationError not implemented");
+        }
+        return await hook.processNotificationError(
+          input.error,
+          input.originalNotification,
+        );
+      });
+  }
+
   // Add processTargetNotification if the hook implements it
   if (hook.processTargetNotification) {
     procedures.processTargetNotification = t.procedure
@@ -515,6 +760,28 @@ export function createHookRouter(hook: Hook) {
           throw new Error("processTargetNotification not implemented");
         }
         return await hook.processTargetNotification(input);
+      });
+  }
+
+  // Add processTargetNotificationError if the hook implements it
+  if (hook.processTargetNotificationError) {
+    procedures.processTargetNotificationError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalNotification: NotificationSchema,
+        }),
+      )
+      .output(TargetNotificationErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processTargetNotificationError) {
+          throw new Error("processTargetNotificationError not implemented");
+        }
+        return await hook.processTargetNotificationError(
+          input.error,
+          input.originalNotification,
+        );
       });
   }
 

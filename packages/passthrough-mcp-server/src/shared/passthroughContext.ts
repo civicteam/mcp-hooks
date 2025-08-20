@@ -4,6 +4,8 @@
  */
 
 import type {
+  HookChainError,
+  MethodsWithErrorType,
   MethodsWithRequestType,
   MethodsWithResponseType,
   RequestExtra,
@@ -42,6 +44,7 @@ import {
   processNotificationThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
+  toHookChainError,
 } from "../hook/processor.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { MetadataHelper } from "./metadataHelper.js";
@@ -235,12 +238,14 @@ export class PassthroughContext {
     TResponseSchema extends z.ZodSchema<TResponse>,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
+    TErrorMethodName extends MethodsWithErrorType<TRequest>,
   >(
     request: TRequest,
     requestExtra: RequestExtra,
     responseSchema: TResponseSchema,
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
+    hookErrorMethodName: TErrorMethodName,
   ): Promise<TResponse> {
     // Annotate request with metadata
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -258,14 +263,13 @@ export class PassthroughContext {
       "reverse", // Process in reverse direction
     );
 
-    let response: TResponse | undefined = undefined;
-
-    if (requestResult.resultType === "abort") {
-      throw createAbortException("request", requestResult.reason);
-    }
+    let response: TResponse | null = null;
+    let error: HookChainError | null = null;
 
     if (requestResult.resultType === "respond") {
       response = requestResult.response;
+    } else if (requestResult.resultType === "abort") {
+      error = requestResult.error;
     } else {
       // (requestResult.resultType === "continue")
       // Forward the request to the actual server
@@ -275,26 +279,35 @@ export class PassthroughContext {
           "No server transport connected. Cannot forward request to target server.",
         );
       }
-      response = await this._passthroughServer.request(
-        requestResult.request,
-        responseSchema,
-      );
+      try {
+        response = await this._passthroughServer.request(
+          requestResult.request,
+          responseSchema,
+        );
+      } catch (e) {
+        error = toHookChainError(e);
+      }
     }
 
-    const annotatedResponse = this.addMetaToResult(response);
+    let annotatedResponse: TResponse | null = null;
+    if (response) {
+      annotatedResponse = this.addMetaToResult(response);
+    }
 
     // Process response through hooks (also in reverse, from last processed hook back)
     const responseResult = await processResponseThroughHooks(
       annotatedResponse,
+      error,
       annotatedRequest,
       requestExtra,
       requestResult.lastProcessedHook,
       hookResponseMethodName,
+      hookErrorMethodName,
       "forward", // Process in reverse direction
     );
 
     if (responseResult.resultType === "abort") {
-      throw createAbortException("response", responseResult.reason);
+      throw createAbortException(responseResult.error);
     }
 
     return responseResult.response;
@@ -306,12 +319,14 @@ export class PassthroughContext {
     TResponseSchema extends z.ZodSchema<TResponse>,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
+    TErrorMethodName extends MethodsWithErrorType<TRequest>,
   >(
     request: TRequest,
     requestExtra: RequestExtra,
     responseSchema: TResponseSchema,
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
+    hookErrorMethodName: TErrorMethodName,
   ): Promise<TResponse> {
     // Annotate request
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -329,13 +344,12 @@ export class PassthroughContext {
     );
 
     let response: TResponse | undefined = undefined;
-
-    if (requestResult.resultType === "abort") {
-      throw createAbortException("request", requestResult.reason);
-    }
+    let error: HookChainError | null = null;
 
     if (requestResult.resultType === "respond") {
       response = requestResult.response;
+    } else if (requestResult.resultType === "abort") {
+      error = requestResult.error;
     } else {
       // (requestResult.resultType === "continue")
       // Check if client transport is connected before forwarding request
@@ -345,25 +359,34 @@ export class PassthroughContext {
           ERROR_MESSAGES.NO_CLIENT_TRANSPORT,
         );
       }
-      response = await this._passthroughClient.request(
-        requestResult.request,
-        responseSchema,
-      );
+      try {
+        response = await this._passthroughClient.request(
+          requestResult.request,
+          responseSchema,
+        );
+      } catch (e) {
+        error = toHookChainError(e);
+      }
     }
 
-    const annotatedResponse = this.addMetaToResult(response);
+    let annotatedResponse: TResponse | null = null;
+    if (response) {
+      annotatedResponse = this.addMetaToResult(response);
+    }
 
     // pass response through chain
     const responseResult = await processResponseThroughHooks(
       annotatedResponse,
+      error,
       annotatedRequest,
       requestExtra,
       requestResult.lastProcessedHook,
       hookResponseMethodName,
+      hookErrorMethodName,
     );
 
     if (responseResult.resultType === "abort") {
-      throw createAbortException("response", responseResult.reason);
+      throw createAbortException(responseResult.error);
     }
 
     return responseResult.response;
@@ -383,6 +406,7 @@ export class PassthroughContext {
       InitializeResultSchema,
       "processInitializeRequest",
       "processInitializeResult",
+      "processInitializeError",
     );
   }
 
@@ -400,6 +424,7 @@ export class PassthroughContext {
       ListToolsResultSchema,
       "processListToolsRequest",
       "processListToolsResult",
+      "processListToolsError",
     );
   }
 
@@ -417,6 +442,7 @@ export class PassthroughContext {
       CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
       "processCallToolRequest",
       "processCallToolResult",
+      "processCallToolError",
     );
   }
 
@@ -442,6 +468,7 @@ export class PassthroughContext {
       ResultSchema,
       "processOtherRequest",
       "processOtherResult",
+      "processOtherError",
     );
   }
 
@@ -468,7 +495,7 @@ export class PassthroughContext {
       // If aborted by hooks, log and return (notifications can't return errors)
       if (result.resultType === "abort") {
         this._onerror(
-          new Error(`Notification aborted by hook: ${result.reason}`),
+          new Error(`Notification aborted by hook: ${result.error.message}`),
         );
         return;
       }
@@ -517,6 +544,7 @@ export class PassthroughContext {
       ResultSchema,
       "processTargetRequest",
       "processTargetResult",
+      "processTargetError",
     );
   }
 
@@ -549,7 +577,9 @@ export class PassthroughContext {
       // If aborted by hooks, log and return (notifications can't return errors)
       if (result.resultType === "abort") {
         this._onerror(
-          new Error(`Client notification aborted by hook: ${result.reason}`),
+          new Error(
+            `Client notification aborted by hook: ${result.error.message}`,
+          ),
         );
         return;
       }

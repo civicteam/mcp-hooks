@@ -138,10 +138,7 @@ async function example4_withProgrammaticHooks() {
         request.params.name.toLowerCase().includes("delete") ||
         request.params.name.toLowerCase().includes("remove")
       ) {
-        return {
-          resultType: "abort",
-          reason: "Dangerous operations are not allowed",
-        };
+        throw new Error("Dangerous operations are not allowed");
       }
 
       return {

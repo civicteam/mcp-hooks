@@ -60,10 +60,8 @@ class TestValidationHook extends AbstractHook {
     requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     if (request.params.name.includes("dangerous")) {
-      return {
-        resultType: "abort",
-        reason: "Dangerous operation blocked",
-      };
+      // Instead of returning abort, throw an error
+      throw new Error("Dangerous operation blocked");
     }
     return {
       resultType: "continue",
@@ -146,13 +144,10 @@ describe("LocalHookClient", () => {
       },
     };
 
-    const response = await client.processCallToolRequest(
-      request,
-      mockRequestExtra,
-    );
-
-    expect(response.resultType).toBe("abort");
-    expect((response as any).reason).toBe("Dangerous operation blocked");
+    // The client should propagate the error from the hook
+    await expect(
+      client.processCallToolRequest(request, mockRequestExtra),
+    ).rejects.toThrow("Dangerous operation blocked");
   });
 
   it("should propagate hook errors", async () => {

@@ -16,17 +16,25 @@ import type {
   Result,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
+  CallToolErrorHookResult,
   CallToolRequestHookResult,
   CallToolResponseHookResult,
   Hook,
+  HookChainError,
+  InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  NotificationErrorHookResult,
   NotificationHookResult,
+  OtherErrorHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
+  TargetErrorHookResult,
+  TargetNotificationErrorHookResult,
 } from "./types.js";
 
 export class LocalHookClient implements Hook {
@@ -261,5 +269,148 @@ export class LocalHookClient implements Hook {
       };
     }
     return await this.hook.processTargetNotification(notification);
+  }
+
+  /**
+   * Process errors for tool calls
+   */
+  async processCallToolError(
+    error: HookChainError,
+    originalToolCall: CallToolRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<CallToolErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processCallToolError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processCallToolError(
+      error,
+      originalToolCall,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for tools/list requests
+   */
+  async processListToolsError(
+    error: HookChainError,
+    originalRequest: ListToolsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListToolsErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processListToolsError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processListToolsError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for initialize requests
+   */
+  async processInitializeError(
+    error: HookChainError,
+    originalRequest: InitializeRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<InitializeErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processInitializeError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processInitializeError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for other requests
+   */
+  async processOtherError(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<OtherErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processOtherError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processOtherError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for target requests
+   */
+  async processTargetError(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<TargetErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processTargetError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processTargetError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for notifications
+   */
+  async processNotificationError(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<NotificationErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processNotificationError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processNotificationError(
+      error,
+      originalNotification,
+    );
+  }
+
+  /**
+   * Process errors for target notifications
+   */
+  async processTargetNotificationError(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<TargetNotificationErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processTargetNotificationError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processTargetNotificationError(
+      error,
+      originalNotification,
+    );
   }
 }
