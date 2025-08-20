@@ -55,10 +55,9 @@ export class RateLimitHook extends AbstractHook {
     // Check rate limit
     if (userLimits.count >= this.limitPerMinute) {
       const retryAfter = Math.ceil((userLimits.resetTime - now) / 1000); // seconds
-      return {
-        resultType: "abort",
-        reason: `Rate limit exceeded. Too many requests. Retry after ${retryAfter} seconds. Limit: ${this.limitPerMinute} per minute`,
-      };
+      throw new Error(
+        `Rate limit exceeded. Too many requests. Retry after ${retryAfter} seconds. Limit: ${this.limitPerMinute} per minute`,
+      );
     }
 
     // Increment counter and allow request

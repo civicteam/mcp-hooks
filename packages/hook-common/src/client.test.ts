@@ -156,57 +156,42 @@ describe("RemoteHookClient", () => {
       expect(result).toEqual(expectedResponse);
     });
 
-    it("should handle abort responses", async () => {
+    it("should propagate exceptions from hooks", async () => {
       const toolCall = toToolCall({
         name: "dangerous-tool",
         arguments: {},
         toolDefinition: undefined,
       });
 
-      const abortResponse: CallToolRequestHookResult = {
-        resultType: "abort",
-        reason: "Tool not allowed",
-      };
+      const error = new Error("Tool not allowed");
+      mockProcessCallToolRequest.mockRejectedValue(error);
 
-      mockProcessCallToolRequest.mockResolvedValue(abortResponse);
-
-      const result = await hookClient.processCallToolRequest(
-        toolCall,
-        mockRequestExtra,
-      );
-
-      expect(result).toEqual(abortResponse);
+      // The client should propagate errors from hooks
+      await expect(
+        hookClient.processCallToolRequest(toolCall, mockRequestExtra),
+      ).rejects.toThrow("Tool not allowed");
     });
 
-    it("should handle errors and return continue response", async () => {
+    it("should handle 'not implemented' errors and return continue response", async () => {
       const toolCall = toToolCall({
         name: "test-tool",
         arguments: {},
         toolDefinition: undefined,
       });
 
-      const error = new Error("Network error");
+      const error = new Error("processCallToolRequest not implemented");
       mockProcessCallToolRequest.mockRejectedValue(error);
-
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
 
       const result = await hookClient.processCallToolRequest(
         toolCall,
         mockRequestExtra,
       );
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Hook test-hook processCallToolRequest failed:",
-        error,
-      );
+      // Should silently continue for "not implemented" errors
       expect(result).toEqual({
         resultType: "continue",
         request: toolCall,
       });
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -315,23 +300,20 @@ describe("RemoteHookClient", () => {
         ],
       };
 
-      const abortResponse: CallToolResponseHookResult = {
-        resultType: "abort",
-        reason: "Sensitive data detected",
-      };
+      const error = new Error("Sensitive data detected");
+      mockProcessCallToolResult.mockRejectedValue(error);
 
-      mockProcessCallToolResult.mockResolvedValue(abortResponse);
-
-      const result = await hookClient.processCallToolResult(
-        toolResponse,
-        originalCallToolRequest,
-        mockRequestExtra,
-      );
-
-      expect(result).toEqual(abortResponse);
+      // The client should propagate errors from hooks
+      await expect(
+        hookClient.processCallToolResult(
+          toolResponse,
+          originalCallToolRequest,
+          mockRequestExtra,
+        ),
+      ).rejects.toThrow("Sensitive data detected");
     });
 
-    it("should handle errors and return continue response", async () => {
+    it("should handle 'not implemented' errors and return continue response", async () => {
       const originalCallToolRequest: CallToolRequest = toToolCall({
         name: "test-tool",
         arguments: {},
@@ -345,13 +327,9 @@ describe("RemoteHookClient", () => {
           },
         ],
       };
-      const error = new Error("Processing failed");
+      const error = new Error("processCallToolResult not implemented");
 
       mockProcessCallToolResult.mockRejectedValue(error);
-
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
 
       const result = await hookClient.processCallToolResult(
         toolResponse,
@@ -359,16 +337,11 @@ describe("RemoteHookClient", () => {
         mockRequestExtra,
       );
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Hook test-hook processCallToolResult failed:",
-        error,
-      );
+      // Should silently continue for "not implemented" errors
       expect(result).toEqual({
         resultType: "continue",
         response: toolResponse,
       });
-
-      consoleSpy.mockRestore();
     });
   });
 });

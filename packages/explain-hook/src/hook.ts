@@ -9,6 +9,7 @@ import {
   type CallToolRequestHookResult,
   type ListToolsResponseHookResult,
 } from "@civic/hook-common";
+import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import type {
   CallToolRequest,
   ListToolsRequest,
@@ -37,10 +38,9 @@ export class ExplainHook extends AbstractHook {
       typeof modifiedToolCall.params.arguments !== "object" ||
       modifiedToolCall.params.arguments === null
     ) {
-      return {
-        resultType: "abort",
-        reason: "Tool call must include arguments with a 'reason' parameter",
-      };
+      throw new Error(
+        "Tool call must include arguments with a 'reason' parameter",
+      );
     }
 
     const args = modifiedToolCall.params.arguments as Record<string, unknown>;
@@ -51,11 +51,8 @@ export class ExplainHook extends AbstractHook {
       !args.reason ||
       (typeof args.reason === "string" && args.reason.trim() === "")
     ) {
-      return {
-        resultType: "abort",
-        reason:
-          "Missing or empty 'reason' parameter. Please provide a justification for using this tool.",
-      };
+      // Throw an McpError with the expected error code -32001
+      throw new McpError(-32001, "Missing or empty 'reason' parameter");
     }
 
     // Log the reason before removing it

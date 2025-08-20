@@ -7,20 +7,28 @@ import type {
   Result,
 } from "@modelcontextprotocol/sdk/types.js";
 import type {
+  CallToolErrorHookResult,
   CallToolRequestHookResult,
   CallToolRequestWithContext,
   CallToolResponseHookResult,
   Hook,
+  HookChainError,
+  InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeRequestWithContext,
   InitializeResponseHookResult,
+  ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsRequestWithContext,
   ListToolsResponseHookResult,
+  NotificationErrorHookResult,
   NotificationHookResult,
+  OtherErrorHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
+  TargetErrorHookResult,
+  TargetNotificationErrorHookResult,
 } from "./types.js";
 
 /**
@@ -63,6 +71,18 @@ export abstract class AbstractHook implements Hook {
   }
 
   /**
+   * Process errors for tool calls.
+   * Default implementation continues with the error unchanged.
+   */
+  async processCallToolError(
+    error: HookChainError,
+    originalCallToolRequest: CallToolRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<CallToolErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
    * Process a tools/list request.
    * Default implementation passes through without modification.
    */
@@ -89,6 +109,18 @@ export abstract class AbstractHook implements Hook {
       resultType: "continue",
       response: response,
     };
+  }
+
+  /**
+   * Process errors for tools/list requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processListToolsError?(
+    error: HookChainError,
+    originalRequest: ListToolsRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListToolsErrorHookResult> {
+    return { resultType: "continue" };
   }
 
   /**
@@ -121,6 +153,18 @@ export abstract class AbstractHook implements Hook {
   }
 
   /**
+   * Process errors for initialize requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processInitializeError?(
+    error: HookChainError,
+    originalRequest: InitializeRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<InitializeErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
    * Process a request from the client NOT covered by a dedicated handler.
    * Default implementation passes through without modification.
    */
@@ -147,6 +191,18 @@ export abstract class AbstractHook implements Hook {
       resultType: "continue",
       response: response,
     };
+  }
+
+  /**
+   * Process errors for other requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processOtherError?(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<OtherErrorHookResult> {
+    return { resultType: "continue" };
   }
 
   /**
@@ -179,6 +235,18 @@ export abstract class AbstractHook implements Hook {
   }
 
   /**
+   * Process errors for target requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processTargetError?(
+    error: HookChainError,
+    originalRequest: Request,
+    originalRequestExtra: RequestExtra,
+  ): Promise<TargetErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
    * Process a notification.
    * Default implementation passes through without modification.
    */
@@ -192,6 +260,17 @@ export abstract class AbstractHook implements Hook {
   }
 
   /**
+   * Process errors for notifications.
+   * Default implementation continues with the error unchanged.
+   */
+  async processNotificationError?(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<NotificationErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
    * Process a target notification.
    * Default implementation passes through without modification.
    */
@@ -202,5 +281,16 @@ export abstract class AbstractHook implements Hook {
       resultType: "continue",
       notification: notification,
     };
+  }
+
+  /**
+   * Process errors for target notifications.
+   * Default implementation continues with the error unchanged.
+   */
+  async processTargetNotificationError?(
+    error: HookChainError,
+    originalNotification: Notification,
+  ): Promise<TargetNotificationErrorHookResult> {
+    return { resultType: "continue" };
   }
 }

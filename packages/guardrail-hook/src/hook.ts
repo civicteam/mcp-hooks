@@ -44,10 +44,9 @@ export class GuardrailHook implements Hook {
       name.toLowerCase().includes("delete") ||
       name.toLowerCase().includes("remove")
     ) {
-      return {
-        resultType: "abort",
-        reason: `Tool call to '${name}' was blocked by guardrails: destructive operations are not allowed`,
-      };
+      throw new Error(
+        `Tool call to '${name}' was blocked by guardrails: destructive operations are not allowed`,
+      );
     }
 
     // Check for sensitive data in arguments (simple example)
@@ -57,10 +56,9 @@ export class GuardrailHook implements Hook {
       argsStr.includes("secret") ||
       argsStr.includes("token")
     ) {
-      return {
-        resultType: "abort",
-        reason: `Tool call to '${name}' was blocked by guardrails: sensitive data detected in arguments`,
-      };
+      throw new Error(
+        `Tool call to '${name}' was blocked by guardrails: sensitive data detected in arguments`,
+      );
     }
 
     // Example: Domain validation for fetch-docs MCP server
@@ -84,16 +82,14 @@ export class GuardrailHook implements Hook {
           if (
             !this.allowedDomains.some((domain) => url.hostname.endsWith(domain))
           ) {
-            return {
-              resultType: "abort",
-              reason: `Tool call to '${name}' was blocked by guardrails: URL domain '${url.hostname}' is not in the allowed domains list`,
-            };
+            throw new Error(
+              `Tool call to '${name}' was blocked by guardrails: URL domain '${url.hostname}' is not in the allowed domains list`,
+            );
           }
         } catch (error) {
-          return {
-            resultType: "abort",
-            reason: `Tool call to '${name}' was blocked by guardrails: invalid URL provided`,
-          };
+          throw new Error(
+            `Tool call to '${name}' was blocked by guardrails: invalid URL provided`,
+          );
         }
       }
     }
@@ -140,10 +136,9 @@ export class GuardrailHook implements Hook {
     // Check if any sensitive patterns are found
     for (const pattern of sensitivePatterns) {
       if (pattern.test(responseStr)) {
-        return {
-          resultType: "abort",
-          reason: `Response from tool '${name}' was blocked by guardrails: sensitive data detected in response`,
-        };
+        throw new Error(
+          `Response from tool '${name}' was blocked by guardrails: sensitive data detected in response`,
+        );
       }
     }
 
