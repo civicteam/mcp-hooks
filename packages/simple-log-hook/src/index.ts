@@ -10,6 +10,7 @@ import {
   AbstractHook,
   type CallToolRequestHookResult,
   type CallToolResponseHookResult,
+  type RequestExtra,
   startHookServer,
 } from "@civic/hook-common";
 import type {
@@ -30,21 +31,33 @@ class SimpleLogHook extends AbstractHook {
 
   async processCallToolRequest(
     request: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
-    console.log(`[REQUEST] ${request.params.name}`, request.params.arguments);
+    console.log(
+      `[REQUEST ${requestExtra.requestId}] ${request.params.name}`,
+      request.params.arguments,
+    );
 
     // Call parent implementation to continue with unmodified tool call
-    return super.processCallToolRequest(request);
+    return super.processCallToolRequest(request, requestExtra);
   }
 
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
-    console.log(`[RESPONSE] ${originalCallToolRequest.params.name}`, response);
+    console.log(
+      `[RESPONSE ${requestExtra.requestId}] ${originalCallToolRequest.params.name}`,
+      response,
+    );
 
     // Call parent implementation to continue with unmodified response
-    return super.processCallToolResult(response, originalCallToolRequest);
+    return super.processCallToolResult(
+      response,
+      originalCallToolRequest,
+      requestExtra,
+    );
   }
 }
 

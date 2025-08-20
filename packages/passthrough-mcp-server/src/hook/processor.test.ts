@@ -5,6 +5,7 @@ import type {
   Hook,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  RequestExtra,
 } from "@civic/hook-common";
 import type {
   CallToolRequest,
@@ -19,6 +20,12 @@ import {
   processRequestThroughHooks,
   processResponseThroughHooks,
 } from "./processor.js";
+
+// Mock RequestExtra for testing
+const mockRequestExtra: RequestExtra = {
+  requestId: "test-request-id",
+  sessionId: "test-session-id",
+};
 
 // Helper to create a tool call request
 const createToolCall = (
@@ -55,6 +62,7 @@ class MockHook implements Hook {
   // Default implementations that satisfy the interface
   async processCallToolRequest(
     request: CallToolRequestWithContext,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
@@ -62,7 +70,23 @@ class MockHook implements Hook {
   async processCallToolResult(
     response: CallToolResult,
     originalRequest: CallToolRequestWithContext,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
+    return { resultType: "continue", response };
+  }
+
+  async processListToolsRequest?(
+    request: ListToolsRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListToolsRequestHookResult> {
+    return { resultType: "continue", request };
+  }
+
+  async processListToolsResult?(
+    response: ListToolsResult,
+    originalRequest: ListToolsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListToolsResponseHookResult> {
     return { resultType: "continue", response };
   }
 }
@@ -80,7 +104,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, null, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, null, "processCallToolRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook).toBe(null);
@@ -106,11 +130,14 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("test-hook");
-        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(toolCall);
+        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(
+          toolCall,
+          mockRequestExtra,
+        );
       });
 
       it("should handle hook rejection", async () => {
@@ -130,7 +157,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("security-hook");
@@ -165,7 +192,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("hook2");
@@ -196,7 +223,12 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(originalCallToolRequest, chain.head, "processCallToolRequest");
+        >(
+          originalCallToolRequest,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolRequest",
+        );
 
         expect(result.resultType).toBe("continue");
         if (result.resultType === "continue") {
@@ -225,7 +257,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(result.lastProcessedHook?.name).toBe("hook2");
         expect(hook2.processCallToolRequest).toHaveBeenCalled();
@@ -252,7 +284,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(result.resultType).toBe("respond");
         expect(result.lastProcessedHook?.name).toBe("cache-hook");
@@ -333,7 +365,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(toolCall, chain.head, "processCallToolRequest");
+        >(toolCall, mockRequestExtra, chain.head, "processCallToolRequest");
 
         expect(requestResult.resultType).toBe("respond");
         expect(requestResult.lastProcessedHook?.name).toBe("hook2");
@@ -348,6 +380,7 @@ describe("Hook Processor", () => {
         >(
           directResponse,
           toolCall,
+          mockRequestExtra,
           requestResult.lastProcessedHook,
           "processCallToolResult",
         );
@@ -388,11 +421,14 @@ describe("Hook Processor", () => {
           ListToolsRequest,
           ListToolsResult,
           "processListToolsRequest"
-        >(request, chain.head, "processListToolsRequest");
+        >(request, mockRequestExtra, chain.head, "processListToolsRequest");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("test-hook");
-        expect(mockHook.processListToolsRequest).toHaveBeenCalledWith(request);
+        expect(mockHook.processListToolsRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
       });
     });
   });
@@ -409,7 +445,7 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, toolCall, null, "processCallToolResult");
+        >(response, toolCall, mockRequestExtra, null, "processCallToolResult");
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook).toBe(null);
@@ -458,7 +494,13 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, toolCall, chain.tail, "processCallToolResult");
+        >(
+          response,
+          toolCall,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolResult",
+        );
 
         expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
       });
@@ -480,7 +522,13 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, toolCall, chain.head, "processCallToolResult");
+        >(
+          response,
+          toolCall,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+        );
 
         expect(result.resultType).toBe("abort");
         expect(result.lastProcessedHook?.name).toBe("filter-hook");
@@ -509,7 +557,13 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(originalResponse, toolCall, chain.head, "processCallToolResult");
+        >(
+          originalResponse,
+          toolCall,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+        );
 
         expect(result.resultType).toBe("continue");
         expect(result.lastProcessedHook?.name).toBe("modifier-hook");
@@ -547,12 +601,19 @@ describe("Hook Processor", () => {
           ListToolsRequest,
           ListToolsResult,
           "processListToolsResult"
-        >(response, request, chain.head, "processListToolsResult");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processListToolsResult",
+        );
 
         expect(result.resultType).toBe("continue");
         expect(mockHook.processListToolsResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
       });
     });
@@ -570,7 +631,7 @@ describe("Hook Processor", () => {
         CallToolRequest,
         CallToolResult,
         "processCallToolRequest"
-      >(toolCall, null, "processCallToolRequest");
+      >(toolCall, mockRequestExtra, null, "processCallToolRequest");
 
       expect(requestResult.resultType).toBe("continue");
       expect(requestResult.lastProcessedHook).toBe(null);
@@ -586,6 +647,7 @@ describe("Hook Processor", () => {
       >(
         response,
         toolCall,
+        mockRequestExtra,
         requestResult.lastProcessedHook,
         "processCallToolResult",
       );
@@ -634,16 +696,26 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(request, chain.tail, "processCallToolRequest", "reverse");
+        >(
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolRequest",
+          "reverse",
+        );
 
         expect(result.resultType).toBe("continue");
 
         // hook2 should be called first (reverse order)
-        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
         expect(hook1.processCallToolRequest).toHaveBeenCalledWith(
           expect.objectContaining({
             params: expect.objectContaining({ hook2: true }),
           }),
+          mockRequestExtra,
         );
 
         // Final request should have both modifications
@@ -670,10 +742,19 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(request, chain.tail, "processCallToolRequest", "reverse");
+        >(
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolRequest",
+          "reverse",
+        );
 
         expect(result.resultType).toBe("continue");
-        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(mockHook.processCallToolRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
         if (result.resultType === "continue") {
           expect(result.request.params).toHaveProperty("modified", true);
         }
@@ -699,11 +780,20 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(request, chain.tail, "processCallToolRequest", "reverse");
+        >(
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolRequest",
+          "reverse",
+        );
 
         expect(result.resultType).toBe("abort");
         // hook2 should be called first and abort
-        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
         // hook1 should not be called due to abort
         expect(hook1.processCallToolRequest).not.toHaveBeenCalled();
         if (result.resultType === "abort") {
@@ -729,10 +819,19 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(request, chain.tail, "processCallToolRequest", "reverse");
+        >(
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolRequest",
+          "reverse",
+        );
 
         expect(result.resultType).toBe("respond");
-        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
         expect(hook1.processCallToolRequest).not.toHaveBeenCalled();
         if (result.resultType === "respond") {
           expect(result.response).toEqual(mockResponse);
@@ -759,10 +858,19 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolRequest"
-        >(request, chain.tail, "processCallToolRequest", "reverse");
+        >(
+          request,
+          mockRequestExtra,
+          chain.tail,
+          "processCallToolRequest",
+          "reverse",
+        );
 
         expect(result.resultType).toBe("continue");
-        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(request);
+        expect(hook2.processCallToolRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
         if (result.resultType === "continue") {
           expect(result.request.params).toHaveProperty("hook2", true);
         }
@@ -809,7 +917,14 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, request, chain.head, "processCallToolResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("continue");
 
@@ -817,12 +932,14 @@ describe("Hook Processor", () => {
         expect(hook1.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           expect.objectContaining({
             content: [{ type: "text", text: "modified-by-hook1" }],
           }),
           request,
+          mockRequestExtra,
         );
 
         // Final response should have hook2's modification
@@ -853,12 +970,20 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, request, chain.head, "processCallToolResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("continue");
         expect(mockHook.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         if (result.resultType === "continue") {
           expect(result.response.content).toEqual([
@@ -887,13 +1012,21 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, request, chain.head, "processCallToolResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("abort");
         // hook1 should be called first and abort
         expect(hook1.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         // hook2 should not be called due to abort
         expect(hook2.processCallToolResult).not.toHaveBeenCalled();
@@ -925,12 +1058,20 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, request, chain.head, "processCallToolResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processCallToolResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("continue");
         expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         if (result.resultType === "continue") {
           expect(result.response.content).toEqual([
@@ -949,7 +1090,14 @@ describe("Hook Processor", () => {
           CallToolRequest,
           CallToolResult,
           "processCallToolResult"
-        >(response, request, null, "processCallToolResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          null,
+          "processCallToolResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("continue");
         if (result.resultType === "continue") {
@@ -995,6 +1143,7 @@ describe("Hook Processor", () => {
         >(
           response,
           request,
+          mockRequestExtra,
           chain.head?.next,
           "processCallToolResult",
           "forward",
@@ -1007,6 +1156,7 @@ describe("Hook Processor", () => {
         expect(hook2.processCallToolResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         expect(hook3.processCallToolResult).toHaveBeenCalled();
         if (result.resultType === "continue") {
@@ -1040,12 +1190,20 @@ describe("Hook Processor", () => {
           ListToolsRequest,
           ListToolsResult,
           "processListToolsResult"
-        >(response, request, chain.head, "processListToolsResult", "forward");
+        >(
+          response,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processListToolsResult",
+          "forward",
+        );
 
         expect(result.resultType).toBe("continue");
         expect(hook.processListToolsResult).toHaveBeenCalledWith(
           response,
           request,
+          mockRequestExtra,
         );
         if (result.resultType === "continue") {
           expect(result.response.tools).toHaveLength(2);

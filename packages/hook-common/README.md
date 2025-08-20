@@ -65,38 +65,53 @@ type ToolCallResponseHookResult =
 
 ### Hook Interface
 
-The interface for implementing hooks:
+The interface for implementing hooks (v0.4.1+):
 
 ```typescript
+interface RequestExtra {
+  requestId: string | number;
+  sessionId?: string;
+}
+
 interface Hook {
   get name(): string;
-  processCallToolRequest?(request: CallToolRequest): Promise<ToolCallRequestHookResult>;
+  
+  // Request processing methods - receive RequestExtra as second parameter
+  processCallToolRequest?(
+    request: CallToolRequest, 
+    requestExtra: RequestExtra
+  ): Promise<CallToolRequestHookResult>;
+  
+  processListToolsRequest?(
+    request: ListToolsRequest,
+    requestExtra: RequestExtra
+  ): Promise<ListToolsRequestHookResult>;
+  
+  processInitializeRequest?(
+    request: InitializeRequest,
+    requestExtra: RequestExtra
+  ): Promise<InitializeRequestHookResult>;
+  
+  // Response processing methods - receive RequestExtra as third parameter
   processCallToolResult?(
     response: CallToolResult,
-    originalCallToolRequest: CallToolRequest
-  ): Promise<ToolCallResponseHookResult>;
-  processListToolsRequest?(request: ListToolsRequest): Promise<ListToolsRequestHookResult>;
+    originalCallToolRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolResponseHookResult>;
+  
   processListToolsResult?(
     response: ListToolsResult,
-    originalRequest: ListToolsRequest
+    originalRequest: ListToolsRequest,
+    requestExtra: RequestExtra
   ): Promise<ListToolsResponseHookResult>;
-  processToolCallTransportError?(
-    error: TransportError,
-    originalCallToolRequest: CallToolRequest
-  ): Promise<ToolCallTransportErrorHookResult>;
-  processToolsListTransportError?(
-    error: TransportError,
-    originalRequest: ListToolsRequest
-  ): Promise<ListToolsTransportErrorHookResult>;
-  processInitializeRequest?(request: InitializeRequest): Promise<InitializeRequestHookResult>;
+  
   processInitializeResult?(
     response: InitializeResult,
-    originalRequest: InitializeRequest
+    originalRequest: InitializeRequest,
+    requestExtra: RequestExtra
   ): Promise<InitializeResponseHookResult>;
-  processInitializeTransportError?(
-    error: TransportError,
-    originalRequest: InitializeRequest
-  ): Promise<InitializeTransportErrorHookResult>;
+  
+  // ... other methods follow the same pattern
 }
 ```
 
@@ -106,24 +121,34 @@ To create a custom hook, extend the `AbstractHook` class:
 
 ```typescript
 import { AbstractHook } from '@civic/hook-common';
-import type { CallToolRequest, ToolCallRequestHookResult } from '@civic/hook-common';
+import type { 
+  CallToolRequest, 
+  CallToolResult,
+  RequestExtra,
+  CallToolRequestHookResult,
+  CallToolResponseHookResult 
+} from '@civic/hook-common';
 
 export class MyCustomHook extends AbstractHook {
   get name(): string {
     return 'my-custom-hook';
   }
 
-  async processCallToolRequest(request: CallToolRequest): Promise<ToolCallRequestHookResult> {
-    // Analyze the tool call
-    console.log(`Processing request for tool: ${toolCall.params.name}`);
+  async processCallToolRequest(
+    request: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolRequestHookResult> {
+    // Use requestId for tracking
+    console.log(`[${requestExtra.requestId}] Processing request for tool: ${request.params.name}`);
+    console.log(`Session ID: ${requestExtra.sessionId}`);
     
     // Optionally modify the tool call
-    const modifiedToolCall = {
-      ...toolCall,
+    const modifiedRequest = {
+      ...request,
       params: {
-        ...toolCall.params,
+        ...request.params,
         arguments: {
-          ...toolCall.params.arguments,
+          ...request.params.arguments,
           injected: 'value'
         }
       }
@@ -132,16 +157,17 @@ export class MyCustomHook extends AbstractHook {
     // Return response
     return {
       resultType: 'continue',
-      request: modifiedToolCall
+      request: modifiedRequest
     };
   }
 
   async processCallToolResult(
     response: CallToolResult,
-    originalCallToolRequest: CallToolRequest
-  ): Promise<ToolCallResponseHookResult> {
-    // Process the tool's response
-    console.log(`Processing response for tool: ${originalCallToolRequest.params.name}`);
+    originalCallToolRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolResponseHookResult> {
+    // Use the same requestId to correlate with the request
+    console.log(`[${requestExtra.requestId}] Processing response for tool: ${originalCallToolRequest.params.name}`);
     
     // Optionally modify the response
     return {
@@ -151,6 +177,21 @@ export class MyCustomHook extends AbstractHook {
   }
 }
 ```
+
+## Request Tracking with RequestExtra (v0.4.1+)
+
+The `RequestExtra` parameter enables powerful request tracking capabilities:
+
+- **Request ID**: Unique identifier for each request, enabling correlation between request and response processing
+- **Session ID**: Consistent identifier throughout a client session, useful for session-based analytics
+
+### Use Cases
+
+1. **Request/Response Correlation**: Match responses to their originating requests without maintaining state
+2. **Distributed Tracing**: Track requests across multiple hooks and services
+3. **Rate Limiting**: Implement per-session or per-request rate limiting
+4. **Audit Logging**: Create comprehensive audit trails with request/session context
+5. **Performance Monitoring**: Measure processing time for each request
 
 ## Hook Execution Flow
 

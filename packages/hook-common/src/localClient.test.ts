@@ -8,7 +8,14 @@ import { LocalHookClient } from "./localClient.js";
 import type {
   CallToolRequestHookResult,
   CallToolResponseHookResult,
+  RequestExtra,
 } from "./types.js";
+
+// Test helper for creating a mock RequestExtra
+const mockRequestExtra: RequestExtra = {
+  requestId: "test-request-id",
+  sessionId: "test-session-id",
+};
 
 // Test hook that logs to an array
 class TestLoggingHook extends AbstractHook {
@@ -20,6 +27,7 @@ class TestLoggingHook extends AbstractHook {
 
   async processCallToolRequest(
     request: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     this.logs.push(`REQUEST: ${request.params.name}`);
     return {
@@ -31,6 +39,7 @@ class TestLoggingHook extends AbstractHook {
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequest,
+    originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     this.logs.push(`RESPONSE: ${originalCallToolRequest.params.name}`);
     return {
@@ -48,6 +57,7 @@ class TestValidationHook extends AbstractHook {
 
   async processCallToolRequest(
     request: CallToolRequest,
+    requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     if (request.params.name.includes("dangerous")) {
       return {
@@ -82,7 +92,10 @@ describe("LocalHookClient", () => {
       },
     };
 
-    const response = await client.processCallToolRequest(request);
+    const response = await client.processCallToolRequest(
+      request,
+      mockRequestExtra,
+    );
 
     expect(response.resultType).toBe("continue");
     expect((response as any).request).toEqual(request);
@@ -110,7 +123,11 @@ describe("LocalHookClient", () => {
       ],
     };
 
-    const response = await client.processCallToolResult(toolResponse, request);
+    const response = await client.processCallToolResult(
+      toolResponse,
+      request,
+      mockRequestExtra,
+    );
 
     expect(response.resultType).toBe("continue");
     expect((response as any).response).toEqual(toolResponse);
@@ -129,7 +146,10 @@ describe("LocalHookClient", () => {
       },
     };
 
-    const response = await client.processCallToolRequest(request);
+    const response = await client.processCallToolRequest(
+      request,
+      mockRequestExtra,
+    );
 
     expect(response.resultType).toBe("abort");
     expect((response as any).reason).toBe("Dangerous operation blocked");
@@ -142,7 +162,10 @@ describe("LocalHookClient", () => {
         return "ErrorHook";
       }
 
-      async processCallToolRequest(): Promise<CallToolRequestHookResult> {
+      async processCallToolRequest(
+        request: CallToolRequest,
+        requestExtra: RequestExtra,
+      ): Promise<CallToolRequestHookResult> {
         throw new Error("Hook error");
       }
     }
@@ -159,8 +182,8 @@ describe("LocalHookClient", () => {
     };
 
     // Should propagate the error
-    await expect(client.processCallToolRequest(request)).rejects.toThrow(
-      "Hook error",
-    );
+    await expect(
+      client.processCallToolRequest(request, mockRequestExtra),
+    ).rejects.toThrow("Hook error");
   });
 });

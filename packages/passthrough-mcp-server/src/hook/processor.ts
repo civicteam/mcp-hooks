@@ -20,6 +20,7 @@ import type {
   MethodsWithRequestType,
   MethodsWithResponseType,
   NotificationHookResult,
+  RequestExtra,
 } from "@civic/hook-common";
 import type { Notification } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../logger/logger.js";
@@ -46,6 +47,7 @@ export async function processRequestThroughHooks<
   TMethodName extends MethodsWithRequestType<TRequest>,
 >(
   request: TRequest,
+  requestExtra: RequestExtra,
   startHook: LinkedListHook | null, // null: empty hook-chain, can be head or tail
   methodName: TMethodName,
   direction: "forward" | "reverse" = "forward", // forward: head->tail, reverse: tail->head
@@ -85,8 +87,9 @@ export async function processRequestThroughHooks<
     const hookResult = await (
       hookMethod as (
         request: TRequest,
+        requestExtra: RequestExtra,
       ) => Promise<GenericRequestHookResult<TRequest, TResponse>>
-    ).call(hook, currentRequest);
+    ).call(hook, currentRequest, requestExtra);
 
     if (hookResult.resultType === "continue") {
       // Hook may have modified the request - use the updated version
@@ -145,6 +148,7 @@ export async function processResponseThroughHooks<
 >(
   response: TResponse,
   originalRequest: TRequest,
+  originalRequestExtra: RequestExtra,
   startHook: LinkedListHook | null, // null : empty hook-chain
   methodName: TMethodName,
   direction: "forward" | "reverse" = "reverse", // forward: head->tail, reverse: tail->head
@@ -173,8 +177,9 @@ export async function processResponseThroughHooks<
       hookMethod as (
         response: TResponse,
         request: TRequest,
+        requestExtra: RequestExtra,
       ) => Promise<GenericResponseHookResult<TResponse>>
-    ).call(hook, currentResponse, originalRequest);
+    ).call(hook, currentResponse, originalRequest, originalRequestExtra);
 
     if (hookResult.resultType === "continue") {
       currentResponse = hookResult.response;

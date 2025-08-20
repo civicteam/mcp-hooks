@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-08-19
+
+### Added
+
+- **BREAKING**: Added `RequestExtra` parameter to all Hook interface methods
+  - New parameter provides `requestId` and optional `sessionId` for request tracking
+  - Enables hooks to correlate requests and responses using unique identifiers
+  - Supports session-based tracking and monitoring capabilities
+- Added `RequestExtra` type with Zod schema validation
+- Added `RequestIdSchema` supporting both string and number request IDs
+
+### Changed
+
+- **BREAKING**: All Hook interface methods now require `RequestExtra` as a parameter:
+  - Request processing methods: Second parameter after the request
+  - Response processing methods: Third parameter after response and original request
+  - Notification processing methods: Second parameter after the notification
+- Updated `AbstractHook` base class with `RequestExtra` parameter in all methods
+- Updated `LocalHookClient` to pass `RequestExtra` to hook methods
+- Updated `RemoteHookClient` (tRPC) to include `RequestExtra` in RPC calls
+- Updated router definitions to include `RequestExtra` in input schemas
+- Fixed TypeScript type helpers (`MethodsWithRequestType`, `MethodsWithResponseType`) to handle new parameter structure
+
+### Technical Details
+
+- Maintains backward compatibility with existing hook result types
+- Request IDs enable stateless request/response correlation
+- Session IDs support multi-session tracking and isolation
+- Full TypeScript support with proper type inference
+
 ## [0.4.0] - 2025-08-14
 
 ### Changed
