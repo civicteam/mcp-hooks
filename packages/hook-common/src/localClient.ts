@@ -9,9 +9,15 @@ import type {
   CallToolResult,
   InitializeRequest,
   InitializeResult,
+  ListResourceTemplatesRequest,
+  ListResourceTemplatesResult,
+  ListResourcesRequest,
+  ListResourcesResult,
   ListToolsRequest,
   ListToolsResult,
   Notification,
+  ReadResourceRequest,
+  ReadResourceResult,
   Request,
   Result,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -24,12 +30,21 @@ import type {
   InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListResourceTemplatesErrorHookResult,
+  ListResourceTemplatesRequestHookResult,
+  ListResourceTemplatesResponseHookResult,
+  ListResourcesErrorHookResult,
+  ListResourcesRequestHookResult,
+  ListResourcesResponseHookResult,
   ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   NotificationErrorHookResult,
   NotificationHookResult,
   OtherErrorHookResult,
+  ReadResourceErrorHookResult,
+  ReadResourceRequestHookResult,
+  ReadResourceResponseHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
@@ -411,6 +426,189 @@ export class LocalHookClient implements Hook {
     return await this.hook.processTargetNotificationError(
       error,
       originalNotification,
+    );
+  }
+
+  /**
+   * Process a resources/list request through the hook
+   */
+  async processListResourcesRequest(
+    request: ListResourcesRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourcesRequestHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processListResourcesRequest) {
+      return {
+        resultType: "continue",
+        request: request,
+      };
+    }
+    return await this.hook.processListResourcesRequest(request, requestExtra);
+  }
+
+  /**
+   * Process a resources/list response through the hook
+   */
+  async processListResourcesResult(
+    response: ListResourcesResult,
+    originalRequest: ListResourcesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesResponseHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processListResourcesResult) {
+      return {
+        resultType: "continue",
+        response: response,
+      };
+    }
+    return await this.hook.processListResourcesResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for resources/list requests
+   */
+  async processListResourcesError(
+    error: HookChainError,
+    originalRequest: ListResourcesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processListResourcesError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processListResourcesError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process a resources/templates/list request through the hook
+   */
+  async processListResourceTemplatesRequest(
+    request: ListResourceTemplatesRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesRequestHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processListResourceTemplatesRequest) {
+      return {
+        resultType: "continue",
+        request: request,
+      };
+    }
+    return await this.hook.processListResourceTemplatesRequest(
+      request,
+      requestExtra,
+    );
+  }
+
+  /**
+   * Process a resources/templates/list response through the hook
+   */
+  async processListResourceTemplatesResult(
+    response: ListResourceTemplatesResult,
+    originalRequest: ListResourceTemplatesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesResponseHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processListResourceTemplatesResult) {
+      return {
+        resultType: "continue",
+        response: response,
+      };
+    }
+    return await this.hook.processListResourceTemplatesResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for resources/templates/list requests
+   */
+  async processListResourceTemplatesError(
+    error: HookChainError,
+    originalRequest: ListResourceTemplatesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processListResourceTemplatesError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processListResourceTemplatesError(
+      error,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process a resources/read request through the hook
+   */
+  async processReadResourceRequest(
+    request: ReadResourceRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ReadResourceRequestHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processReadResourceRequest) {
+      return {
+        resultType: "continue",
+        request: request,
+      };
+    }
+    return await this.hook.processReadResourceRequest(request, requestExtra);
+  }
+
+  /**
+   * Process a resources/read response through the hook
+   */
+  async processReadResourceResult(
+    response: ReadResourceResult,
+    originalRequest: ReadResourceRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceResponseHookResult> {
+    // Check if hook supports this operation
+    if (!this.hook.processReadResourceResult) {
+      return {
+        resultType: "continue",
+        response: response,
+      };
+    }
+    return await this.hook.processReadResourceResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for resources/read requests
+   */
+  async processReadResourceError(
+    error: HookChainError,
+    originalRequest: ReadResourceRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceErrorHookResult> {
+    // Check if hook supports error processing
+    if (!this.hook.processReadResourceError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processReadResourceError(
+      error,
+      originalRequest,
+      originalRequestExtra,
     );
   }
 }

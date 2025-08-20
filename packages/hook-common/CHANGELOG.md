@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2025-01-20
+
+### Added
+
+- **Resource Hook Methods**: Added comprehensive resource support to Hook interface
+  - `processListResourcesRequest`: Process resource listing requests
+  - `processListResourcesResponse`: Process resource listing responses
+  - `processListResourcesError`: Process resource listing errors
+  - `processListResourceTemplatesRequest`: Process resource template listing requests
+  - `processListResourceTemplatesResponse`: Process resource template listing responses
+  - `processListResourceTemplatesError`: Process resource template listing errors
+  - `processReadResourceRequest`: Process resource reading requests
+  - `processReadResourceResponse`: Process resource reading responses
+  - `processReadResourceError`: Process resource reading errors
+- **Resource Types and Schemas**: Added MCP SDK resource types
+  - Resource listing request/response types with context
+  - Resource template listing request/response types with context
+  - Resource reading request/response types with context
+  - Comprehensive Zod schemas for all resource operations
+- **Resource Hook Result Types**: New result types for resource processing
+  - `ListResourcesRequestHookResult`: Result type for resource list request processing
+  - `ListResourcesResponseHookResult`: Result type for resource list response processing
+  - `ListResourcesErrorHookResult`: Result type for resource list error processing
+  - Similar result types for resource templates and resource reading
+
+### Changed
+
+- Updated `AbstractHook` to include default implementations for all resource methods
+- Enhanced `LocalHookClient` to handle resource processing methods
+- Updated `RemoteHookClient` to support resource operations over tRPC
+- Extended router definitions to include resource processing endpoints
+- Enhanced type helpers to support resource method discovery
+
+### Technical Details
+
+- Full support for MCP resource operations including listing, templates, and reading
+- Resource hooks follow the same pattern as existing tool and initialization hooks
+- Maintains backward compatibility with existing hook implementations
+- Full TypeScript support with proper type inference for resource handling
+
 ## [0.4.2] - 2025-01-20
 
 ### Added

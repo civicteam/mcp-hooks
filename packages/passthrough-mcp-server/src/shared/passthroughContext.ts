@@ -26,12 +26,24 @@ import {
   InitializeRequestSchema,
   type InitializeResult,
   InitializeResultSchema,
+  type ListResourceTemplatesRequest,
+  ListResourceTemplatesRequestSchema,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
+  type ListResourcesRequest,
+  ListResourcesRequestSchema,
+  type ListResourcesResult,
+  ListResourcesResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
   ListToolsResultSchema,
   McpError,
   type Notification,
+  type ReadResourceRequest,
+  ReadResourceRequestSchema,
+  type ReadResourceResult,
+  ReadResourceResultSchema,
   type Request,
   type Result,
   ResultSchema,
@@ -196,6 +208,21 @@ export class PassthroughContext {
     this._passthroughServer.setRequestHandler(
       CallToolRequestSchema,
       this._onServerCallToolRequest.bind(this),
+    );
+
+    this._passthroughServer.setRequestHandler(
+      ListResourcesRequestSchema,
+      this._onServerListResourcesRequest.bind(this),
+    );
+
+    this._passthroughServer.setRequestHandler(
+      ListResourceTemplatesRequestSchema,
+      this._onServerListResourceTemplatesRequest.bind(this),
+    );
+
+    this._passthroughServer.setRequestHandler(
+      ReadResourceRequestSchema,
+      this._onServerReadResourceRequest.bind(this),
     );
 
     this._passthroughServer.onclose = this._onServerClose.bind(this);
@@ -443,6 +470,60 @@ export class PassthroughContext {
       "processCallToolRequest",
       "processCallToolResult",
       "processCallToolError",
+    );
+  }
+
+  private async _onServerListResourcesRequest(
+    request: ListResourcesRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<ListResourcesResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
+    return this.processServerRequest(
+      request,
+      requestExtra,
+      ListResourcesResultSchema,
+      "processListResourcesRequest",
+      "processListResourcesResult",
+      "processListResourcesError",
+    );
+  }
+
+  private async _onServerListResourceTemplatesRequest(
+    request: ListResourceTemplatesRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<ListResourceTemplatesResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
+    return this.processServerRequest(
+      request,
+      requestExtra,
+      ListResourceTemplatesResultSchema,
+      "processListResourceTemplatesRequest",
+      "processListResourceTemplatesResult",
+      "processListResourceTemplatesError",
+    );
+  }
+
+  private async _onServerReadResourceRequest(
+    request: ReadResourceRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<ReadResourceResult> {
+    const requestExtra: RequestExtra = {
+      requestId: requestHandlerExtra.requestId,
+      sessionId: requestHandlerExtra.sessionId,
+    };
+    return this.processServerRequest(
+      request,
+      requestExtra,
+      ReadResourceResultSchema,
+      "processReadResourceRequest",
+      "processReadResourceResult",
+      "processReadResourceError",
     );
   }
 

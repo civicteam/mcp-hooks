@@ -3,9 +3,15 @@ import type {
   CallToolRequest,
   InitializeRequest,
   InitializeResult,
+  ListResourceTemplatesRequest,
+  ListResourceTemplatesResult,
+  ListResourcesRequest,
+  ListResourcesResult,
   ListToolsRequest,
   ListToolsResult,
   Notification,
+  ReadResourceRequest,
+  ReadResourceResult,
   Request,
   Result,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -21,12 +27,21 @@ import type {
   InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListResourceTemplatesErrorHookResult,
+  ListResourceTemplatesRequestHookResult,
+  ListResourceTemplatesResponseHookResult,
+  ListResourcesErrorHookResult,
+  ListResourcesRequestHookResult,
+  ListResourcesResponseHookResult,
   ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
   NotificationErrorHookResult,
   NotificationHookResult,
   OtherErrorHookResult,
+  ReadResourceErrorHookResult,
+  ReadResourceRequestHookResult,
+  ReadResourceResponseHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
@@ -435,6 +450,220 @@ export class RemoteHookClient implements Hook {
         clientError,
         this.name,
         "processTargetNotificationError",
+        {
+          resultType: "continue" as const,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process a resources/list request through the hook
+   */
+  async processListResourcesRequest(
+    request: ListResourcesRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourcesRequestHookResult> {
+    try {
+      return await this.client.processListResourcesRequest.mutate({
+        request,
+        requestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processListResourcesRequest", {
+        resultType: "continue" as const,
+        request: request,
+      });
+    }
+  }
+
+  /**
+   * Process a resources/list response through the hook
+   */
+  async processListResourcesResult(
+    response: ListResourcesResult,
+    originalRequest: ListResourcesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesResponseHookResult> {
+    try {
+      return await this.client.processListResourcesResult.mutate({
+        response,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processListResourcesResult", {
+        resultType: "continue" as const,
+        response: response,
+      });
+    }
+  }
+
+  /**
+   * Process errors for resources/list requests
+   */
+  async processListResourcesError(
+    error: HookChainError,
+    originalRequest: ListResourcesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesErrorHookResult> {
+    try {
+      return await this.client.processListResourcesError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processListResourcesError",
+        {
+          resultType: "continue" as const,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process a resources/templates/list request through the hook
+   */
+  async processListResourceTemplatesRequest(
+    request: ListResourceTemplatesRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesRequestHookResult> {
+    try {
+      return await this.client.processListResourceTemplatesRequest.mutate({
+        request,
+        requestExtra,
+      });
+    } catch (error) {
+      return handleHookError(
+        error,
+        this.name,
+        "processListResourceTemplatesRequest",
+        {
+          resultType: "continue" as const,
+          request: request,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process a resources/templates/list response through the hook
+   */
+  async processListResourceTemplatesResult(
+    response: ListResourceTemplatesResult,
+    originalRequest: ListResourceTemplatesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesResponseHookResult> {
+    try {
+      return await this.client.processListResourceTemplatesResult.mutate({
+        response,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (error) {
+      return handleHookError(
+        error,
+        this.name,
+        "processListResourceTemplatesResult",
+        {
+          resultType: "continue" as const,
+          response: response,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process errors for resources/templates/list requests
+   */
+  async processListResourceTemplatesError(
+    error: HookChainError,
+    originalRequest: ListResourceTemplatesRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesErrorHookResult> {
+    try {
+      return await this.client.processListResourceTemplatesError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processListResourceTemplatesError",
+        {
+          resultType: "continue" as const,
+        },
+      );
+    }
+  }
+
+  /**
+   * Process a resources/read request through the hook
+   */
+  async processReadResourceRequest(
+    request: ReadResourceRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ReadResourceRequestHookResult> {
+    try {
+      return await this.client.processReadResourceRequest.mutate({
+        request,
+        requestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processReadResourceRequest", {
+        resultType: "continue" as const,
+        request: request,
+      });
+    }
+  }
+
+  /**
+   * Process a resources/read response through the hook
+   */
+  async processReadResourceResult(
+    response: ReadResourceResult,
+    originalRequest: ReadResourceRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceResponseHookResult> {
+    try {
+      return await this.client.processReadResourceResult.mutate({
+        response,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processReadResourceResult", {
+        resultType: "continue" as const,
+        response: response,
+      });
+    }
+  }
+
+  /**
+   * Process errors for resources/read requests
+   */
+  async processReadResourceError(
+    error: HookChainError,
+    originalRequest: ReadResourceRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceErrorHookResult> {
+    try {
+      return await this.client.processReadResourceError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processReadResourceError",
         {
           resultType: "continue" as const,
         },

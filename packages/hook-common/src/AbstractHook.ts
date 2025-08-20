@@ -1,8 +1,11 @@
 import type {
   CallToolResult,
   InitializeResult,
+  ListResourceTemplatesResult,
+  ListResourcesResult,
   ListToolsResult,
   Notification,
+  ReadResourceResult,
   Request,
   Result,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -17,6 +20,14 @@ import type {
   InitializeRequestHookResult,
   InitializeRequestWithContext,
   InitializeResponseHookResult,
+  ListResourceTemplatesErrorHookResult,
+  ListResourceTemplatesRequestHookResult,
+  ListResourceTemplatesRequestWithContext,
+  ListResourceTemplatesResponseHookResult,
+  ListResourcesErrorHookResult,
+  ListResourcesRequestHookResult,
+  ListResourcesRequestWithContext,
+  ListResourcesResponseHookResult,
   ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsRequestWithContext,
@@ -24,6 +35,10 @@ import type {
   NotificationErrorHookResult,
   NotificationHookResult,
   OtherErrorHookResult,
+  ReadResourceErrorHookResult,
+  ReadResourceRequestHookResult,
+  ReadResourceRequestWithContext,
+  ReadResourceResponseHookResult,
   RequestExtra,
   RequestHookResult,
   ResponseHookResult,
@@ -291,6 +306,129 @@ export abstract class AbstractHook implements Hook {
     error: HookChainError,
     originalNotification: Notification,
   ): Promise<TargetNotificationErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
+   * Process a resources/list request.
+   * Default implementation passes through without modification.
+   */
+  async processListResourcesRequest?(
+    request: ListResourcesRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourcesRequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process a resources/list response.
+   * Default implementation passes through without modification.
+   */
+  async processListResourcesResult?(
+    response: ListResourcesResult,
+    originalRequest: ListResourcesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process errors for resources/list requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processListResourcesError?(
+    error: HookChainError,
+    originalRequest: ListResourcesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
+   * Process a resources/templates/list request.
+   * Default implementation passes through without modification.
+   */
+  async processListResourceTemplatesRequest?(
+    request: ListResourceTemplatesRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesRequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process a resources/templates/list response.
+   * Default implementation passes through without modification.
+   */
+  async processListResourceTemplatesResult?(
+    response: ListResourceTemplatesResult,
+    originalRequest: ListResourceTemplatesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process errors for resources/templates/list requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processListResourceTemplatesError?(
+    error: HookChainError,
+    originalRequest: ListResourceTemplatesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesErrorHookResult> {
+    return { resultType: "continue" };
+  }
+
+  /**
+   * Process a resources/read request.
+   * Default implementation passes through without modification.
+   */
+  async processReadResourceRequest?(
+    request: ReadResourceRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ReadResourceRequestHookResult> {
+    return {
+      resultType: "continue",
+      request: request,
+    };
+  }
+
+  /**
+   * Process a resources/read response.
+   * Default implementation passes through without modification.
+   */
+  async processReadResourceResult?(
+    response: ReadResourceResult,
+    originalRequest: ReadResourceRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceResponseHookResult> {
+    return {
+      resultType: "continue",
+      response: response,
+    };
+  }
+
+  /**
+   * Process errors for resources/read requests.
+   * Default implementation continues with the error unchanged.
+   */
+  async processReadResourceError?(
+    error: HookChainError,
+    originalRequest: ReadResourceRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceErrorHookResult> {
     return { resultType: "continue" };
   }
 }

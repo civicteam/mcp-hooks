@@ -92,6 +92,21 @@ interface Hook {
     requestExtra: RequestExtra
   ): Promise<InitializeRequestHookResult>;
   
+  processListResourcesRequest?(
+    request: ListResourcesRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ListResourcesRequestHookResult>;
+  
+  processListResourceTemplatesRequest?(
+    request: ListResourceTemplatesRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ListResourceTemplatesRequestHookResult>;
+  
+  processReadResourceRequest?(
+    request: ReadResourceRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ReadResourceRequestHookResult>;
+  
   // Response processing methods - receive RequestExtra as third parameter
   processCallToolResult?(
     response: CallToolResult,
@@ -110,6 +125,24 @@ interface Hook {
     originalRequest: InitializeRequest,
     requestExtra: RequestExtra
   ): Promise<InitializeResponseHookResult>;
+  
+  processListResourcesResult?(
+    response: ListResourcesResult,
+    originalRequest: ListResourcesRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ListResourcesResponseHookResult>;
+  
+  processListResourceTemplatesResult?(
+    response: ListResourceTemplatesResult,
+    originalRequest: ListResourceTemplatesRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ListResourceTemplatesResponseHookResult>;
+  
+  processReadResourceResult?(
+    response: ReadResourceResult,
+    originalRequest: ReadResourceRequestWithContext,
+    requestExtra: RequestExtra
+  ): Promise<ReadResourceResponseHookResult>;
   
   // ... other methods follow the same pattern
 }

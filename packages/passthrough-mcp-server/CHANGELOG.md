@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2025-01-20
+
+### Added
+
+- **Resource Hook Support**: Complete implementation of MCP resource operations through hook chains
+  - Full support for resource listing, template listing, and resource reading
+  - Bidirectional processing for resource requests and responses
+  - Error callback processing for all resource operations
+- **PassthroughContext Resource Methods**: Added resource handling to PassthroughContext
+  - `resources/list`: Process and forward resource listing requests
+  - `resources/templates/list`: Process and forward resource template listing requests
+  - `resources/read`: Process and forward resource reading requests
+- **Integration Tests**: Comprehensive test suite for resource hooks
+  - Request modification and interception tests
+  - Response modification tests
+  - Error handling and recovery tests
+  - Multiple hook chaining with proper ordering
+  - Resource template with URI pattern support
+- **Hook Manager Enhancement**: Fixed hook detection for getter-based name property
+  - Properly differentiates between Hook instances and RemoteHookConfig
+
+### Changed
+
+- Updated to use @civic/hook-common v0.4.3 with resource hook methods
+- Enhanced `PassthroughContext` to handle all resource operations
+- Improved hook processor functions to support resource processing
+- Fixed `isHookInstance` function to properly detect Hook objects with getters
+
+### Technical Details
+
+- Resource hooks follow the same pattern as existing tool and initialization hooks
+- Support for resource templates with URI patterns for dynamic resource access
+- Full backward compatibility maintained with existing hook implementations
+- Integration tests demonstrate real-world usage with MCP servers
+
 ## [0.8.3] - 2025-01-20
 
 ### Added

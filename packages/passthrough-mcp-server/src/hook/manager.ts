@@ -15,11 +15,12 @@ import type { HookDefinition } from "../proxy/config.js";
  * Check if a hook definition is a Hook instance
  */
 function isHookInstance(hook: HookDefinition): hook is Hook {
+  // Check if it's not a RemoteHookConfig (which has a url property)
+  // Hook instances have a name getter and at least one process method
   return (
     typeof hook === "object" &&
-    "processCallToolRequest" in hook &&
-    "processCallToolResult" in hook &&
-    "name" in hook
+    !("url" in hook) &&
+    typeof (hook as Hook).name !== "undefined"
   );
 }
 
