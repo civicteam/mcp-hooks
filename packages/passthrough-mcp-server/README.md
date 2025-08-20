@@ -5,6 +5,7 @@ A Model Context Protocol (MCP) server that acts as a passthrough proxy with prot
 ## Features
 
 - **Bidirectional Protocol Handling**: Seamlessly routes messages between clients and upstream servers
+- **🆕 Error Processing Support (v0.8.3)**: Comprehensive error callback processing through hook chains
 - **🆕 Direct Transport Communication**: New TransportInterface with `source` and `target` interfaces for bypassing passthrough flow
 - **Protocol-Level Hook System**: tRPC-based hook system for request/response interception and modification at the MCP protocol level
 - **Session Isolation**: Each client connection gets its own isolated session context with `targetSessionId` and `sourceSessionId`
@@ -196,6 +197,58 @@ await context.connect(serverTransport, clientTransport);
 // Clean up when done
 await context.close();
 ```
+
+## New in v0.8.3: Error Processing Support
+
+Hooks can now intercept and process errors that occur during request processing, enabling sophisticated error handling strategies:
+
+```typescript
+import { AbstractHook, type HookChainError } from '@civic/hook-common';
+
+class ErrorRecoveryHook extends AbstractHook {
+  get name() { return 'error-recovery'; }
+
+  async processCallToolError(
+    error: HookChainError,
+    originalRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolErrorHookResult> {
+    // Log the error
+    console.error(`Tool ${originalRequest.params.name} failed:`, error);
+    
+    // Option 1: Transform the error
+    if (error.code === -32001) {
+      throw new Error(`Enhanced error: ${error.message}`);
+    }
+    
+    // Option 2: Recover with a fallback response
+    if (originalRequest.params.name === 'weather') {
+      return {
+        resultType: 'respond',
+        response: {
+          content: [{ 
+            type: 'text', 
+            text: 'Weather service unavailable, please try again later' 
+          }]
+        }
+      };
+    }
+    
+    // Option 3: Pass through unchanged
+    return { resultType: 'continue' };
+  }
+}
+
+// Use with PassthroughContext
+const context = new PassthroughContext([new ErrorRecoveryHook()]);
+```
+
+**Error Processing Features:**
+- **Error Transformation**: Modify error messages, codes, or add context
+- **Error Recovery**: Convert errors into successful fallback responses
+- **Error Enrichment**: Add debugging information or user-friendly messages
+- **Chain Processing**: Errors are processed in reverse order through the hook chain
+- **Type Safety**: Full TypeScript support with HookChainError type
 
 ## New in v0.7.2: Direct Transport Communication
 

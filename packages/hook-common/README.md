@@ -199,14 +199,71 @@ The `RequestExtra` parameter enables powerful request tracking capabilities:
 2. **Tool Execution**: If all hooks return "continue", the tool executes
 3. **Response Processing**: Hooks process the tool's response in reverse order
 
+4. **Error Processing** (v0.4.2+): Hooks can intercept and handle errors through dedicated error callbacks
+
 ```mermaid
 graph LR
     A[Tool Call] --> B[Hook 1 Request]
     B --> C[Hook 2 Request]
     C --> D[Tool Execution]
-    D --> E[Hook 2 Response]
-    E --> F[Hook 1 Response]
+    D --> E[Hook 2 Response/Error]
+    E --> F[Hook 1 Response/Error]
     F --> G[Final Response]
+```
+
+### Error Handling (v0.4.2+)
+
+Hooks can now process errors that occur during request processing:
+
+```typescript
+interface Hook {
+  // Error processing methods
+  processCallToolError?(
+    error: HookChainError,
+    originalRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolErrorHookResult>;
+  
+  processListToolsError?(
+    error: HookChainError,
+    originalRequest: ListToolsRequest,
+    requestExtra: RequestExtra
+  ): Promise<ListToolsErrorHookResult>;
+  
+  // ... other error methods
+}
+```
+
+Error processing allows hooks to:
+- **Transform errors**: Modify error messages or codes
+- **Recover from errors**: Convert an error into a successful response
+- **Pass through errors**: Let the error continue unchanged
+
+```typescript
+export class ErrorHandlingHook extends AbstractHook {
+  async processCallToolError(
+    error: HookChainError,
+    originalRequest: CallToolRequest,
+    requestExtra: RequestExtra
+  ): Promise<CallToolErrorHookResult> {
+    // Log the error
+    console.error(`Error in tool ${originalRequest.params.name}:`, error);
+    
+    // Option 1: Transform the error
+    throw new Error(`Custom error: ${error.message}`);
+    
+    // Option 2: Recover from the error
+    return {
+      resultType: 'respond',
+      response: {
+        content: [{ type: 'text', text: 'Recovered from error' }]
+      }
+    };
+    
+    // Option 3: Pass through unchanged
+    return { resultType: 'continue' };
+  }
+}
 ```
 
 ## Type Safety

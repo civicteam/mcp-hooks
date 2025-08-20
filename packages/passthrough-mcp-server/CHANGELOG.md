@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2025-01-20
+
+### Added
+
+- **Error Processing Support**: Complete implementation of error callback processing through hook chains
+  - Hooks can now intercept and process errors at every stage of request/response handling
+  - Error callbacks are invoked in reverse order through the hook chain
+  - Support for error transformation, recovery, and pass-through
+- **Enhanced HookChain Processor**: Improved error handling capabilities
+  - `processResponseThroughHooks` now accepts both response and error parameters
+  - Automatic switching between error and response processing based on hook results
+  - When a hook recovers from an error, subsequent hooks see a successful response
+- **toHookChainError Utility**: Standardized error conversion function
+  - Converts various error types (McpError, Error, objects, primitives) to HookChainError
+  - Preserves error codes, messages, and additional data
+  - Ensures consistent error handling throughout the system
+- **Comprehensive Integration Tests**: New test suite for error callback scenarios
+  - Tests for single-hook error processing (transform, recover, pass-through)
+  - Tests for multi-hook error chains with proper ordering
+  - Validation of error recovery converting to successful responses
+
+### Changed
+
+- Updated to use @civic/hook-common v0.4.2 with error processing methods
+- Enhanced `PassthroughContext` to handle error callbacks from hooks
+- Improved processor functions to support bidirectional error/response processing
+- Better error propagation and handling throughout the hook chain
+
+### Technical Details
+
+- Error callbacks enable sophisticated error handling strategies
+- Hooks can implement retry logic, fallback responses, or error enrichment
+- Full backward compatibility maintained with existing hook implementations
+- TypeScript support ensures type-safe error handling
+
 ## [0.8.2] - 2025-08-19
 
 ### Added
