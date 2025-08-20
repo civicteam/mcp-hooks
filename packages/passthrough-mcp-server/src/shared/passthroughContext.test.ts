@@ -5,8 +5,17 @@
 import {
   type CallToolRequest,
   type CallToolResult,
+  type ListResourceTemplatesRequest,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
+  type ListResourcesRequest,
+  type ListResourcesResult,
+  ListResourcesResultSchema,
   McpError,
   type Notification,
+  type ReadResourceRequest,
+  type ReadResourceResult,
+  ReadResourceResultSchema,
   type Request,
   type Result,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -574,6 +583,281 @@ describe("PassthroughContext Source and Target Interfaces", () => {
 
       expect(sourceTransport()).toBe(mockServerTransport);
       expect(targetTransport()).toBe(mockClientTransport);
+    });
+  });
+
+  describe("Resource Methods", () => {
+    describe("listResources", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        const testRequest: ListResourcesRequest = {
+          method: "resources/list",
+          params: {},
+        };
+
+        await expect(
+          context.source.request(testRequest, ListResourcesResultSchema),
+        ).rejects.toThrow(McpError);
+
+        await expect(
+          context.source.request(testRequest, ListResourcesResultSchema),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No server transport connected"),
+        });
+      });
+
+      it("should delegate to passthroughServer for resources/list", async () => {
+        const testRequest: ListResourcesRequest = {
+          method: "resources/list",
+          params: { cursor: "test-cursor" },
+        };
+
+        const expectedResponse: ListResourcesResult = {
+          resources: [
+            {
+              uri: "file:///test.txt",
+              name: "Test File",
+              mimeType: "text/plain",
+            },
+          ],
+        };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        const result = await context.source.request(
+          testRequest,
+          ListResourcesResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          ListResourcesResultSchema,
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
+        expect(result.resources).toHaveLength(1);
+        expect(result.resources[0].uri).toBe("file:///test.txt");
+      });
+    });
+
+    describe("listResourceTemplates", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        const testRequest: ListResourceTemplatesRequest = {
+          method: "resources/templates/list",
+          params: {},
+        };
+
+        await expect(
+          context.source.request(
+            testRequest,
+            ListResourceTemplatesResultSchema,
+          ),
+        ).rejects.toThrow(McpError);
+      });
+
+      it("should delegate to passthroughServer for resources/templates/list", async () => {
+        const testRequest: ListResourceTemplatesRequest = {
+          method: "resources/templates/list",
+          params: {},
+        };
+
+        const expectedResponse: ListResourceTemplatesResult = {
+          resourceTemplates: [
+            {
+              uriTemplate: "template://{name}",
+              name: "Dynamic Template",
+              mimeType: "text/plain",
+            },
+          ],
+        };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        const result = await context.source.request(
+          testRequest,
+          ListResourceTemplatesResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          ListResourceTemplatesResultSchema,
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
+        expect(result.resourceTemplates).toHaveLength(1);
+        expect(result.resourceTemplates[0].uriTemplate).toBe(
+          "template://{name}",
+        );
+      });
+    });
+
+    describe("readResource", () => {
+      it("should throw McpError when no server transport is connected", async () => {
+        const testRequest: ReadResourceRequest = {
+          method: "resources/read",
+          params: { uri: "file:///test.txt" },
+        };
+
+        await expect(
+          context.source.request(testRequest, ReadResourceResultSchema),
+        ).rejects.toThrow(McpError);
+      });
+
+      it("should delegate to passthroughServer for resources/read", async () => {
+        const testRequest: ReadResourceRequest = {
+          method: "resources/read",
+          params: { uri: "file:///test.txt" },
+        };
+
+        const expectedResponse: ReadResourceResult = {
+          contents: [
+            {
+              uri: "file:///test.txt",
+              mimeType: "text/plain",
+              text: "Test content",
+            },
+          ],
+        };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        const result = await context.source.request(
+          testRequest,
+          ReadResourceResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          ReadResourceResultSchema,
+          undefined,
+        );
+        expect(result).toEqual(expectedResponse);
+        expect(result.contents).toHaveLength(1);
+        expect(result.contents[0].text).toBe("Test content");
+      });
+
+      it("should handle binary resources with blob data", async () => {
+        const testRequest: ReadResourceRequest = {
+          method: "resources/read",
+          params: { uri: "file:///image.png" },
+        };
+
+        const expectedResponse: ReadResourceResult = {
+          contents: [
+            {
+              uri: "file:///image.png",
+              mimeType: "image/png",
+              blob: "base64encodeddata",
+            },
+          ],
+        };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        const result = await context.source.request(
+          testRequest,
+          ReadResourceResultSchema,
+        );
+
+        expect(result.contents[0].blob).toBe("base64encodeddata");
+        expect(result.contents[0].text).toBeUndefined();
+      });
+    });
+
+    describe("Target resource methods", () => {
+      it("should delegate resources/list to target when client transport is connected", async () => {
+        const testRequest: ListResourcesRequest = {
+          method: "resources/list",
+          params: {},
+        };
+
+        const expectedResponse: ListResourcesResult = {
+          resources: [
+            {
+              uri: "target://resource",
+              name: "Target Resource",
+              mimeType: "text/plain",
+            },
+          ],
+        };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughClient.request = mockRequest;
+
+        await context.connect(
+          mockServerTransport as any,
+          mockClientTransport as any,
+        );
+
+        const result = await context.target.request(
+          testRequest,
+          ListResourcesResultSchema,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          ListResourcesResultSchema,
+          undefined,
+        );
+        expect(result.resources[0].uri).toBe("target://resource");
+      });
+
+      it("should throw error for target resource methods when no client transport", async () => {
+        await context.connect(mockServerTransport as any);
+
+        const testRequest: ReadResourceRequest = {
+          method: "resources/read",
+          params: { uri: "file:///test.txt" },
+        };
+
+        await expect(
+          context.target.request(testRequest, ReadResourceResultSchema),
+        ).rejects.toMatchObject({
+          code: MCP_ERROR_CODES.REQUEST_REJECTED,
+          message: expect.stringContaining("No client transport connected"),
+        });
+      });
+    });
+
+    describe("Resource method options", () => {
+      it("should pass through options for resource methods", async () => {
+        const testRequest: ListResourcesRequest = {
+          method: "resources/list",
+          params: {},
+        };
+
+        const testOptions = { timeout: 10000 };
+        const expectedResponse: ListResourcesResult = { resources: [] };
+
+        const mockRequest = vi.fn().mockResolvedValue(expectedResponse);
+        (context as any)._passthroughServer.request = mockRequest;
+
+        await context.connect(mockServerTransport as any);
+
+        await context.source.request(
+          testRequest,
+          ListResourcesResultSchema,
+          testOptions,
+        );
+
+        expect(mockRequest).toHaveBeenCalledWith(
+          testRequest,
+          ListResourcesResultSchema,
+          testOptions,
+        );
+      });
     });
   });
 });

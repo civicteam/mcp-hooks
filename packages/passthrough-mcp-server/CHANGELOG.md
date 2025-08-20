@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4] - 2025-01-20
+
+### Added
+
+- **Resource Hook Support**: Complete implementation of MCP resource operations through hook chains
+  - Full support for resource listing, template listing, and resource reading
+  - Bidirectional processing for resource requests and responses
+  - Error callback processing for all resource operations
+- **PassthroughContext Resource Methods**: Added resource handling to PassthroughContext
+  - `resources/list`: Process and forward resource listing requests
+  - `resources/templates/list`: Process and forward resource template listing requests
+  - `resources/read`: Process and forward resource reading requests
+- **Integration Tests**: Comprehensive test suite for resource hooks
+  - Request modification and interception tests
+  - Response modification tests
+  - Error handling and recovery tests
+  - Multiple hook chaining with proper ordering
+  - Resource template with URI pattern support
+- **Hook Manager Enhancement**: Fixed hook detection for getter-based name property
+  - Properly differentiates between Hook instances and RemoteHookConfig
+
+### Changed
+
+- Updated to use @civic/hook-common v0.4.3 with resource hook methods
+- Enhanced `PassthroughContext` to handle all resource operations
+- Improved hook processor functions to support resource processing
+- Fixed `isHookInstance` function to properly detect Hook objects with getters
+
+### Technical Details
+
+- Resource hooks follow the same pattern as existing tool and initialization hooks
+- Support for resource templates with URI patterns for dynamic resource access
+- Full backward compatibility maintained with existing hook implementations
+- Integration tests demonstrate real-world usage with MCP servers
+
+## [0.8.3] - 2025-01-20
+
+### Added
+
+- **Error Processing Support**: Complete implementation of error callback processing through hook chains
+  - Hooks can now intercept and process errors at every stage of request/response handling
+  - Error callbacks are invoked in reverse order through the hook chain
+  - Support for error transformation, recovery, and pass-through
+- **Enhanced HookChain Processor**: Improved error handling capabilities
+  - `processResponseThroughHooks` now accepts both response and error parameters
+  - Automatic switching between error and response processing based on hook results
+  - When a hook recovers from an error, subsequent hooks see a successful response
+- **toHookChainError Utility**: Standardized error conversion function
+  - Converts various error types (McpError, Error, objects, primitives) to HookChainError
+  - Preserves error codes, messages, and additional data
+  - Ensures consistent error handling throughout the system
+- **Comprehensive Integration Tests**: New test suite for error callback scenarios
+  - Tests for single-hook error processing (transform, recover, pass-through)
+  - Tests for multi-hook error chains with proper ordering
+  - Validation of error recovery converting to successful responses
+
+### Changed
+
+- Updated to use @civic/hook-common v0.4.2 with error processing methods
+- Enhanced `PassthroughContext` to handle error callbacks from hooks
+- Improved processor functions to support bidirectional error/response processing
+- Better error propagation and handling throughout the hook chain
+
+### Technical Details
+
+- Error callbacks enable sophisticated error handling strategies
+- Hooks can implement retry logic, fallback responses, or error enrichment
+- Full backward compatibility maintained with existing hook implementations
+- TypeScript support ensures type-safe error handling
+
 ## [0.8.2] - 2025-08-19
 
 ### Added

@@ -2,10 +2,15 @@ import {
   CallToolRequestSchema,
   InitializeRequestSchema,
   InitializeResultSchema,
+  ListResourceTemplatesRequestSchema,
+  ListResourceTemplatesResultSchema,
+  ListResourcesRequestSchema,
+  ListResourcesResultSchema,
   ListToolsRequestSchema,
   ListToolsResultSchema,
   NotificationSchema,
-  // NotificationSchema,
+  ReadResourceRequestSchema,
+  ReadResourceResultSchema,
   RequestSchema,
   ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -20,12 +25,21 @@ import {
   InitializeErrorHookResultSchema,
   InitializeRequestHookResultSchema,
   InitializeResponseHookResultSchema,
+  ListResourceTemplatesErrorHookResultSchema,
+  ListResourceTemplatesRequestHookResultSchema,
+  ListResourceTemplatesResponseHookResultSchema,
+  ListResourcesErrorHookResultSchema,
+  ListResourcesRequestHookResultSchema,
+  ListResourcesResponseHookResultSchema,
   ListToolsErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
   ListToolsResponseHookResultSchema,
   NotificationErrorHookResultSchema,
   NotificationHookResultSchema,
   OtherErrorHookResultSchema,
+  ReadResourceErrorHookResultSchema,
+  ReadResourceRequestHookResultSchema,
+  ReadResourceResponseHookResultSchema,
   RequestExtraSchema,
   RequestHookResultSchema,
   ResponseHookResultSchema,
@@ -198,6 +212,152 @@ const initializeRouter = t.router({
 });
 
 /**
+ * Resource router procedures
+ */
+const resourceRouter = t.router({
+  /**
+   * Process a resources/list request
+   */
+  processListResourcesRequest: t.procedure
+    .input(
+      z.object({
+        request: ListResourcesRequestSchema,
+        requestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourcesRequestHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourcesRequest not implemented");
+    }),
+
+  /**
+   * Process a resources/list response
+   */
+  processListResourcesResult: t.procedure
+    .input(
+      z.object({
+        response: ListResourcesResultSchema,
+        originalRequest: ListResourcesRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourcesResponseHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourcesResult not implemented");
+    }),
+
+  /**
+   * Process errors for resources/list requests
+   */
+  processListResourcesError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: ListResourcesRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourcesErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourcesError not implemented");
+    }),
+
+  /**
+   * Process a resources/templates/list request
+   */
+  processListResourceTemplatesRequest: t.procedure
+    .input(
+      z.object({
+        request: ListResourceTemplatesRequestSchema,
+        requestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourceTemplatesRequestHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourceTemplatesRequest not implemented");
+    }),
+
+  /**
+   * Process a resources/templates/list response
+   */
+  processListResourceTemplatesResult: t.procedure
+    .input(
+      z.object({
+        response: ListResourceTemplatesResultSchema,
+        originalRequest: ListResourceTemplatesRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourceTemplatesResponseHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourceTemplatesResult not implemented");
+    }),
+
+  /**
+   * Process errors for resources/templates/list requests
+   */
+  processListResourceTemplatesError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: ListResourceTemplatesRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ListResourceTemplatesErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListResourceTemplatesError not implemented");
+    }),
+
+  /**
+   * Process a resources/read request
+   */
+  processReadResourceRequest: t.procedure
+    .input(
+      z.object({
+        request: ReadResourceRequestSchema,
+        requestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ReadResourceRequestHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processReadResourceRequest not implemented");
+    }),
+
+  /**
+   * Process a resources/read response
+   */
+  processReadResourceResult: t.procedure
+    .input(
+      z.object({
+        response: ReadResourceResultSchema,
+        originalRequest: ReadResourceRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ReadResourceResponseHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processReadResourceResult not implemented");
+    }),
+
+  /**
+   * Process errors for resources/read requests
+   */
+  processReadResourceError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: ReadResourceRequestSchema,
+        originalRequestExtra: RequestExtraSchema,
+      }),
+    )
+    .output(ReadResourceErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processReadResourceError not implemented");
+    }),
+});
+
+/**
  * Target and notification router procedures
  */
 const targetAndNotificationRouter = t.router({
@@ -353,6 +513,7 @@ const fullRouter = t.router({
   ...baseRouter._def.procedures,
   ...toolsListRouter._def.procedures,
   ...initializeRouter._def.procedures,
+  ...resourceRouter._def.procedures,
   ...targetAndNotificationRouter._def.procedures,
 });
 
@@ -781,6 +942,218 @@ export function createHookRouter(hook: Hook) {
         return await hook.processTargetNotificationError(
           input.error,
           input.originalNotification,
+        );
+      });
+  }
+
+  // Add processListResourcesRequest if the hook implements it
+  if (hook.processListResourcesRequest) {
+    procedures.processListResourcesRequest = t.procedure
+      .input(
+        z.object({
+          request: ListResourcesRequestSchema,
+          requestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourcesRequestHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourcesRequest) {
+          throw new Error("processListResourcesRequest not implemented");
+        }
+        return await hook.processListResourcesRequest(
+          input.request,
+          input.requestExtra,
+        );
+      });
+  }
+
+  // Add processListResourcesResult if the hook implements it
+  if (hook.processListResourcesResult) {
+    procedures.processListResourcesResult = t.procedure
+      .input(
+        z.object({
+          response: ListResourcesResultSchema,
+          originalRequest: ListResourcesRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourcesResponseHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourcesResult) {
+          throw new Error("processListResourcesResult not implemented");
+        }
+        return await hook.processListResourcesResult(
+          input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processListResourcesError if the hook implements it
+  if (hook.processListResourcesError) {
+    procedures.processListResourcesError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: ListResourcesRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourcesErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourcesError) {
+          throw new Error("processListResourcesError not implemented");
+        }
+        return await hook.processListResourcesError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processListResourceTemplatesRequest if the hook implements it
+  if (hook.processListResourceTemplatesRequest) {
+    procedures.processListResourceTemplatesRequest = t.procedure
+      .input(
+        z.object({
+          request: ListResourceTemplatesRequestSchema,
+          requestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourceTemplatesRequestHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourceTemplatesRequest) {
+          throw new Error(
+            "processListResourceTemplatesRequest not implemented",
+          );
+        }
+        return await hook.processListResourceTemplatesRequest(
+          input.request,
+          input.requestExtra,
+        );
+      });
+  }
+
+  // Add processListResourceTemplatesResult if the hook implements it
+  if (hook.processListResourceTemplatesResult) {
+    procedures.processListResourceTemplatesResult = t.procedure
+      .input(
+        z.object({
+          response: ListResourceTemplatesResultSchema,
+          originalRequest: ListResourceTemplatesRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourceTemplatesResponseHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourceTemplatesResult) {
+          throw new Error("processListResourceTemplatesResult not implemented");
+        }
+        return await hook.processListResourceTemplatesResult(
+          input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processListResourceTemplatesError if the hook implements it
+  if (hook.processListResourceTemplatesError) {
+    procedures.processListResourceTemplatesError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: ListResourceTemplatesRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ListResourceTemplatesErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListResourceTemplatesError) {
+          throw new Error("processListResourceTemplatesError not implemented");
+        }
+        return await hook.processListResourceTemplatesError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processReadResourceRequest if the hook implements it
+  if (hook.processReadResourceRequest) {
+    procedures.processReadResourceRequest = t.procedure
+      .input(
+        z.object({
+          request: ReadResourceRequestSchema,
+          requestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ReadResourceRequestHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processReadResourceRequest) {
+          throw new Error("processReadResourceRequest not implemented");
+        }
+        return await hook.processReadResourceRequest(
+          input.request,
+          input.requestExtra,
+        );
+      });
+  }
+
+  // Add processReadResourceResult if the hook implements it
+  if (hook.processReadResourceResult) {
+    procedures.processReadResourceResult = t.procedure
+      .input(
+        z.object({
+          response: ReadResourceResultSchema,
+          originalRequest: ReadResourceRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ReadResourceResponseHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processReadResourceResult) {
+          throw new Error("processReadResourceResult not implemented");
+        }
+        return await hook.processReadResourceResult(
+          input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+
+  // Add processReadResourceError if the hook implements it
+  if (hook.processReadResourceError) {
+    procedures.processReadResourceError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: ReadResourceRequestSchema,
+          originalRequestExtra: RequestExtraSchema,
+        }),
+      )
+      .output(ReadResourceErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processReadResourceError) {
+          throw new Error("processReadResourceError not implemented");
+        }
+        return await hook.processReadResourceError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
         );
       });
   }

@@ -7,12 +7,24 @@ import {
   InitializeRequestSchema,
   type InitializeResult,
   InitializeResultSchema,
+  type ListResourceTemplatesRequest,
+  ListResourceTemplatesRequestSchema,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
+  type ListResourcesRequest,
+  ListResourcesRequestSchema,
+  type ListResourcesResult,
+  ListResourcesResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
   ListToolsResultSchema,
   type Notification,
   NotificationSchema,
+  type ReadResourceRequest,
+  ReadResourceRequestSchema,
+  type ReadResourceResult,
+  ReadResourceResultSchema,
   type Request,
   RequestId,
   RequestIdSchema,
@@ -37,9 +49,15 @@ export type {
   CallToolResult,
   InitializeRequest,
   InitializeResult,
+  ListResourcesRequest,
+  ListResourcesResult,
+  ListResourceTemplatesRequest,
+  ListResourceTemplatesResult,
   ListToolsRequest,
   ListToolsResult,
   Notification,
+  ReadResourceRequest,
+  ReadResourceResult,
   Request,
   Result,
 };
@@ -77,6 +95,21 @@ export const InitializeRequestSchemaWithContext =
     requestContext: RequestContextSchema.optional(),
   });
 
+export const ListResourcesRequestSchemaWithContext =
+  ListResourcesRequestSchema.extend({
+    requestContext: RequestContextSchema.optional(),
+  });
+
+export const ListResourceTemplatesRequestSchemaWithContext =
+  ListResourceTemplatesRequestSchema.extend({
+    requestContext: RequestContextSchema.optional(),
+  });
+
+export const ReadResourceRequestSchemaWithContext =
+  ReadResourceRequestSchema.extend({
+    requestContext: RequestContextSchema.optional(),
+  });
+
 /**
  * Extended request types that include request context for hooks
  *
@@ -92,6 +125,16 @@ export type ListToolsRequestWithContext = ListToolsRequest & {
   requestContext?: RequestContext;
 };
 export type InitializeRequestWithContext = InitializeRequest & {
+  requestContext?: RequestContext;
+};
+export type ListResourcesRequestWithContext = ListResourcesRequest & {
+  requestContext?: RequestContext;
+};
+export type ListResourceTemplatesRequestWithContext =
+  ListResourceTemplatesRequest & {
+    requestContext?: RequestContext;
+  };
+export type ReadResourceRequestWithContext = ReadResourceRequest & {
   requestContext?: RequestContext;
 };
 
@@ -240,6 +283,128 @@ export const TargetNotificationErrorHookResultSchema = z.discriminatedUnion(
   ],
 );
 
+export const ListResourcesRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: ListResourcesRequestSchemaWithContext,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListResourcesResultSchema,
+    }),
+  ],
+);
+
+export const ListResourcesResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: ListResourcesResultSchema,
+    }),
+  ],
+);
+
+export const ListResourcesErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListResourcesResultSchema,
+    }),
+  ],
+);
+
+export const ListResourceTemplatesRequestHookResultSchema =
+  z.discriminatedUnion("resultType", [
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: ListResourceTemplatesRequestSchemaWithContext,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListResourceTemplatesResultSchema,
+    }),
+  ]);
+
+export const ListResourceTemplatesResponseHookResultSchema =
+  z.discriminatedUnion("resultType", [
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: ListResourceTemplatesResultSchema,
+    }),
+  ]);
+
+export const ListResourceTemplatesErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListResourceTemplatesResultSchema,
+    }),
+  ],
+);
+
+export const ReadResourceRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: ReadResourceRequestSchemaWithContext,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ReadResourceResultSchema,
+    }),
+  ],
+);
+
+export const ReadResourceResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: ReadResourceResultSchema,
+    }),
+  ],
+);
+
+export const ReadResourceErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ReadResourceResultSchema,
+    }),
+  ],
+);
+
 export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
@@ -362,6 +527,33 @@ export type RequestHookResult = z.infer<typeof RequestHookResultSchema>;
 export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
 export type NotificationHookResult = z.infer<
   typeof NotificationHookResultSchema
+>;
+export type ListResourcesRequestHookResult = z.infer<
+  typeof ListResourcesRequestHookResultSchema
+>;
+export type ListResourcesResponseHookResult = z.infer<
+  typeof ListResourcesResponseHookResultSchema
+>;
+export type ListResourcesErrorHookResult = z.infer<
+  typeof ListResourcesErrorHookResultSchema
+>;
+export type ListResourceTemplatesRequestHookResult = z.infer<
+  typeof ListResourceTemplatesRequestHookResultSchema
+>;
+export type ListResourceTemplatesResponseHookResult = z.infer<
+  typeof ListResourceTemplatesResponseHookResultSchema
+>;
+export type ListResourceTemplatesErrorHookResult = z.infer<
+  typeof ListResourceTemplatesErrorHookResultSchema
+>;
+export type ReadResourceRequestHookResult = z.infer<
+  typeof ReadResourceRequestHookResultSchema
+>;
+export type ReadResourceResponseHookResult = z.infer<
+  typeof ReadResourceResponseHookResultSchema
+>;
+export type ReadResourceErrorHookResult = z.infer<
+  typeof ReadResourceErrorHookResultSchema
 >;
 
 export const RequestExtraSchema = z.object({
@@ -516,6 +708,84 @@ export interface Hook {
     originalRequest: Request,
     originalRequestExtra: RequestExtra,
   ): Promise<TargetErrorHookResult>;
+
+  /**
+   * Process a resources/list request (optional)
+   */
+  processListResourcesRequest?(
+    request: ListResourcesRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourcesRequestHookResult>;
+
+  /**
+   * Process a resources/list response (optional)
+   */
+  processListResourcesResult?(
+    result: ListResourcesResult,
+    originalListToolsRequest: ListResourcesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesResponseHookResult>;
+
+  /**
+   * Process errors for resources/list requests (optional)
+   */
+  processListResourcesError?(
+    error: HookChainError,
+    originalRequest: ListResourcesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourcesErrorHookResult>;
+
+  /**
+   * Process a resources/templates/list request (optional)
+   */
+  processListResourceTemplatesRequest?(
+    request: ListResourceTemplatesRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesRequestHookResult>;
+
+  /**
+   * Process a resources/templates/list response (optional)
+   */
+  processListResourceTemplatesResult?(
+    result: ListResourceTemplatesResult,
+    originalListToolsRequest: ListResourceTemplatesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesResponseHookResult>;
+
+  /**
+   * Process errors for resources/templates/list requests (optional)
+   */
+  processListResourceTemplatesError?(
+    error: HookChainError,
+    originalRequest: ListResourceTemplatesRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListResourceTemplatesErrorHookResult>;
+
+  /**
+   * Process a resources/read request (optional)
+   */
+  processReadResourceRequest?(
+    request: ReadResourceRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ReadResourceRequestHookResult>;
+
+  /**
+   * Process a resources/read response (optional)
+   */
+  processReadResourceResult?(
+    result: ReadResourceResult,
+    originalListToolsRequest: ReadResourceRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceResponseHookResult>;
+
+  /**
+   * Process errors for resources/read requests (optional)
+   */
+  processReadResourceError?(
+    error: HookChainError,
+    originalRequest: ReadResourceRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ReadResourceErrorHookResult>;
 
   /**
    * Process a notification (notification from client to target server) (optional)
