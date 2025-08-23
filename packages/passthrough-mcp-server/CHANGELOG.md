@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.5] - 2025-01-23
+
+### Changed
+
+- Updated to use @civic/hook-common v0.5.0
+- Benefits from improved type safety in hook-common router implementation
+
+### Dependencies
+
+- @civic/hook-common: 0.4.3 → 0.5.0
+
 ## [0.8.4] - 2025-01-20
 
 ### Added

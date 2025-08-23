@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-01-23
+
+### Changed
+
+- **BREAKING**: Removed `RequestExtraSchema` export - validation is now handled internally
+- Improved type safety in router by using `*WithContext` schemas for proper validation
+- Router now uses proper schema validation instead of runtime type assertions
+- All request validations now use the appropriate `*RequestSchemaWithContext` schemas
+
+### Technical Details
+
+- Replaced `RequestExtraSchema` usage with `z.any()` for flexible request extra handling
+- Eliminated unnecessary type casting (`as` assertions) throughout the router
+- Proper TypeScript type inference through schema validation
+- Maintains full backward compatibility for the `RequestExtra` type
+
 ## [0.4.3] - 2025-01-20
 
 ### Added

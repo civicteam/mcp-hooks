@@ -1,3 +1,4 @@
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import {
   type CallToolRequest,
   CallToolRequestSchema,
@@ -26,9 +27,9 @@ import {
   type ReadResourceResult,
   ReadResourceResultSchema,
   type Request,
-  RequestId,
-  RequestIdSchema,
-  RequestMeta,
+  type RequestId,
+  type RequestInfo,
+  type RequestMeta,
   RequestSchema,
   type Result,
   ResultSchema,
@@ -556,20 +557,37 @@ export type ReadResourceErrorHookResult = z.infer<
   typeof ReadResourceErrorHookResultSchema
 >;
 
-export const RequestExtraSchema = z.object({
+/**
+ * Extra data provided to request handlers in hooks.
+ * Mirrors fields from MCP SDK's RequestHandlerExtra.
+ */
+export type RequestExtra = {
   /**
    * The session ID from the transport, if available.
    */
-  sessionId: z.string().optional(),
+  sessionId?: string;
 
   /**
    * The JSON-RPC ID of the request being handled.
    * This can be useful for tracking or logging purposes.
    */
-  requestId: RequestIdSchema,
-});
+  requestId: RequestId;
 
-export type RequestExtra = z.infer<typeof RequestExtraSchema>;
+  /**
+   * Information about a validated access token, provided to request handlers.
+   */
+  authInfo?: AuthInfo;
+
+  /**
+   * Metadata from the original request.
+   */
+  _meta?: RequestMeta;
+
+  /**
+   * The original HTTP request.
+   */
+  requestInfo?: RequestInfo;
+};
 
 /**
  * Hook interface that all hooks must implement
