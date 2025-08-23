@@ -20,33 +20,56 @@ import { z } from "zod";
 import {
   CallToolErrorHookResultSchema,
   CallToolRequestHookResultSchema,
+  CallToolRequestSchemaWithContext,
   CallToolResponseHookResultSchema,
   HookChainErrorSchema,
   InitializeErrorHookResultSchema,
   InitializeRequestHookResultSchema,
+  InitializeRequestSchemaWithContext,
   InitializeResponseHookResultSchema,
   ListResourceTemplatesErrorHookResultSchema,
   ListResourceTemplatesRequestHookResultSchema,
+  ListResourceTemplatesRequestSchemaWithContext,
   ListResourceTemplatesResponseHookResultSchema,
   ListResourcesErrorHookResultSchema,
   ListResourcesRequestHookResultSchema,
+  ListResourcesRequestSchemaWithContext,
   ListResourcesResponseHookResultSchema,
   ListToolsErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
+  ListToolsRequestSchemaWithContext,
   ListToolsResponseHookResultSchema,
   NotificationErrorHookResultSchema,
   NotificationHookResultSchema,
   OtherErrorHookResultSchema,
   ReadResourceErrorHookResultSchema,
   ReadResourceRequestHookResultSchema,
+  ReadResourceRequestSchemaWithContext,
   ReadResourceResponseHookResultSchema,
-  RequestExtraSchema,
   RequestHookResultSchema,
   ResponseHookResultSchema,
   TargetErrorHookResultSchema,
   TargetNotificationErrorHookResultSchema,
 } from "./types.js";
-import type { Hook } from "./types.js";
+import type {
+  CallToolRequestWithContext,
+  CallToolResult,
+  Hook,
+  HookChainError,
+  InitializeRequestWithContext,
+  InitializeResult,
+  ListResourceTemplatesRequestWithContext,
+  ListResourceTemplatesResult,
+  ListResourcesRequestWithContext,
+  ListResourcesResult,
+  ListToolsRequestWithContext,
+  ListToolsResult,
+  ReadResourceRequestWithContext,
+  ReadResourceResult,
+  Request,
+  RequestExtra,
+  Result,
+} from "./types.js";
 
 /**
  * Create a tRPC instance with SuperJSON for serialization
@@ -65,8 +88,8 @@ const baseRouter = t.router({
   processCallToolRequest: t.procedure
     .input(
       z.object({
-        request: CallToolRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: CallToolRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(CallToolRequestHookResultSchema)
@@ -82,7 +105,7 @@ const baseRouter = t.router({
       z.object({
         response: z.any(),
         originalCallToolRequest: CallToolRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(CallToolResponseHookResultSchema)
@@ -98,7 +121,7 @@ const baseRouter = t.router({
       z.object({
         error: HookChainErrorSchema,
         originalToolCall: CallToolRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(CallToolErrorHookResultSchema)
@@ -117,8 +140,8 @@ const toolsListRouter = t.router({
   processListToolsRequest: t.procedure
     .input(
       z.object({
-        request: ListToolsRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: ListToolsRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(ListToolsRequestHookResultSchema)
@@ -133,8 +156,8 @@ const toolsListRouter = t.router({
     .input(
       z.object({
         response: ListToolsResultSchema,
-        originalRequest: ListToolsRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListToolsRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListToolsResponseHookResultSchema)
@@ -149,8 +172,8 @@ const toolsListRouter = t.router({
     .input(
       z.object({
         error: HookChainErrorSchema,
-        originalRequest: ListToolsRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListToolsRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListToolsErrorHookResultSchema)
@@ -169,8 +192,8 @@ const initializeRouter = t.router({
   processInitializeRequest: t.procedure
     .input(
       z.object({
-        request: InitializeRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: InitializeRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(InitializeRequestHookResultSchema)
@@ -185,8 +208,8 @@ const initializeRouter = t.router({
     .input(
       z.object({
         response: InitializeResultSchema,
-        originalRequest: InitializeRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: InitializeRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(InitializeResponseHookResultSchema)
@@ -201,8 +224,8 @@ const initializeRouter = t.router({
     .input(
       z.object({
         error: HookChainErrorSchema,
-        originalRequest: InitializeRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: InitializeRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(InitializeErrorHookResultSchema)
@@ -221,8 +244,8 @@ const resourceRouter = t.router({
   processListResourcesRequest: t.procedure
     .input(
       z.object({
-        request: ListResourcesRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: ListResourcesRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(ListResourcesRequestHookResultSchema)
@@ -237,8 +260,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         response: ListResourcesResultSchema,
-        originalRequest: ListResourcesRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListResourcesRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListResourcesResponseHookResultSchema)
@@ -253,8 +276,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         error: HookChainErrorSchema,
-        originalRequest: ListResourcesRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListResourcesRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListResourcesErrorHookResultSchema)
@@ -268,8 +291,8 @@ const resourceRouter = t.router({
   processListResourceTemplatesRequest: t.procedure
     .input(
       z.object({
-        request: ListResourceTemplatesRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: ListResourceTemplatesRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(ListResourceTemplatesRequestHookResultSchema)
@@ -284,8 +307,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         response: ListResourceTemplatesResultSchema,
-        originalRequest: ListResourceTemplatesRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListResourceTemplatesRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListResourceTemplatesResponseHookResultSchema)
@@ -300,8 +323,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         error: HookChainErrorSchema,
-        originalRequest: ListResourceTemplatesRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ListResourceTemplatesRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ListResourceTemplatesErrorHookResultSchema)
@@ -315,8 +338,8 @@ const resourceRouter = t.router({
   processReadResourceRequest: t.procedure
     .input(
       z.object({
-        request: ReadResourceRequestSchema,
-        requestExtra: RequestExtraSchema,
+        request: ReadResourceRequestSchemaWithContext,
+        requestExtra: z.any(),
       }),
     )
     .output(ReadResourceRequestHookResultSchema)
@@ -331,8 +354,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         response: ReadResourceResultSchema,
-        originalRequest: ReadResourceRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ReadResourceRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ReadResourceResponseHookResultSchema)
@@ -347,8 +370,8 @@ const resourceRouter = t.router({
     .input(
       z.object({
         error: HookChainErrorSchema,
-        originalRequest: ReadResourceRequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequest: ReadResourceRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ReadResourceErrorHookResultSchema)
@@ -368,7 +391,7 @@ const targetAndNotificationRouter = t.router({
     .input(
       z.object({
         request: RequestSchema,
-        requestExtra: RequestExtraSchema,
+        requestExtra: z.any(),
       }),
     )
     .output(RequestHookResultSchema)
@@ -384,7 +407,7 @@ const targetAndNotificationRouter = t.router({
       z.object({
         response: ResultSchema,
         originalRequest: RequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ResponseHookResultSchema)
@@ -400,7 +423,7 @@ const targetAndNotificationRouter = t.router({
       z.object({
         error: HookChainErrorSchema,
         originalRequest: RequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(OtherErrorHookResultSchema)
@@ -415,7 +438,7 @@ const targetAndNotificationRouter = t.router({
     .input(
       z.object({
         request: RequestSchema,
-        requestExtra: RequestExtraSchema,
+        requestExtra: z.any(),
       }),
     )
     .output(RequestHookResultSchema)
@@ -431,7 +454,7 @@ const targetAndNotificationRouter = t.router({
       z.object({
         response: ResultSchema,
         originalRequest: RequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(ResponseHookResultSchema)
@@ -447,7 +470,7 @@ const targetAndNotificationRouter = t.router({
       z.object({
         error: HookChainErrorSchema,
         originalRequest: RequestSchema,
-        originalRequestExtra: RequestExtraSchema,
+        originalRequestExtra: z.any(),
       }),
     )
     .output(TargetErrorHookResultSchema)
@@ -531,8 +554,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processCallToolRequest = t.procedure
       .input(
         z.object({
-          request: CallToolRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: CallToolRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(CallToolRequestHookResultSchema)
@@ -554,8 +577,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: z.any(),
-          originalCallToolRequest: CallToolRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalCallToolRequest: CallToolRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(CallToolResponseHookResultSchema)
@@ -578,8 +601,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalToolCall: CallToolRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalToolCall: CallToolRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(CallToolErrorHookResultSchema)
@@ -600,8 +623,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processListToolsRequest = t.procedure
       .input(
         z.object({
-          request: ListToolsRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: ListToolsRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(ListToolsRequestHookResultSchema)
@@ -622,8 +645,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: ListToolsResultSchema,
-          originalRequest: ListToolsRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListToolsRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListToolsResponseHookResultSchema)
@@ -646,8 +669,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalRequest: ListToolsRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListToolsRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListToolsErrorHookResultSchema)
@@ -669,8 +692,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processInitializeRequest = t.procedure
       .input(
         z.object({
-          request: InitializeRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: InitializeRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(InitializeRequestHookResultSchema)
@@ -692,8 +715,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: InitializeResultSchema,
-          originalRequest: InitializeRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: InitializeRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(InitializeResponseHookResultSchema)
@@ -716,8 +739,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalRequest: InitializeRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: InitializeRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(InitializeErrorHookResultSchema)
@@ -740,7 +763,7 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           request: RequestSchema,
-          requestExtra: RequestExtraSchema,
+          requestExtra: z.any(),
         }),
       )
       .output(RequestHookResultSchema)
@@ -763,7 +786,7 @@ export function createHookRouter(hook: Hook) {
         z.object({
           response: ResultSchema,
           originalRequest: RequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ResponseHookResultSchema)
@@ -787,7 +810,7 @@ export function createHookRouter(hook: Hook) {
         z.object({
           error: HookChainErrorSchema,
           originalRequest: RequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(OtherErrorHookResultSchema)
@@ -810,7 +833,7 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           request: RequestSchema,
-          requestExtra: RequestExtraSchema,
+          requestExtra: z.any(),
         }),
       )
       .output(RequestHookResultSchema)
@@ -833,7 +856,7 @@ export function createHookRouter(hook: Hook) {
         z.object({
           response: ResultSchema,
           originalRequest: RequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ResponseHookResultSchema)
@@ -857,7 +880,7 @@ export function createHookRouter(hook: Hook) {
         z.object({
           error: HookChainErrorSchema,
           originalRequest: RequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(TargetErrorHookResultSchema)
@@ -951,8 +974,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processListResourcesRequest = t.procedure
       .input(
         z.object({
-          request: ListResourcesRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: ListResourcesRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(ListResourcesRequestHookResultSchema)
@@ -974,8 +997,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: ListResourcesResultSchema,
-          originalRequest: ListResourcesRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListResourcesRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListResourcesResponseHookResultSchema)
@@ -998,8 +1021,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalRequest: ListResourcesRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListResourcesRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListResourcesErrorHookResultSchema)
@@ -1021,8 +1044,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processListResourceTemplatesRequest = t.procedure
       .input(
         z.object({
-          request: ListResourceTemplatesRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: ListResourceTemplatesRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(ListResourceTemplatesRequestHookResultSchema)
@@ -1046,8 +1069,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: ListResourceTemplatesResultSchema,
-          originalRequest: ListResourceTemplatesRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListResourceTemplatesRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListResourceTemplatesResponseHookResultSchema)
@@ -1070,8 +1093,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalRequest: ListResourceTemplatesRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ListResourceTemplatesRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ListResourceTemplatesErrorHookResultSchema)
@@ -1093,8 +1116,8 @@ export function createHookRouter(hook: Hook) {
     procedures.processReadResourceRequest = t.procedure
       .input(
         z.object({
-          request: ReadResourceRequestSchema,
-          requestExtra: RequestExtraSchema,
+          request: ReadResourceRequestSchemaWithContext,
+          requestExtra: z.any(),
         }),
       )
       .output(ReadResourceRequestHookResultSchema)
@@ -1116,8 +1139,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           response: ReadResourceResultSchema,
-          originalRequest: ReadResourceRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ReadResourceRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ReadResourceResponseHookResultSchema)
@@ -1140,8 +1163,8 @@ export function createHookRouter(hook: Hook) {
       .input(
         z.object({
           error: HookChainErrorSchema,
-          originalRequest: ReadResourceRequestSchema,
-          originalRequestExtra: RequestExtraSchema,
+          originalRequest: ReadResourceRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
         }),
       )
       .output(ReadResourceErrorHookResultSchema)
