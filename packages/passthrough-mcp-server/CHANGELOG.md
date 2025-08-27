@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 2025-01-27
+
+### Added
+
+- **RequestExtra Mapping Utility**: Created `mapRequestHandlerExtraToRequestExtra` utility function to properly map all fields from MCP SDK's `RequestHandlerExtra` to hook system's `RequestExtra`
+  - Maps authentication info (`authInfo`), request metadata (`_meta`), and HTTP request info (`requestInfo`)
+  - Ensures complete propagation of request context through hook chains
+  - Provides consistent field mapping across all request handlers
+
+### Changed
+
+- **Enhanced Request Context Propagation**: All request handlers now use the mapping utility
+  - Updated 8 request handlers in PassthroughContext to use consistent mapping
+  - Hooks now receive complete request context including authentication and HTTP details
+  - Improved traceability and security context for hook implementations
+
+### Testing
+
+- Added comprehensive tests for RequestExtra mapping functionality
+- Enhanced processor tests to verify complete field propagation through hooks
+
 ## [0.8.5] - 2025-01-23
 
 ### Changed

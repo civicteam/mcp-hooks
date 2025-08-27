@@ -1,6 +1,6 @@
 {
   "name": "@civic/passthrough-mcp-server",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "A Model Context Protocol (MCP) server that acts as a passthrough proxy with hook middleware support",
   "keywords": [
     "mcp",

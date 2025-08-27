@@ -29,10 +29,22 @@ import {
   toHookChainError,
 } from "./processor.js";
 
-// Mock RequestExtra for testing
+// Mock RequestExtra for testing with all possible fields
 const mockRequestExtra: RequestExtra = {
   requestId: "test-request-id",
   sessionId: "test-session-id",
+  authInfo: {
+    access_token: "test-token",
+    token_type: "Bearer",
+  },
+  _meta: {
+    test: "metadata",
+  },
+  requestInfo: {
+    url: "http://test.example.com",
+    method: "POST",
+    headers: { "content-type": "application/json" },
+  },
 };
 
 // Helper to create a tool call request
@@ -2374,6 +2386,149 @@ describe("Hook Processor", () => {
       // Should process hook2 -> hook3 (hook1 should not be called)
       expect(callOrder).toEqual(["hook2", "hook3"]);
       expect(hook1.processNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("RequestExtra propagation", () => {
+    it("should pass complete RequestExtra to hooks including authInfo and requestInfo", async () => {
+      const mockHook = new MockHook("test-hook");
+      const processCallToolSpy = vi.spyOn(mockHook, "processCallToolRequest");
+      const chain = new HookChain([mockHook]);
+
+      const toolCall = createToolCall({
+        name: "test-tool",
+        arguments: { arg1: "value1" },
+      });
+
+      const fullRequestExtra: RequestExtra = {
+        requestId: "full-request-id",
+        sessionId: "full-session-id",
+        authInfo: {
+          access_token: "full-token",
+          token_type: "Bearer",
+          expires_in: 3600,
+        },
+        _meta: {
+          custom: "metadata",
+          version: "1.0",
+        },
+        requestInfo: {
+          url: "https://api.example.com/tools",
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer full-token",
+          },
+        },
+      };
+
+      await processRequestThroughHooks<
+        CallToolRequest,
+        CallToolResult,
+        "processCallToolRequest"
+      >(toolCall, fullRequestExtra, chain.head, "processCallToolRequest");
+
+      expect(processCallToolSpy).toHaveBeenCalledWith(
+        toolCall,
+        fullRequestExtra,
+      );
+
+      // Verify all fields were passed
+      const [, receivedExtra] = processCallToolSpy.mock.calls[0];
+      expect(receivedExtra.requestId).toBe("full-request-id");
+      expect(receivedExtra.sessionId).toBe("full-session-id");
+      expect(receivedExtra.authInfo).toEqual({
+        access_token: "full-token",
+        token_type: "Bearer",
+        expires_in: 3600,
+      });
+      expect(receivedExtra._meta).toEqual({
+        custom: "metadata",
+        version: "1.0",
+      });
+      expect(receivedExtra.requestInfo).toEqual({
+        url: "https://api.example.com/tools",
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer full-token",
+        },
+      });
+    });
+
+    it("should pass RequestExtra to response hooks with all fields", async () => {
+      const mockHook = new MockHook("test-hook");
+      const processCallToolResultSpy = vi.spyOn(
+        mockHook,
+        "processCallToolResult",
+      );
+      const chain = new HookChain([mockHook]);
+
+      const toolCall = createToolCall({
+        name: "test-tool",
+        arguments: { arg1: "value1" },
+      });
+
+      const response: CallToolResult = {
+        result: {
+          content: [{ type: "text", text: "Tool executed successfully" }],
+        },
+      };
+
+      const fullRequestExtra: RequestExtra = {
+        requestId: "response-request-id",
+        sessionId: "response-session-id",
+        authInfo: {
+          access_token: "response-token",
+          token_type: "Bearer",
+        },
+        _meta: {
+          responseTest: true,
+        },
+        requestInfo: {
+          url: "https://api.example.com/response",
+          method: "GET",
+          headers: { accept: "application/json" },
+        },
+      };
+
+      await processResponseThroughHooks<
+        CallToolRequest,
+        CallToolResult,
+        "processCallToolResult",
+        "processCallToolError"
+      >(
+        response,
+        null,
+        toolCall,
+        fullRequestExtra,
+        chain.head,
+        "processCallToolResult",
+        "processCallToolError",
+      );
+
+      expect(processCallToolResultSpy).toHaveBeenCalledWith(
+        response,
+        toolCall,
+        fullRequestExtra,
+      );
+
+      // Verify all fields were passed
+      const [, , receivedExtra] = processCallToolResultSpy.mock.calls[0];
+      expect(receivedExtra.requestId).toBe("response-request-id");
+      expect(receivedExtra.sessionId).toBe("response-session-id");
+      expect(receivedExtra.authInfo).toEqual({
+        access_token: "response-token",
+        token_type: "Bearer",
+      });
+      expect(receivedExtra._meta).toEqual({
+        responseTest: true,
+      });
+      expect(receivedExtra.requestInfo).toEqual({
+        url: "https://api.example.com/response",
+        method: "GET",
+        headers: { accept: "application/json" },
+      });
     });
   });
 });
