@@ -61,6 +61,7 @@ import {
 import type { HookDefinition } from "../proxy/config.js";
 import { MetadataHelper } from "./metadataHelper.js";
 import { PassthroughEndpoint } from "./passthroughEndpoint.js";
+import { mapRequestHandlerExtraToRequestExtra } from "./requestExtraMapper.js";
 
 /**
  * Options for configuring PassthroughContext behavior
@@ -423,10 +424,8 @@ export class PassthroughContext {
     request: InitializeRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<InitializeResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -441,10 +440,8 @@ export class PassthroughContext {
     request: ListToolsRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<ListToolsResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -459,10 +456,8 @@ export class PassthroughContext {
     request: CallToolRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<CallToolResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -477,10 +472,8 @@ export class PassthroughContext {
     request: ListResourcesRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<ListResourcesResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -495,10 +488,8 @@ export class PassthroughContext {
     request: ListResourceTemplatesRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<ListResourceTemplatesResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -513,10 +504,8 @@ export class PassthroughContext {
     request: ReadResourceRequest,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<ReadResourceResult> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -539,10 +528,8 @@ export class PassthroughContext {
       );
     }
 
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processServerRequest(
       request,
       requestExtra,
@@ -615,10 +602,8 @@ export class PassthroughContext {
     request: Request,
     requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
   ): Promise<Result> {
-    const requestExtra: RequestExtra = {
-      requestId: requestHandlerExtra.requestId,
-      sessionId: requestHandlerExtra.sessionId,
-    };
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
     return this.processClientRequest(
       request,
       requestExtra,
