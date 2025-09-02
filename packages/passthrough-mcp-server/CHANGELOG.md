@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.7] - 2025-01-02
+
+### Changed
+
+- **Exposed proxyContext in StdioPassthroughProxy**: Made the `proxyContext` property public and readonly in `StdioPassthroughProxy` to allow external access to the PassthroughContext instance
+- **Exposed sessionManager in HttpPassthroughProxy**: Made the `sessionManager` property public and readonly in `HttpPassthroughProxy` to allow external access to the McpSessionManager instance
+
 ## [0.8.6] - 2025-01-27
 
 ### Added
