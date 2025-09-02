@@ -38,7 +38,7 @@ export type HttpProxyConfig = Omit<Config, "source"> & {
 export class HttpPassthroughProxy implements PassthroughProxy {
   private httpServer!: HttpServer;
   private isStarted = false;
-  private sessionManager: McpSessionManager;
+  public readonly sessionManager: McpSessionManager;
 
   constructor(private config: HttpProxyConfig) {
     this.sessionManager = new McpSessionManager();

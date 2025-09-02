@@ -19,7 +19,7 @@ export type StdioProxyConfig = Omit<Config, "source"> & {
 export class StdioPassthroughProxy implements PassthroughProxy {
   private isStarted = false;
 
-  private proxyContext: PassthroughContext;
+  public readonly proxyContext: PassthroughContext;
   private serverTransport: StdioServerTransport;
   private clientTransport: Transport;
 
