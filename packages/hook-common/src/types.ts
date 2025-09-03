@@ -8,6 +8,10 @@ import {
   InitializeRequestSchema,
   type InitializeResult,
   InitializeResultSchema,
+  type ListPromptsRequest,
+  ListPromptsRequestSchema,
+  type ListPromptsResult,
+  ListPromptsResultSchema,
   type ListResourceTemplatesRequest,
   ListResourceTemplatesRequestSchema,
   type ListResourceTemplatesResult,
@@ -50,6 +54,8 @@ export type {
   CallToolResult,
   InitializeRequest,
   InitializeResult,
+  ListPromptsRequest,
+  ListPromptsResult,
   ListResourcesRequest,
   ListResourcesResult,
   ListResourceTemplatesRequest,
@@ -88,6 +94,10 @@ export type RequestContext = z.infer<typeof RequestContextSchema>;
 export const CallToolRequestSchemaWithContext = CallToolRequestSchema.extend({
   requestContext: RequestContextSchema.optional(),
 });
+export const ListPromptsRequestSchemaWithContext =
+  ListPromptsRequestSchema.extend({
+    requestContext: RequestContextSchema.optional(),
+  });
 export const ListToolsRequestSchemaWithContext = ListToolsRequestSchema.extend({
   requestContext: RequestContextSchema.optional(),
 });
@@ -120,6 +130,9 @@ export const ReadResourceRequestSchemaWithContext =
  * the optional requestContext field for cleaner separation of concerns.
  */
 export type CallToolRequestWithContext = CallToolRequest & {
+  requestContext?: RequestContext;
+};
+export type ListPromptsRequestWithContext = ListPromptsRequest & {
   requestContext?: RequestContext;
 };
 export type ListToolsRequestWithContext = ListToolsRequest & {
@@ -204,6 +217,21 @@ export const CallToolErrorHookResultSchema = z.discriminatedUnion(
     z.object({
       resultType: z.literal("respond"),
       response: CallToolResultSchema,
+    }),
+  ],
+);
+
+export const ListPromptsErrorHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) error
+    z.object({
+      resultType: z.literal("continue"),
+    }),
+    // stop the error handling and replace the error with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListPromptsResultSchema,
     }),
   ],
 );
@@ -406,6 +434,22 @@ export const ReadResourceErrorHookResultSchema = z.discriminatedUnion(
   ],
 );
 
+export const ListPromptsRequestHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) request
+    z.object({
+      resultType: z.literal("continue"),
+      request: ListPromptsRequestSchemaWithContext,
+    }),
+    // stop the request and return to the caller with this response
+    z.object({
+      resultType: z.literal("respond"),
+      response: ListPromptsResultSchema,
+    }),
+  ],
+);
+
 export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
   "resultType",
   [
@@ -418,6 +462,17 @@ export const ListToolsRequestHookResultSchema = z.discriminatedUnion(
     z.object({
       resultType: z.literal("respond"),
       response: ListToolsResultSchema,
+    }),
+  ],
+);
+
+export const ListPromptsResponseHookResultSchema = z.discriminatedUnion(
+  "resultType",
+  [
+    // continue the hook chain, passing this (potentially updated) response
+    z.object({
+      resultType: z.literal("continue"),
+      response: ListPromptsResultSchema,
     }),
   ],
 );
@@ -498,6 +553,9 @@ export type CallToolResponseHookResult = z.infer<
 export type CallToolErrorHookResult = z.infer<
   typeof CallToolErrorHookResultSchema
 >;
+export type ListPromptsErrorHookResult = z.infer<
+  typeof ListPromptsErrorHookResultSchema
+>;
 export type ListToolsErrorHookResult = z.infer<
   typeof ListToolsErrorHookResultSchema
 >;
@@ -511,6 +569,12 @@ export type NotificationErrorHookResult = z.infer<
 >;
 export type TargetNotificationErrorHookResult = z.infer<
   typeof TargetNotificationErrorHookResultSchema
+>;
+export type ListPromptsRequestHookResult = z.infer<
+  typeof ListPromptsRequestHookResultSchema
+>;
+export type ListPromptsResponseHookResult = z.infer<
+  typeof ListPromptsResponseHookResultSchema
 >;
 export type ListToolsRequestHookResult = z.infer<
   typeof ListToolsRequestHookResultSchema
@@ -623,6 +687,32 @@ export interface Hook {
     originalToolCall: CallToolRequestWithContext,
     originalRequestExtra: RequestExtra,
   ): Promise<CallToolErrorHookResult>;
+  /**
+   * Process a prompts/list request (optional)
+   */
+  processListPromptsRequest?(
+    request: ListPromptsRequestWithContext,
+    requestExtra: RequestExtra,
+  ): Promise<ListPromptsRequestHookResult>;
+
+  /**
+   * Process a prompts/list response (optional)
+   */
+  processListPromptsResult?(
+    result: ListPromptsResult,
+    originalListPromptsRequest: ListPromptsRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsResponseHookResult>;
+
+  /**
+   * Process errors for prompts/list requests (optional)
+   */
+  processListPromptsError?(
+    error: HookChainError,
+    originalRequest: ListPromptsRequestWithContext,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsErrorHookResult>;
+
   /**
    * Process a tools/list request (optional)
    */

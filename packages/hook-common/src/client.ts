@@ -3,6 +3,8 @@ import type {
   CallToolRequest,
   InitializeRequest,
   InitializeResult,
+  ListPromptsRequest,
+  ListPromptsResult,
   ListResourceTemplatesRequest,
   ListResourceTemplatesResult,
   ListResourcesRequest,
@@ -27,6 +29,9 @@ import type {
   InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListPromptsErrorHookResult,
+  ListPromptsRequestHookResult,
+  ListPromptsResponseHookResult,
   ListResourceTemplatesErrorHookResult,
   ListResourceTemplatesRequestHookResult,
   ListResourceTemplatesResponseHookResult,
@@ -142,6 +147,48 @@ export class RemoteHookClient implements Hook {
       return handleHookError(error, this.name, "processCallToolResult", {
         resultType: "continue" as const,
         response,
+      });
+    }
+  }
+
+  /**
+   * Process a prompts/list request through the hook
+   */
+  async processListPromptsRequest(
+    request: ListPromptsRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListPromptsRequestHookResult> {
+    try {
+      return await this.client.processListPromptsRequest.mutate({
+        request,
+        requestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processListPromptsRequest", {
+        resultType: "continue" as const,
+        request: request,
+      });
+    }
+  }
+
+  /**
+   * Process a prompts/list response through the hook
+   */
+  async processListPromptsResult(
+    response: ListPromptsResult,
+    originalRequest: ListPromptsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsResponseHookResult> {
+    try {
+      return await this.client.processListPromptsResult.mutate({
+        response,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (error) {
+      return handleHookError(error, this.name, "processListPromptsResult", {
+        resultType: "continue" as const,
+        response: response,
       });
     }
   }
@@ -322,6 +369,32 @@ export class RemoteHookClient implements Hook {
       return handleHookError(clientError, this.name, "processCallToolError", {
         resultType: "continue" as const,
       });
+    }
+  }
+
+  /**
+   * Process errors for prompts/list requests
+   */
+  async processListPromptsError(
+    error: HookChainError,
+    originalRequest: ListPromptsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsErrorHookResult> {
+    try {
+      return await this.client.processListPromptsError.mutate({
+        error,
+        originalRequest,
+        originalRequestExtra,
+      });
+    } catch (clientError) {
+      return handleHookError(
+        clientError,
+        this.name,
+        "processListPromptsError",
+        {
+          resultType: "continue" as const,
+        },
+      );
     }
   }
 

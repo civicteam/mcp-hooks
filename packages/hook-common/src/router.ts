@@ -2,6 +2,8 @@ import {
   CallToolRequestSchema,
   InitializeRequestSchema,
   InitializeResultSchema,
+  ListPromptsRequestSchema,
+  ListPromptsResultSchema,
   ListResourceTemplatesRequestSchema,
   ListResourceTemplatesResultSchema,
   ListResourcesRequestSchema,
@@ -27,6 +29,10 @@ import {
   InitializeRequestHookResultSchema,
   InitializeRequestSchemaWithContext,
   InitializeResponseHookResultSchema,
+  ListPromptsErrorHookResultSchema,
+  ListPromptsRequestHookResultSchema,
+  ListPromptsRequestSchemaWithContext,
+  ListPromptsResponseHookResultSchema,
   ListResourceTemplatesErrorHookResultSchema,
   ListResourceTemplatesRequestHookResultSchema,
   ListResourceTemplatesRequestSchemaWithContext,
@@ -58,6 +64,8 @@ import type {
   HookChainError,
   InitializeRequestWithContext,
   InitializeResult,
+  ListPromptsRequestWithContext,
+  ListPromptsResult,
   ListResourceTemplatesRequestWithContext,
   ListResourceTemplatesResult,
   ListResourcesRequestWithContext,
@@ -134,6 +142,50 @@ const baseRouter = t.router({
  * Optional router procedures for tools/list
  */
 const toolsListRouter = t.router({
+  /**
+   * Process a prompts/list request
+   */
+  processListPromptsRequest: t.procedure
+    .input(
+      z.object({
+        request: ListPromptsRequestSchemaWithContext,
+        requestExtra: z.any(),
+      }),
+    )
+    .output(ListPromptsRequestHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListPromptsRequest not implemented");
+    }),
+  /**
+   * Process a prompts/list response
+   */
+  processListPromptsResult: t.procedure
+    .input(
+      z.object({
+        response: ListPromptsResultSchema,
+        originalRequest: ListPromptsRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
+      }),
+    )
+    .output(ListPromptsResponseHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListPromptsResult not implemented");
+    }),
+  /**
+   * Process errors for prompts/list requests
+   */
+  processListPromptsError: t.procedure
+    .input(
+      z.object({
+        error: HookChainErrorSchema,
+        originalRequest: ListPromptsRequestSchemaWithContext,
+        originalRequestExtra: z.any(),
+      }),
+    )
+    .output(ListPromptsErrorHookResultSchema)
+    .mutation(async ({ input }) => {
+      throw new Error("processListPromptsError not implemented");
+    }),
   /**
    * Process a tools/list request
    */
@@ -619,6 +671,71 @@ export function createHookRouter(hook: Hook) {
       });
   }
 
+  if (hook.processListPromptsRequest) {
+    procedures.processListPromptsRequest = t.procedure
+      .input(
+        z.object({
+          request: ListPromptsRequestSchemaWithContext,
+          requestExtra: z.any(),
+        }),
+      )
+      .output(ListPromptsRequestHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListPromptsRequest) {
+          throw new Error("processListPromptsRequest not implemented");
+        }
+        return await hook.processListPromptsRequest(
+          input.request,
+          input.requestExtra,
+        );
+      });
+  }
+  if (hook.processListPromptsResult) {
+    procedures.processListPromptsResult = t.procedure
+      .input(
+        z.object({
+          response: ListPromptsResultSchema,
+          originalRequest: ListPromptsRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
+        }),
+      )
+      .output(ListPromptsResponseHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListPromptsResult) {
+          throw new Error("processListPromptsResult not implemented");
+        }
+        return await hook.processListPromptsResult(
+          input.response,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
+  // Add processListPromptsError if the hook implements it
+  if (hook.processListPromptsError) {
+    procedures.processListPromptsError = t.procedure
+      .input(
+        z.object({
+          error: HookChainErrorSchema,
+          originalRequest: ListPromptsRequestSchemaWithContext,
+          originalRequestExtra: z.any(),
+        }),
+      )
+      .output(ListPromptsErrorHookResultSchema)
+      .mutation(async ({ input }) => {
+        // This should never happen since we check for the method existence
+        if (!hook.processListPromptsError) {
+          throw new Error("processListPromptsError not implemented");
+        }
+        return await hook.processListPromptsError(
+          input.error,
+          input.originalRequest,
+          input.originalRequestExtra,
+        );
+      });
+  }
   if (hook.processListToolsRequest) {
     procedures.processListToolsRequest = t.procedure
       .input(
