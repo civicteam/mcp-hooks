@@ -26,6 +26,10 @@ import {
   InitializeRequestSchema,
   type InitializeResult,
   InitializeResultSchema,
+  type ListPromptsRequest,
+  ListPromptsRequestSchema,
+  type ListPromptsResult,
+  ListPromptsResultSchema,
   type ListResourceTemplatesRequest,
   ListResourceTemplatesRequestSchema,
   type ListResourceTemplatesResult,
@@ -200,6 +204,10 @@ export class PassthroughContext {
     this._passthroughServer.setRequestHandler(
       InitializeRequestSchema,
       this._onServerInitializeRequest.bind(this),
+    );
+    this._passthroughServer.setRequestHandler(
+      ListPromptsRequestSchema,
+      this._onServerListPromptsRequest.bind(this),
     );
     this._passthroughServer.setRequestHandler(
       ListToolsRequestSchema,
@@ -433,6 +441,22 @@ export class PassthroughContext {
       "processInitializeRequest",
       "processInitializeResult",
       "processInitializeError",
+    );
+  }
+
+  private async _onServerListPromptsRequest(
+    request: ListPromptsRequest,
+    requestHandlerExtra: RequestHandlerExtra<Request, Notification>,
+  ): Promise<ListPromptsResult> {
+    const requestExtra =
+      mapRequestHandlerExtraToRequestExtra(requestHandlerExtra);
+    return this.processServerRequest(
+      request,
+      requestExtra,
+      ListPromptsResultSchema,
+      "processListPromptsRequest",
+      "processListPromptsResult",
+      "processListPromptsError",
     );
   }
 

@@ -1,6 +1,10 @@
 import type {
   CallToolRequest,
   CallToolResult,
+  ListPromptsRequest,
+  ListPromptsResult,
+  ListToolsRequest,
+  ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +16,10 @@ import {
 import type {
   CallToolRequestHookResult,
   CallToolResponseHookResult,
+  ListPromptsRequestHookResult,
+  ListPromptsResponseHookResult,
+  ListToolsRequestHookResult,
+  ListToolsResponseHookResult,
   RequestExtra,
 } from "./types.js";
 
@@ -28,6 +36,18 @@ vi.mock("@trpc/client", () => ({
       mutate: vi.fn(),
     },
     processCallToolResult: {
+      mutate: vi.fn(),
+    },
+    processListToolsRequest: {
+      mutate: vi.fn(),
+    },
+    processListToolsResult: {
+      mutate: vi.fn(),
+    },
+    processListPromptsRequest: {
+      mutate: vi.fn(),
+    },
+    processListPromptsResult: {
       mutate: vi.fn(),
     },
   })),
@@ -50,6 +70,10 @@ const toToolCall = (params: CallToolRequest["params"]): CallToolRequest => ({
 describe("RemoteHookClient", () => {
   let mockProcessCallToolRequest: ReturnType<typeof vi.fn>;
   let mockProcessCallToolResult: ReturnType<typeof vi.fn>;
+  let mockProcessListToolsRequest: ReturnType<typeof vi.fn>;
+  let mockProcessListToolsResult: ReturnType<typeof vi.fn>;
+  let mockProcessListPromptsRequest: ReturnType<typeof vi.fn>;
+  let mockProcessListPromptsResult: ReturnType<typeof vi.fn>;
   let hookClient: RemoteHookClient;
   const config: RemoteHookConfig = {
     url: "http://localhost:3000",
@@ -62,11 +86,19 @@ describe("RemoteHookClient", () => {
     // Setup mock implementations
     mockProcessCallToolRequest = vi.fn();
     mockProcessCallToolResult = vi.fn();
+    mockProcessListToolsRequest = vi.fn();
+    mockProcessListToolsResult = vi.fn();
+    mockProcessListPromptsRequest = vi.fn();
+    mockProcessListPromptsResult = vi.fn();
 
     // Mock the tRPC client creation
     const mockClient = {
       processCallToolRequest: { mutate: mockProcessCallToolRequest },
       processCallToolResult: { mutate: mockProcessCallToolResult },
+      processListToolsRequest: { mutate: mockProcessListToolsRequest },
+      processListToolsResult: { mutate: mockProcessListToolsResult },
+      processListPromptsRequest: { mutate: mockProcessListPromptsRequest },
+      processListPromptsResult: { mutate: mockProcessListPromptsResult },
     };
 
     (createTRPCClient as any).mockReturnValue(mockClient);
@@ -341,6 +373,215 @@ describe("RemoteHookClient", () => {
       expect(result).toEqual({
         resultType: "continue",
         response: toolResponse,
+      });
+    });
+  });
+
+  describe("processListToolsRequest", () => {
+    it("should process tools/list request", async () => {
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const expectedResponse: ListToolsRequestHookResult = {
+        resultType: "continue",
+        request,
+      };
+
+      mockProcessListToolsRequest.mockResolvedValue(expectedResponse);
+
+      const result = await hookClient.processListToolsRequest(
+        request,
+        mockRequestExtra,
+      );
+
+      expect(mockProcessListToolsRequest).toHaveBeenCalledWith({
+        request,
+        requestExtra: mockRequestExtra,
+      });
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it("should handle errors in tools/list request", async () => {
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const error = new Error("processListToolsRequest not implemented");
+      mockProcessListToolsRequest.mockRejectedValue(error);
+
+      const result = await hookClient.processListToolsRequest(
+        request,
+        mockRequestExtra,
+      );
+
+      // Should return continue on error
+      expect(result).toEqual({
+        resultType: "continue",
+        request,
+      });
+    });
+  });
+
+  describe("processListToolsResult", () => {
+    it("should process tools/list response", async () => {
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const response: ListToolsResult = {
+        tools: [
+          {
+            name: "test-tool",
+            description: "Test tool description",
+            inputSchema: {
+              type: "object",
+              properties: {},
+            },
+          },
+        ],
+      };
+
+      const expectedResponse: ListToolsResponseHookResult = {
+        resultType: "continue",
+        response,
+      };
+
+      mockProcessListToolsResult.mockResolvedValue(expectedResponse);
+
+      const result = await hookClient.processListToolsResult(
+        response,
+        request,
+        mockRequestExtra,
+      );
+
+      expect(mockProcessListToolsResult).toHaveBeenCalledWith({
+        response,
+        originalRequest: request,
+        originalRequestExtra: mockRequestExtra,
+      });
+      expect(result).toEqual(expectedResponse);
+    });
+  });
+
+  describe("processListPromptsRequest", () => {
+    it("should process prompts/list request", async () => {
+      const request: ListPromptsRequest = {
+        method: "prompts/list",
+        params: {},
+      };
+
+      const expectedResponse: ListPromptsRequestHookResult = {
+        resultType: "continue",
+        request,
+      };
+
+      mockProcessListPromptsRequest.mockResolvedValue(expectedResponse);
+
+      const result = await hookClient.processListPromptsRequest(
+        request,
+        mockRequestExtra,
+      );
+
+      expect(mockProcessListPromptsRequest).toHaveBeenCalledWith({
+        request,
+        requestExtra: mockRequestExtra,
+      });
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it("should handle errors in prompts/list request", async () => {
+      const request: ListPromptsRequest = {
+        method: "prompts/list",
+        params: {},
+      };
+
+      const error = new Error("processListPromptsRequest not implemented");
+      mockProcessListPromptsRequest.mockRejectedValue(error);
+
+      const result = await hookClient.processListPromptsRequest(
+        request,
+        mockRequestExtra,
+      );
+
+      // Should return continue on error
+      expect(result).toEqual({
+        resultType: "continue",
+        request,
+      });
+    });
+  });
+
+  describe("processListPromptsResult", () => {
+    it("should process prompts/list response", async () => {
+      const request: ListPromptsRequest = {
+        method: "prompts/list",
+        params: {},
+      };
+
+      const response: ListPromptsResult = {
+        prompts: [
+          {
+            name: "test-prompt",
+            description: "Test prompt description",
+            arguments: [
+              {
+                name: "arg1",
+                description: "First argument",
+                required: true,
+              },
+            ],
+          },
+        ],
+      };
+
+      const expectedResponse: ListPromptsResponseHookResult = {
+        resultType: "continue",
+        response,
+      };
+
+      mockProcessListPromptsResult.mockResolvedValue(expectedResponse);
+
+      const result = await hookClient.processListPromptsResult(
+        response,
+        request,
+        mockRequestExtra,
+      );
+
+      expect(mockProcessListPromptsResult).toHaveBeenCalledWith({
+        response,
+        originalRequest: request,
+        originalRequestExtra: mockRequestExtra,
+      });
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it("should handle errors in prompts/list response", async () => {
+      const request: ListPromptsRequest = {
+        method: "prompts/list",
+        params: {},
+      };
+
+      const response: ListPromptsResult = {
+        prompts: [],
+      };
+
+      const error = new Error("processListPromptsResult not implemented");
+      mockProcessListPromptsResult.mockRejectedValue(error);
+
+      const result = await hookClient.processListPromptsResult(
+        response,
+        request,
+        mockRequestExtra,
+      );
+
+      // Should return continue on error
+      expect(result).toEqual({
+        resultType: "continue",
+        response,
       });
     });
   });

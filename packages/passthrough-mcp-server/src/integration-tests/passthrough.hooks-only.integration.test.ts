@@ -7,6 +7,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
+  ListPromptsResultSchema,
   ListToolsResultSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -23,6 +24,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
   let clientTransport: StreamableHTTPClientTransport;
   let serverHook: ServerHook;
   let toolsHook: any;
+  let promptsHook: any;
 
   beforeEach(async () => {
     // Create a server hook that will handle initialization
@@ -99,8 +101,42 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       },
     };
 
-    // Create passthrough context with hooks (serverHook and toolsHook)
-    passthroughContext = new PassthroughContext([serverHook, toolsHook]);
+    // Create a prompts hook that responds to prompts/list
+    promptsHook = {
+      get name() {
+        return "PromptsHook";
+      },
+      async processListPromptsRequest(
+        request: any,
+        requestExtra: RequestExtra,
+      ) {
+        return {
+          resultType: "respond",
+          response: {
+            prompts: [
+              {
+                name: "summarize",
+                description: "Summarize text",
+                arguments: [
+                  {
+                    name: "text",
+                    description: "Text to summarize",
+                    required: true,
+                  },
+                ],
+              },
+            ],
+          },
+        };
+      },
+    };
+
+    // Create passthrough context with hooks (serverHook, toolsHook, and promptsHook)
+    passthroughContext = new PassthroughContext([
+      serverHook,
+      toolsHook,
+      promptsHook,
+    ]);
 
     // Set up server transport (but NO client transport)
     passthroughServerTransport = new StreamableHTTPServerTransport({
@@ -167,6 +203,25 @@ describe("Passthrough Hook-Only Integration Tests", () => {
     // Verify the server hook has client capabilities
     const clientCapabilities = serverHook.getClientCapabilities();
     expect(clientCapabilities).toBeDefined();
+  });
+
+  it("should successfully list prompts through hooks", async () => {
+    // Connect the client first
+    await client.connect(clientTransport);
+
+    // List prompts through the hooks
+    const promptsResult = await client.request(
+      {
+        method: "prompts/list",
+        params: {},
+      },
+      ListPromptsResultSchema,
+    );
+
+    // Verify that we got the prompts from the hook
+    expect(promptsResult.prompts).toBeDefined();
+    expect(promptsResult.prompts).toHaveLength(1);
+    expect(promptsResult.prompts[0].name).toBe("summarize");
   });
 
   it("should successfully list tools through hooks", async () => {

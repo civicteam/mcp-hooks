@@ -6,6 +6,9 @@ import type {
   Hook,
   HookChainError,
   InitializeErrorHookResult,
+  ListPromptsErrorHookResult,
+  ListPromptsRequestHookResult,
+  ListPromptsResponseHookResult,
   ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
@@ -16,6 +19,8 @@ import type {
   CallToolResult,
   InitializeRequest,
   InitializeResult,
+  ListPromptsRequest,
+  ListPromptsResult,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types";
@@ -63,6 +68,14 @@ const createToolsList = (
   method: "tools/list",
 });
 
+// Helper to create a prompts list request
+const createPromptsList = (
+  params: ListPromptsRequest["params"] = {},
+): ListPromptsRequest => ({
+  params,
+  method: "prompts/list",
+});
+
 // Helper to create a tool response
 const createToolResponse = (
   result: Partial<CallToolResult>,
@@ -92,6 +105,21 @@ class MockHook implements Hook {
     originalRequest: CallToolRequestWithContext,
     originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
+    return { resultType: "continue", response };
+  }
+
+  async processListPromptsRequest?(
+    request: ListPromptsRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListPromptsRequestHookResult> {
+    return { resultType: "continue", request };
+  }
+
+  async processListPromptsResult?(
+    response: ListPromptsResult,
+    originalRequest: ListPromptsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsResponseHookResult> {
     return { resultType: "continue", response };
   }
 
@@ -452,6 +480,41 @@ describe("Hook Processor", () => {
         );
       });
     });
+
+    describe("with ListPromptsRequest", () => {
+      it("should process prompts list request through hooks", async () => {
+        const request = createPromptsList();
+
+        // Create a hook that supports prompts list
+        class PromptsListHook extends MockHook {
+          async processListPromptsRequest(
+            request: ListPromptsRequest,
+          ): Promise<ListPromptsRequestHookResult> {
+            return { resultType: "continue", request };
+          }
+        }
+
+        const mockHook = new PromptsListHook("test-hook");
+        mockHook.processListPromptsRequest = vi.fn().mockResolvedValue({
+          resultType: "continue",
+          request,
+        } satisfies ListPromptsRequestHookResult);
+
+        const chain = new HookChain([mockHook]);
+        const result = await processRequestThroughHooks<
+          ListPromptsRequest,
+          ListPromptsResult,
+          "processListPromptsRequest"
+        >(request, mockRequestExtra, chain.head, "processListPromptsRequest");
+
+        expect(result.resultType).toBe("continue");
+        expect(result.lastProcessedHook?.name).toBe("test-hook");
+        expect(mockHook.processListPromptsRequest).toHaveBeenCalledWith(
+          request,
+          mockRequestExtra,
+        );
+      });
+    });
   });
 
   describe("processResponseThroughHooks", () => {
@@ -649,6 +712,54 @@ describe("Hook Processor", () => {
 
         expect(result.resultType).toBe("continue");
         expect(mockHook.processListToolsResult).toHaveBeenCalledWith(
+          response,
+          request,
+          mockRequestExtra,
+        );
+      });
+    });
+
+    describe("with ListPromptsResult", () => {
+      it("should process prompts list response through hooks", async () => {
+        const response: ListPromptsResult = {
+          prompts: [{ name: "test-prompt", description: "A test prompt" }],
+        };
+        const request = createPromptsList();
+
+        // Create a hook that supports prompts list
+        class PromptsListHook extends MockHook {
+          async processListPromptsResult(
+            response: ListPromptsResult,
+            originalRequest: ListPromptsRequest,
+          ): Promise<ListPromptsResponseHookResult> {
+            return { resultType: "continue", response };
+          }
+        }
+
+        const mockHook = new PromptsListHook("test-hook");
+        mockHook.processListPromptsResult = vi.fn().mockResolvedValue({
+          resultType: "continue",
+          response,
+        } satisfies ListPromptsResponseHookResult);
+
+        const chain = new HookChain([mockHook]);
+        const result = await processResponseThroughHooks<
+          ListPromptsRequest,
+          ListPromptsResult,
+          "processListPromptsResult",
+          "processListPromptsError"
+        >(
+          response,
+          null,
+          request,
+          mockRequestExtra,
+          chain.head,
+          "processListPromptsResult",
+          "processListPromptsError",
+        );
+
+        expect(result.resultType).toBe("continue");
+        expect(mockHook.processListPromptsResult).toHaveBeenCalledWith(
           response,
           request,
           mockRequestExtra,

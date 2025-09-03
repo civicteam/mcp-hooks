@@ -9,6 +9,8 @@ import type {
   CallToolResult,
   InitializeRequest,
   InitializeResult,
+  ListPromptsRequest,
+  ListPromptsResult,
   ListResourceTemplatesRequest,
   ListResourceTemplatesResult,
   ListResourcesRequest,
@@ -30,6 +32,9 @@ import type {
   InitializeErrorHookResult,
   InitializeRequestHookResult,
   InitializeResponseHookResult,
+  ListPromptsErrorHookResult,
+  ListPromptsRequestHookResult,
+  ListPromptsResponseHookResult,
   ListResourceTemplatesErrorHookResult,
   ListResourceTemplatesRequestHookResult,
   ListResourceTemplatesResponseHookResult,
@@ -94,6 +99,66 @@ export class LocalHookClient implements Hook {
     return await this.hook.processCallToolResult(
       response,
       originalCallToolRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process a prompts/list request through the hook
+   */
+  async processListPromptsRequest(
+    request: ListPromptsRequest,
+    requestExtra: RequestExtra,
+  ): Promise<ListPromptsRequestHookResult> {
+    // Check if hook supports prompts/list processing
+    if (!this.hook.processListPromptsRequest) {
+      return {
+        resultType: "continue",
+        request: request,
+      };
+    }
+    return await this.hook.processListPromptsRequest(request, requestExtra);
+  }
+
+  /**
+   * Process a prompts/list response through the hook
+   */
+  async processListPromptsResult(
+    response: ListPromptsResult,
+    originalRequest: ListPromptsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsResponseHookResult> {
+    // Check if hook supports prompts/list response processing
+    if (!this.hook.processListPromptsResult) {
+      return {
+        resultType: "continue",
+        response: response,
+      };
+    }
+    return await this.hook.processListPromptsResult(
+      response,
+      originalRequest,
+      originalRequestExtra,
+    );
+  }
+
+  /**
+   * Process errors for prompts/list requests
+   */
+  async processListPromptsError(
+    error: HookChainError,
+    originalRequest: ListPromptsRequest,
+    originalRequestExtra: RequestExtra,
+  ): Promise<ListPromptsErrorHookResult> {
+    // Check if hook supports prompts/list error processing
+    if (!this.hook.processListPromptsError) {
+      return {
+        resultType: "continue",
+      };
+    }
+    return await this.hook.processListPromptsError(
+      error,
+      originalRequest,
       originalRequestExtra,
     );
   }

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-01-03
+
+### Added
+
+- **Prompts Hook Methods**: Added comprehensive prompts support to Hook interface
+  - `processListPromptsRequest`: Process prompts listing requests
+  - `processListPromptsResult`: Process prompts listing responses
+  - `processListPromptsError`: Process prompts listing errors
+- **Prompts Types and Schemas**: Added MCP SDK prompts types
+  - `ListPromptsRequest` and `ListPromptsResult` types with context
+  - Comprehensive Zod schemas for all prompts operations
+  - `ListPromptsRequestHookResult`, `ListPromptsResponseHookResult`, and `ListPromptsErrorHookResult` types
+- **Enhanced AbstractHook**: Fixed incorrect optional markers on method implementations
+  - All AbstractHook methods now properly implemented without optional markers
+  - Improved type safety and consistency across all hook methods
+
+### Fixed
+
+- Fixed incorrect optional markers (`?`) on all AbstractHook method implementations
+- Added missing `inputSchema` fields in test tool definitions
+
+### Testing
+
+- Added comprehensive tests for prompts/list functionality in localClient.test.ts
+- Added RemoteHookClient tests for both tools/list and prompts/list operations
+- Enhanced test coverage for error handling and hook modifications
+
 ## [0.5.0] - 2025-01-23
 
 ### Changed
