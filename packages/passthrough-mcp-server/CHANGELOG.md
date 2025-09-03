@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-01-03
+
+### Added
+
+- **Prompts Support**: Added comprehensive support for MCP prompts/list operations
+  - Added `ListPromptsRequestSchema` handler in PassthroughContext
+  - Implemented `_onServerListPromptsRequest` method for processing prompts/list requests through hooks
+  - Full integration with hook system for prompts listing, including request/response/error processing
+- **Enhanced Testing**: Added prompts/list tests
+  - Unit tests for prompts/list request and response processing in processor.test.ts
+  - Integration tests with PromptsHook in passthrough.hooks-only.integration.test.ts
+  - Complete test coverage for prompts operations matching tools/list pattern
+
+### Dependencies
+
+- @civic/hook-common: 0.5.0 → 0.6.0 (includes prompts support)
+
 ## [0.8.7] - 2025-01-02
 
 ### Changed
