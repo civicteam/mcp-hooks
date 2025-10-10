@@ -550,7 +550,10 @@ export type CallToolRequestHookResult =
       resultType: "continueAsync";
       request: CallToolRequestWithContext;
       response: CallToolResult;
-      callback: (response: CallToolResult) => Promise<void>;
+      callback: (
+        response: CallToolResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type CallToolResponseHookResult = z.infer<
   typeof CallToolResponseHookResultSchema
@@ -581,7 +584,10 @@ export type ListPromptsRequestHookResult =
       resultType: "continueAsync";
       request: ListPromptsRequestWithContext;
       response: ListPromptsResult;
-      callback: (response: ListPromptsResult) => Promise<void>;
+      callback: (
+        response: ListPromptsResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ListPromptsResponseHookResult = z.infer<
   typeof ListPromptsResponseHookResultSchema
@@ -592,7 +598,10 @@ export type ListToolsRequestHookResult =
       resultType: "continueAsync";
       request: ListToolsRequestWithContext;
       response: ListToolsResult;
-      callback: (response: ListToolsResult) => Promise<void>;
+      callback: (
+        response: ListToolsResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ListToolsResponseHookResult = z.infer<
   typeof ListToolsResponseHookResultSchema
@@ -603,7 +612,10 @@ export type InitializeRequestHookResult =
       resultType: "continueAsync";
       request: InitializeRequestWithContext;
       response: InitializeResult;
-      callback: (response: InitializeResult) => Promise<void>;
+      callback: (
+        response: InitializeResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type InitializeResponseHookResult = z.infer<
   typeof InitializeResponseHookResultSchema
@@ -614,7 +626,10 @@ export type RequestHookResult =
       resultType: "continueAsync";
       request: Request;
       response: Result;
-      callback: (response: Result) => Promise<void>;
+      callback: (
+        response: Result | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
 export type NotificationHookResult = z.infer<
@@ -626,7 +641,10 @@ export type ListResourcesRequestHookResult =
       resultType: "continueAsync";
       request: ListResourcesRequestWithContext;
       response: ListResourcesResult;
-      callback: (response: ListResourcesResult) => Promise<void>;
+      callback: (
+        response: ListResourcesResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ListResourcesResponseHookResult = z.infer<
   typeof ListResourcesResponseHookResultSchema
@@ -640,7 +658,10 @@ export type ListResourceTemplatesRequestHookResult =
       resultType: "continueAsync";
       request: ListResourceTemplatesRequestWithContext;
       response: ListResourceTemplatesResult;
-      callback: (response: ListResourceTemplatesResult) => Promise<void>;
+      callback: (
+        response: ListResourceTemplatesResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ListResourceTemplatesResponseHookResult = z.infer<
   typeof ListResourceTemplatesResponseHookResultSchema
@@ -654,7 +675,10 @@ export type ReadResourceRequestHookResult =
       resultType: "continueAsync";
       request: ReadResourceRequestWithContext;
       response: ReadResourceResult;
-      callback: (response: ReadResourceResult) => Promise<void>;
+      callback: (
+        response: ReadResourceResult | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     };
 export type ReadResourceResponseHookResult = z.infer<
   typeof ReadResourceResponseHookResultSchema
@@ -986,7 +1010,10 @@ export type GenericRequestHookResult<TRequest, TResponse> =
       request: TRequest;
       response: TResponse;
     } & {
-      callback: (response: TResponse) => Promise<void>;
+      callback: (
+        response: TResponse | null,
+        error: HookChainError | null,
+      ) => Promise<void>;
     });
 
 /**
