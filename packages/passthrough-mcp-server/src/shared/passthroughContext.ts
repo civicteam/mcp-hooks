@@ -307,11 +307,14 @@ export class PassthroughContext {
     if (requestResult.resultType === "continueAsync") {
       // continue async through the chain
       void (async () => {
+        let asyncResult: TResponse | null = null;
+        let asyncError: HookChainError | null = null;
+
         try {
           // CAREFUL: in "processClientRequest" next hook is .previous!
           const newStartHook = requestResult.lastProcessedHook?.previous;
           // recursively call processClientRequest on the remainder of the chain.
-          const result = await this.processClientRequest<
+          asyncResult = await this.processClientRequest<
             TRequest,
             TResponse,
             TResponseSchema,
@@ -327,11 +330,22 @@ export class PassthroughContext {
             hookErrorMethodName,
             newStartHook,
           );
-          await requestResult.callback(result, null);
         } catch (e) {
-          const hookChainError = toHookChainError(e);
-          await requestResult.callback(null, hookChainError);
+          asyncError = toHookChainError(e);
         }
+
+        // Invoke callback with result or error
+        try {
+          await requestResult.callback(asyncResult, asyncError);
+        } catch (callbackError) {
+          logger.error("Error in continueAsync callback:", callbackError);
+          this._onerror?.(
+            callbackError instanceof Error
+              ? callbackError
+              : new Error(String(callbackError)),
+          );
+        }
+
         logger.debug("continueAsync: async processing done.");
       })();
     }
@@ -419,10 +433,13 @@ export class PassthroughContext {
     if (requestResult.resultType === "continueAsync") {
       // continue async through the chain
       void (async () => {
+        let asyncResult: TResponse | null = null;
+        let asyncError: HookChainError | null = null;
+
         try {
           const newStartHook = requestResult.lastProcessedHook?.next;
           // recursively call processServerRequest on the remainder of the chain.
-          const result = await this.processServerRequest<
+          asyncResult = await this.processServerRequest<
             TRequest,
             TResponse,
             TResponseSchema,
@@ -438,11 +455,22 @@ export class PassthroughContext {
             hookErrorMethodName,
             newStartHook,
           );
-          await requestResult.callback(result, null);
         } catch (e) {
-          const hookChainError = toHookChainError(e);
-          await requestResult.callback(null, hookChainError);
+          asyncError = toHookChainError(e);
         }
+
+        // Invoke callback with result or error
+        try {
+          await requestResult.callback(asyncResult, asyncError);
+        } catch (callbackError) {
+          logger.error("Error in continueAsync callback:", callbackError);
+          this._onerror?.(
+            callbackError instanceof Error
+              ? callbackError
+              : new Error(String(callbackError)),
+          );
+        }
+
         logger.debug("continueAsync: async processing done.");
       })();
     }

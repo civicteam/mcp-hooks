@@ -1429,6 +1429,88 @@ describe("PassthroughContext ContinueAsync Tests", () => {
     });
   });
 
+  describe("continueAsync callback error handling", () => {
+    it("should handle errors thrown by callback and report via onerror", async () => {
+      const callbackError = new Error("Callback threw an error");
+      const onerrorSpy = vi.fn();
+
+      const hook1 = {
+        get name() {
+          return "ContinueAsyncHook";
+        },
+        async processCallToolRequest(request: CallToolRequest) {
+          return {
+            resultType: "continueAsync" as const,
+            request,
+            response: {
+              content: [{ type: "text" as const, text: "Immediate response" }],
+            },
+            callback: async () => {
+              throw callbackError;
+            },
+          };
+        },
+      };
+
+      const hook2 = {
+        get name() {
+          return "SecondHook";
+        },
+        async processCallToolRequest(request: CallToolRequest) {
+          return {
+            resultType: "respond" as const,
+            request,
+            response: {
+              content: [
+                { type: "text" as const, text: "Final response from hook2" },
+              ],
+            },
+          };
+        },
+      };
+
+      context = new PassthroughContext([hook1, hook2]);
+      context.onerror = onerrorSpy;
+
+      await context.connect(mockServerTransport as any);
+
+      const contextAny = context as any;
+      const request: CallToolRequest = {
+        method: "tools/call",
+        params: { name: "test-tool", arguments: {} },
+      };
+
+      const requestExtra = {
+        requestId: "test-123",
+        sessionId: "session-456",
+      };
+
+      // Call processServerRequest
+      const immediateResponse = await contextAny.processServerRequest(
+        request,
+        requestExtra,
+        z.object({
+          content: z.array(z.object({ type: z.string(), text: z.string() })),
+        }),
+        "processCallToolRequest",
+        "processCallToolResult",
+        "processCallToolError",
+      );
+
+      // Verify immediate response is returned
+      expect(immediateResponse.content).toEqual([
+        { type: "text", text: "Immediate response" },
+      ]);
+
+      // Wait for async callback to be invoked
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify onerror was called with the callback error
+      expect(onerrorSpy).toHaveBeenCalledOnce();
+      expect(onerrorSpy).toHaveBeenCalledWith(callbackError);
+    });
+  });
+
   describe("continueAsync in processClientRequest", () => {
     it("should return immediate response and invoke callback with final result in reverse order", async () => {
       // In client request processing, hooks are processed in reverse (tail to head)

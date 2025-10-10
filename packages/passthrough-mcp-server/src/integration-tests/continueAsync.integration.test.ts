@@ -900,5 +900,85 @@ describe("ContinueAsync Integration Tests", () => {
         message: expect.stringMatching(/tool.*not.*found|unknown.*tool/i),
       });
     });
+
+    it("should handle errors thrown by callback and report via onerror", async () => {
+      const callbackError = new Error("Callback threw an error");
+      const onerrorSpy = vi.fn();
+
+      // Hook that returns continueAsync with a callback that throws
+      const hook1 = {
+        get name() {
+          return "ContinueAsyncLastHook";
+        },
+        async processCallToolRequest(
+          request: any,
+          requestExtra: RequestExtra,
+        ): Promise<CallToolRequestHookResult> {
+          return {
+            resultType: "continueAsync",
+            request,
+            response: {
+              content: [
+                {
+                  type: "text",
+                  text: "Immediate response from hook",
+                },
+              ],
+            },
+            callback: async (
+              response: CallToolResult | null,
+              error: HookChainError | null,
+            ) => {
+              // Callback throws an error
+              throw callbackError;
+            },
+          };
+        },
+      };
+
+      // Target server tool handler that returns a successful response
+      const targetToolHandler = async () => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Response from upstream client",
+            },
+          ],
+        };
+      };
+
+      await setupContextWithUpstreamClient([hook1], targetToolHandler);
+
+      // Set up onerror handler on the context
+      passthroughContext.onerror = onerrorSpy;
+
+      // Make the call
+      const result = await client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: "test-tool",
+            arguments: {},
+          },
+        },
+        CallToolResultSchema,
+      );
+
+      // Should get immediate response from hook1
+      expect(result.content).toEqual([
+        {
+          type: "text",
+          text: "Immediate response from hook",
+        },
+      ]);
+
+      // Wait for async processing and callback error handling
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify onerror was called with the callback error
+      expect(onerrorSpy).toHaveBeenCalledOnce();
+      expect(onerrorSpy).toHaveBeenCalledWith(callbackError);
+    });
   });
 });
