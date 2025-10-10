@@ -338,8 +338,8 @@ export class PassthroughContext {
         try {
           await requestResult.callback(asyncResult, asyncError);
         } catch (callbackError) {
-          logger.error("Error in continueAsync callback:", callbackError);
-          this._onerror?.(
+          logger.error(`Error in continueAsync callback: ${callbackError}`);
+          this._onerror(
             callbackError instanceof Error
               ? callbackError
               : new Error(String(callbackError)),
@@ -463,8 +463,8 @@ export class PassthroughContext {
         try {
           await requestResult.callback(asyncResult, asyncError);
         } catch (callbackError) {
-          logger.error("Error in continueAsync callback:", callbackError);
-          this._onerror?.(
+          logger.error(`Error in continueAsync callback: ${callbackError}`);
+          this._onerror(
             callbackError instanceof Error
               ? callbackError
               : new Error(String(callbackError)),
