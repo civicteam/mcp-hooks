@@ -55,13 +55,53 @@ Hooks return discriminated unions based on the result type:
 type ToolCallRequestHookResult =
   | { resultType: "continue"; request: CallToolRequest }
   | { resultType: "abort"; reason: string; body?: unknown }
-  | { resultType: "respond"; response: CallToolResult };
+  | { resultType: "respond"; response: CallToolResult }
+  | {
+      resultType: "continueAsync";
+      request: CallToolRequest;
+      response: CallToolResult;
+      callback: (response: CallToolResult | null, error: HookChainError | null) => void | Promise<void>;
+    };
 
 // For response processing
 type ToolCallResponseHookResult =
   | { resultType: "continue"; response: CallToolResult }
   | { resultType: "abort"; reason: string; body?: unknown };
 ```
+
+#### continueAsync Result Type (v0.7.0+)
+
+The `continueAsync` result type allows a hook to return an immediate response to the client while continuing async processing through the remaining hooks:
+
+```typescript
+async processCallToolRequest(
+  request: CallToolRequest,
+  requestExtra: RequestExtra
+): Promise<CallToolRequestHookResult> {
+  return {
+    resultType: "continueAsync",
+    request,
+    response: {
+      content: [{ type: "text", text: "Processing started..." }]
+    },
+    callback: async (finalResponse, error) => {
+      if (error) {
+        console.error("Processing failed:", error);
+        // Handle error (e.g., send notification, log to external service)
+      } else {
+        console.log("Processing completed:", finalResponse);
+        // Handle success (e.g., update database, send notification)
+      }
+    }
+  };
+}
+```
+
+**Important Limitation**: The `continueAsync` result type is **NOT supported over tRPC** (RemoteHookClient). Callbacks cannot be serialized and sent over the network. Only use `continueAsync` with:
+- Local hooks (LocalHookClient)
+- Direct Hook instances
+
+For remote hooks, use `respond`, `continue`, or `abort` result types instead.
 
 ### Hook Interface
 
