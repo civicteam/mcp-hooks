@@ -10,6 +10,7 @@ import type {
 import { ServerHook } from "@civic/server-hook";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -533,6 +534,370 @@ describe("ContinueAsync Integration Tests", () => {
       expect(callbackError).toMatchObject({
         code: expect.any(Number),
         message: expect.stringContaining("No client transport connected"),
+      });
+    });
+  });
+
+  describe("continueAsync with upstream client", () => {
+    let targetMcpServer: McpServer;
+    let targetServer: Server;
+    let targetServerUrl: URL;
+    let targetServerTransport: StreamableHTTPServerTransport;
+    let passthroughClientTransport: StreamableHTTPClientTransport;
+    let targetToolHandler: (params: any) => Promise<CallToolResult>;
+
+    async function setupContextWithUpstreamClient(
+      hooks: any[],
+      toolHandler: (params: any) => Promise<CallToolResult>,
+    ) {
+      // Store the tool handler for later use
+      targetToolHandler = toolHandler;
+
+      // Create a target MCP server that passthrough will connect to
+      targetMcpServer = new McpServer(
+        { name: "target-server", version: "1.0.0" },
+        {
+          capabilities: {
+            tools: {},
+          },
+        },
+      );
+
+      // Add a tool to the target server that uses the provided handler
+      targetMcpServer.tool("test-tool", "A test tool", {}, async (params) => {
+        return targetToolHandler(params);
+      });
+
+      // Set up target server transport
+      targetServerTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+      });
+
+      await targetMcpServer.connect(targetServerTransport);
+
+      // Create HTTP server for target
+      targetServer = createServer();
+      targetServer.on("request", async (req, res) => {
+        await targetServerTransport.handleRequest(req, res);
+      });
+
+      targetServerUrl = await new Promise<URL>((resolve) => {
+        targetServer.listen(0, "127.0.0.1", () => {
+          const addr = targetServer.address() as AddressInfo;
+          resolve(new URL(`http://127.0.0.1:${addr.port}`));
+        });
+      });
+
+      // Create passthrough context with hooks (NO serverHook since we have an upstream server)
+      passthroughContext = new PassthroughContext([...hooks]);
+
+      // Set up passthrough server transport
+      passthroughServerTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+      });
+
+      // Create passthrough client transport to connect to target server
+      passthroughClientTransport = new StreamableHTTPClientTransport(
+        targetServerUrl,
+      );
+
+      // Connect passthrough with BOTH server and client transports
+      // Note: The passthrough client will initialize with the target server
+      await passthroughContext.connect(
+        passthroughServerTransport,
+        passthroughClientTransport,
+      );
+
+      // Create HTTP server for the passthrough
+      passthroughServer = createServer();
+      passthroughServer.on("request", async (req, res) => {
+        await passthroughServerTransport.handleRequest(req, res);
+      });
+
+      passthroughServerUrl = await new Promise<URL>((resolve) => {
+        passthroughServer.listen(0, "127.0.0.1", () => {
+          const addr = passthroughServer.address() as AddressInfo;
+          resolve(new URL(`http://127.0.0.1:${addr.port}`));
+        });
+      });
+
+      // Set up a client to connect to the passthrough server
+      client = new Client({
+        name: "continueAsync-test-client",
+        version: "1.0.0",
+      });
+
+      clientTransport = new StreamableHTTPClientTransport(passthroughServerUrl);
+      await client.connect(clientTransport);
+    }
+
+    afterEach(async () => {
+      try {
+        await passthroughClientTransport?.close();
+      } catch (e) {
+        console.warn("Error closing passthrough client transport:", e);
+      }
+
+      try {
+        await targetMcpServer?.close();
+      } catch (e) {
+        console.warn("Error closing target MCP server:", e);
+      }
+
+      try {
+        await targetServerTransport?.close();
+      } catch (e) {
+        console.warn("Error closing target server transport:", e);
+      }
+
+      targetServer?.close();
+    });
+
+    it("should call upstream client and return success response in callback when last hook returns continueAsync", async () => {
+      const callbackSpy = vi.fn();
+
+      // Hook that returns continueAsync as the last hook
+      const hook1 = {
+        get name() {
+          return "ContinueAsyncLastHook";
+        },
+        async processCallToolRequest(
+          request: any,
+          requestExtra: RequestExtra,
+        ): Promise<CallToolRequestHookResult> {
+          return {
+            resultType: "continueAsync",
+            request,
+            response: {
+              content: [
+                {
+                  type: "text",
+                  text: "Immediate response from hook",
+                },
+              ],
+            },
+            callback: async (
+              response: CallToolResult | null,
+              error: HookChainError | null,
+            ) => {
+              callbackSpy(response, error);
+            },
+          };
+        },
+      };
+
+      // Target server tool handler that returns a successful response
+      const targetToolHandler = async () => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Response from upstream client",
+            },
+          ],
+        };
+      };
+
+      await setupContextWithUpstreamClient([hook1], targetToolHandler);
+
+      // Make the call
+      const result = await client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: "test-tool",
+            arguments: {},
+          },
+        },
+        CallToolResultSchema,
+      );
+
+      // Should get immediate response from hook1
+      expect(result.content).toEqual([
+        {
+          type: "text",
+          text: "Immediate response from hook",
+        },
+      ]);
+
+      // Wait for async processing to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should be called with upstream client's response
+      expect(callbackSpy).toHaveBeenCalledOnce();
+      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
+      expect(callbackError).toBeNull();
+      expect(callbackResponse).toMatchObject({
+        content: [
+          {
+            type: "text",
+            text: "Response from upstream client",
+          },
+        ],
+      });
+      // Response should have metadata added
+      expect(callbackResponse._meta).toBeDefined();
+    });
+
+    it("should call upstream client and return error in callback when upstream client throws", async () => {
+      const callbackSpy = vi.fn();
+
+      // Hook that returns continueAsync as the last hook
+      const hook1 = {
+        get name() {
+          return "ContinueAsyncLastHook";
+        },
+        async processCallToolRequest(
+          request: any,
+          requestExtra: RequestExtra,
+        ): Promise<CallToolRequestHookResult> {
+          return {
+            resultType: "continueAsync",
+            request,
+            response: {
+              content: [
+                {
+                  type: "text",
+                  text: "Immediate response from hook",
+                },
+              ],
+            },
+            callback: async (
+              response: CallToolResult | null,
+              error: HookChainError | null,
+            ) => {
+              callbackSpy(response, error);
+            },
+          };
+        },
+      };
+
+      // Target server tool handler that throws an error
+      const targetToolHandler = async () => {
+        throw new Error("Upstream client error");
+      };
+
+      await setupContextWithUpstreamClient([hook1], targetToolHandler);
+
+      // Make the call
+      const result = await client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: "test-tool",
+            arguments: {},
+          },
+        },
+        CallToolResultSchema,
+      );
+
+      // Should get immediate response from hook1
+      expect(result.content).toEqual([
+        {
+          type: "text",
+          text: "Immediate response from hook",
+        },
+      ]);
+
+      // Wait for async processing to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should be called with error response from upstream client
+      expect(callbackSpy).toHaveBeenCalledOnce();
+      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
+      // When a tool throws, MCP SDK returns a CallToolResult with isError: true
+      expect(callbackError).toBeNull();
+      expect(callbackResponse).toMatchObject({
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: "Upstream client error",
+          },
+        ],
+      });
+      // Response should have metadata added
+      expect(callbackResponse._meta).toBeDefined();
+    });
+
+    it("should call upstream client and return MCP error in callback when tool not found", async () => {
+      const callbackSpy = vi.fn();
+
+      // Hook that returns continueAsync as the last hook
+      const hook1 = {
+        get name() {
+          return "ContinueAsyncLastHook";
+        },
+        async processCallToolRequest(
+          request: any,
+          requestExtra: RequestExtra,
+        ): Promise<CallToolRequestHookResult> {
+          return {
+            resultType: "continueAsync",
+            request,
+            response: {
+              content: [
+                {
+                  type: "text",
+                  text: "Immediate response from hook",
+                },
+              ],
+            },
+            callback: async (
+              response: CallToolResult | null,
+              error: HookChainError | null,
+            ) => {
+              callbackSpy(response, error);
+            },
+          };
+        },
+      };
+
+      // Target server tool handler - we won't use it since we'll call a non-existent tool
+      const targetToolHandler = async () => {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "This should not be called",
+            },
+          ],
+        };
+      };
+
+      await setupContextWithUpstreamClient([hook1], targetToolHandler);
+
+      // Make the call to a non-existent tool
+      const result = await client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: "non-existent-tool",
+            arguments: {},
+          },
+        },
+        CallToolResultSchema,
+      );
+
+      // Should get immediate response from hook1
+      expect(result.content).toEqual([
+        {
+          type: "text",
+          text: "Immediate response from hook",
+        },
+      ]);
+
+      // Wait for async processing to complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Callback should be called with MCP error
+      expect(callbackSpy).toHaveBeenCalledOnce();
+      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
+      // MCP errors should be returned as HookChainError
+      expect(callbackResponse).toBeNull();
+      expect(callbackError).toMatchObject({
+        code: expect.any(Number),
+        message: expect.stringMatching(/tool.*not.*found|unknown.*tool/i),
       });
     });
   });
