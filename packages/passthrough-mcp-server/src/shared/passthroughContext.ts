@@ -55,13 +55,14 @@ import {
 import type { z } from "zod";
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
-import { HookChain } from "../hook/hookChain.js";
+import { HookChain, type LinkedListHook } from "../hook/hookChain.js";
 import {
   processNotificationThroughHooks,
   processRequestThroughHooks,
   processResponseThroughHooks,
   toHookChainError,
 } from "../hook/processor.js";
+import { logger } from "../logger/logger.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { MetadataHelper } from "./metadataHelper.js";
 import { PassthroughEndpoint } from "./passthroughEndpoint.js";
@@ -282,6 +283,7 @@ export class PassthroughContext {
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
     hookErrorMethodName: TErrorMethodName,
+    startHook: LinkedListHook | null = this._hookChain.tail,
   ): Promise<TResponse> {
     // Annotate request with metadata
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -294,7 +296,7 @@ export class PassthroughContext {
     >(
       annotatedRequest,
       requestExtra,
-      this._hookChain.tail, // Start from tail instead of head
+      startHook, // Start from tail instead of head
       hookRequestMethodName,
       "reverse", // Process in reverse direction
     );
@@ -302,7 +304,56 @@ export class PassthroughContext {
     let response: TResponse | null = null;
     let error: HookChainError | null = null;
 
-    if (requestResult.resultType === "respond") {
+    if (requestResult.resultType === "continueAsync") {
+      // continue async through the chain
+      void (async () => {
+        let asyncResult: TResponse | null = null;
+        let asyncError: HookChainError | null = null;
+
+        try {
+          // CAREFUL: in "processClientRequest" next hook is .previous!
+          const newStartHook = requestResult.lastProcessedHook?.previous;
+          // recursively call processClientRequest on the remainder of the chain.
+          asyncResult = await this.processClientRequest<
+            TRequest,
+            TResponse,
+            TResponseSchema,
+            TRequestMethodName,
+            TResponseMethodName,
+            TErrorMethodName
+          >(
+            requestResult.request,
+            requestExtra,
+            responseSchema,
+            hookRequestMethodName,
+            hookResponseMethodName,
+            hookErrorMethodName,
+            newStartHook,
+          );
+        } catch (e) {
+          asyncError = toHookChainError(e);
+        }
+
+        // Invoke callback with result or error
+        try {
+          await requestResult.callback(asyncResult, asyncError);
+        } catch (callbackError) {
+          logger.error(`Error in continueAsync callback: ${callbackError}`);
+          this._onerror(
+            callbackError instanceof Error
+              ? callbackError
+              : new Error(String(callbackError)),
+          );
+        }
+
+        logger.debug("continueAsync: async processing done.");
+      })();
+    }
+
+    if (
+      requestResult.resultType === "respond" ||
+      requestResult.resultType === "continueAsync"
+    ) {
       response = requestResult.response;
     } else if (requestResult.resultType === "abort") {
       error = requestResult.error;
@@ -336,9 +387,10 @@ export class PassthroughContext {
       error,
       annotatedRequest,
       requestExtra,
-      requestResult.lastProcessedHook,
       hookResponseMethodName,
       hookErrorMethodName,
+      requestResult.lastProcessedHook,
+      startHook, // we "stop" at the startHook
       "forward", // Process in reverse direction
     );
 
@@ -363,6 +415,7 @@ export class PassthroughContext {
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
     hookErrorMethodName: TErrorMethodName,
+    startHook: LinkedListHook | null = this._hookChain.head,
   ): Promise<TResponse> {
     // Annotate request
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -372,17 +425,61 @@ export class PassthroughContext {
       TRequest,
       TResponse,
       TRequestMethodName
-    >(
-      annotatedRequest,
-      requestExtra,
-      this._hookChain.head,
-      hookRequestMethodName,
-    );
+    >(annotatedRequest, requestExtra, startHook, hookRequestMethodName);
 
     let response: TResponse | undefined = undefined;
     let error: HookChainError | null = null;
 
-    if (requestResult.resultType === "respond") {
+    if (requestResult.resultType === "continueAsync") {
+      // continue async through the chain
+      void (async () => {
+        let asyncResult: TResponse | null = null;
+        let asyncError: HookChainError | null = null;
+
+        try {
+          const newStartHook = requestResult.lastProcessedHook?.next;
+          // recursively call processServerRequest on the remainder of the chain.
+          asyncResult = await this.processServerRequest<
+            TRequest,
+            TResponse,
+            TResponseSchema,
+            TRequestMethodName,
+            TResponseMethodName,
+            TErrorMethodName
+          >(
+            requestResult.request,
+            requestExtra,
+            responseSchema,
+            hookRequestMethodName,
+            hookResponseMethodName,
+            hookErrorMethodName,
+            newStartHook,
+          );
+        } catch (e) {
+          asyncError = toHookChainError(e);
+        }
+
+        // Invoke callback with result or error
+        try {
+          await requestResult.callback(asyncResult, asyncError);
+        } catch (callbackError) {
+          logger.error(`Error in continueAsync callback: ${callbackError}`);
+          this._onerror(
+            callbackError instanceof Error
+              ? callbackError
+              : new Error(String(callbackError)),
+          );
+        }
+
+        logger.debug("continueAsync: async processing done.");
+      })();
+    }
+
+    // respond and continue are the same path
+    if (
+      requestResult.resultType === "respond" ||
+      requestResult.resultType === "continueAsync"
+    ) {
       response = requestResult.response;
     } else if (requestResult.resultType === "abort") {
       error = requestResult.error;
@@ -416,9 +513,10 @@ export class PassthroughContext {
       error,
       annotatedRequest,
       requestExtra,
-      requestResult.lastProcessedHook,
       hookResponseMethodName,
       hookErrorMethodName,
+      requestResult.lastProcessedHook,
+      startHook, // we "stop" at the startHook
     );
 
     if (responseResult.resultType === "abort") {

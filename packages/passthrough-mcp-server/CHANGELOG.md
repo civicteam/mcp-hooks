@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-01-10
+
+### Added
+
+- **continueAsync Support**: Full implementation of `continueAsync` result type in PassthroughContext
+  - Hooks can now return immediate responses while continuing async processing
+  - Callbacks are invoked after remaining hooks complete with either response or error
+  - Comprehensive error handling for callbacks that throw errors
+  - Errors from callbacks are reported via `onerror` handler
+- **Enhanced Hook Processing**: Improved request/response flow with async callback support
+  - `processServerRequest` and `processClientRequest` now handle `continueAsync` results
+  - Fire-and-forget async pattern with proper error boundaries
+  - Distinct variable names (`asyncResult`, `asyncError`) for clear async flow
+- **Comprehensive Testing**: Added extensive test coverage for continueAsync
+  - Unit tests in `passthroughContext.test.ts` for callback error handling
+  - Integration tests in `continueAsync.integration.test.ts` for end-to-end scenarios
+  - Tests cover success cases, error cases, and callback errors
+
+### Changed
+
+- Updated to use @civic/hook-common v0.7.0 with continueAsync support
+- Improved error handling in async callback processing
+- Enhanced logging for async operations
+
+### Technical Details
+
+- continueAsync enables fire-and-forget async operations without blocking request/response flow
+- Callbacks receive either final response (on success) or error (on failure)
+- Callback errors are caught and logged, preventing unhandled promise rejections
+- Full TypeScript support with proper type inference
+- Compatible with all MCP operations (tools/call, tools/list, initialize, etc.)
+
 ## [0.9.0] - 2025-01-03
 
 ### Added

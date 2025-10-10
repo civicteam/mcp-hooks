@@ -429,9 +429,9 @@ describe("Hook Processor", () => {
           null,
           toolCall,
           mockRequestExtra,
-          requestResult.lastProcessedHook,
           "processCallToolResult",
           "processCallToolError",
+          requestResult.lastProcessedHook,
         );
 
         // Should process from hook2 backward to hook1 (hook3 was not in the request path)
@@ -535,9 +535,9 @@ describe("Hook Processor", () => {
           null,
           toolCall,
           mockRequestExtra,
-          null,
           "processCallToolResult",
           "processCallToolError",
+          null,
         );
 
         expect(result.resultType).toBe("continue");
@@ -592,9 +592,9 @@ describe("Hook Processor", () => {
           null,
           toolCall,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         expect(callOrder).toEqual(["hook3", "hook2", "hook1"]);
@@ -622,9 +622,9 @@ describe("Hook Processor", () => {
           null,
           toolCall,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
         );
 
         expect(result.resultType).toBe("abort");
@@ -659,9 +659,9 @@ describe("Hook Processor", () => {
           null,
           toolCall,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
         );
 
         expect(result.resultType).toBe("continue");
@@ -705,9 +705,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processListToolsResult",
           "processListToolsError",
+          chain.head,
         );
 
         expect(result.resultType).toBe("continue");
@@ -753,9 +753,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processListPromptsResult",
           "processListPromptsError",
+          chain.head,
         );
 
         expect(result.resultType).toBe("continue");
@@ -799,9 +799,9 @@ describe("Hook Processor", () => {
         null,
         toolCall,
         mockRequestExtra,
-        requestResult.lastProcessedHook,
         "processCallToolResult",
         "processCallToolError",
+        requestResult.lastProcessedHook,
       );
 
       expect(responseResult.resultType).toBe("continue");
@@ -1060,9 +1060,9 @@ describe("Hook Processor", () => {
           error, // error state
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // Should call error handlers in reverse order
@@ -1118,9 +1118,9 @@ describe("Hook Processor", () => {
           error,
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // hook2 should handle error and recover
@@ -1172,9 +1172,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // hook2 should try to process response and throw
@@ -1242,9 +1242,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // hook3: response -> error (throws)
@@ -1311,9 +1311,9 @@ describe("Hook Processor", () => {
           error,
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // hook3: no error handler, skipped
@@ -1340,9 +1340,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          null,
           "processCallToolResult",
           "processCallToolError",
+          null,
         );
 
         // Should create an internal error
@@ -1406,9 +1406,9 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.tail,
           "processCallToolResult",
           "processCallToolError",
+          chain.tail,
         );
 
         // Verify entire chain was processed
@@ -1452,9 +1452,9 @@ describe("Hook Processor", () => {
           error,
           request,
           mockRequestExtra,
-          chain.head,
           "processListToolsResult",
           "processListToolsError",
+          chain.head,
         );
 
         expect(hook.processListToolsError).toHaveBeenCalledWith(
@@ -1506,9 +1506,9 @@ describe("Hook Processor", () => {
           error,
           request,
           mockRequestExtra,
-          chain.head,
           "processInitializeResult",
           "processInitializeError",
+          chain.head,
         );
 
         expect(hook.processInitializeError).toHaveBeenCalledWith(
@@ -1647,9 +1647,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
+          null,
           "forward",
         );
 
@@ -1703,9 +1704,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
+          null,
           "forward",
         );
 
@@ -1749,9 +1751,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
+          null,
           "forward",
         );
 
@@ -1800,9 +1803,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processCallToolResult",
           "processCallToolError",
+          chain.head,
+          null,
           "forward",
         );
 
@@ -1835,9 +1839,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          null,
           "processCallToolResult",
           "processCallToolError",
+          null,
+          null,
           "forward",
         );
 
@@ -1887,9 +1892,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head?.next,
           "processCallToolResult",
           "processCallToolError",
+          chain.head?.next,
+          null,
           "forward",
         );
 
@@ -1940,9 +1946,10 @@ describe("Hook Processor", () => {
           null,
           request,
           mockRequestExtra,
-          chain.head,
           "processListToolsResult",
           "processListToolsError",
+          chain.head,
+          null,
           "forward",
         );
 
@@ -2613,9 +2620,9 @@ describe("Hook Processor", () => {
         null,
         toolCall,
         fullRequestExtra,
-        chain.head,
         "processCallToolResult",
         "processCallToolError",
+        chain.head,
       );
 
       expect(processCallToolResultSpy).toHaveBeenCalledWith(

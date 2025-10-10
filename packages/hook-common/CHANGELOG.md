@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-01-10
+
+### Added
+
+- **continueAsync Result Type**: New result type for hooks to return immediate responses while continuing async processing
+  - `continueAsync` result type allows hooks to provide an immediate response to the client
+  - Async callback receives either the final response or error after remaining hooks complete
+  - Enables fire-and-forget async operations without blocking the request/response flow
+  - Comprehensive error handling for callbacks that throw errors
+- **continueAsync Types and Schemas**: Added type definitions for all hook result types
+  - `CallToolRequestHookResult` now includes `continueAsync` result type
+  - `ListToolsRequestHookResult`, `InitializeRequestHookResult`, and other request result types updated
+  - Zod schemas updated to validate `continueAsync` results with callback functions
+  - Callback signature: `(response: TResponse | null, error: HookChainError | null) => void | Promise<void>`
+
+### Important Notes
+
+- **tRPC Limitation**: The `continueAsync` result type is NOT supported when using hooks over tRPC (RemoteHookClient)
+  - Callbacks cannot be serialized and sent over the network
+  - Only use `continueAsync` with local hooks (LocalHookClient) or direct Hook instances
+  - Remote hooks should use `respond`, `continue`, or `abort` result types
+
+### Technical Details
+
+- Callbacks are invoked after all remaining hooks in the chain complete
+- Errors thrown by callbacks are caught and reported via the `onerror` handler
+- Comprehensive test coverage including unit and integration tests
+- Full TypeScript support with proper type inference
+
 ## [0.6.0] - 2025-01-03
 
 ### Added

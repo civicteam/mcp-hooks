@@ -616,10 +616,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processCallToolRequest) {
           throw new Error("processCallToolRequest not implemented");
         }
-        return await hook.processCallToolRequest(
+        const result = await hook.processCallToolRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -685,10 +691,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processListPromptsRequest) {
           throw new Error("processListPromptsRequest not implemented");
         }
-        return await hook.processListPromptsRequest(
+        const result = await hook.processListPromptsRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
   if (hook.processListPromptsResult) {
@@ -750,10 +762,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processListToolsRequest) {
           throw new Error("processListToolsRequest not implemented");
         }
-        return await hook.processListToolsRequest(
+        const result = await hook.processListToolsRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -819,10 +837,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processInitializeRequest) {
           throw new Error("processInitializeRequest not implemented");
         }
-        return await hook.processInitializeRequest(
+        const result = await hook.processInitializeRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -889,10 +913,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processOtherRequest) {
           throw new Error("processOtherRequest not implemented");
         }
-        return await hook.processOtherRequest(
+        const result = await hook.processOtherRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -959,10 +989,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processTargetRequest) {
           throw new Error("processTargetRequest not implemented");
         }
-        return await hook.processTargetRequest(
+        const result = await hook.processTargetRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -1101,10 +1137,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processListResourcesRequest) {
           throw new Error("processListResourcesRequest not implemented");
         }
-        return await hook.processListResourcesRequest(
+        const result = await hook.processListResourcesRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -1173,10 +1215,16 @@ export function createHookRouter(hook: Hook) {
             "processListResourceTemplatesRequest not implemented",
           );
         }
-        return await hook.processListResourceTemplatesRequest(
+        const result = await hook.processListResourceTemplatesRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
@@ -1243,10 +1291,16 @@ export function createHookRouter(hook: Hook) {
         if (!hook.processReadResourceRequest) {
           throw new Error("processReadResourceRequest not implemented");
         }
-        return await hook.processReadResourceRequest(
+        const result = await hook.processReadResourceRequest(
           input.request,
           input.requestExtra,
         );
+        if (result.resultType === "continueAsync") {
+          throw new Error(
+            "continueAsync is not supported for remote hooks via tRPC",
+          );
+        }
+        return result;
       });
   }
 
