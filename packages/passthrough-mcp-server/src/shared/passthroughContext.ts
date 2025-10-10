@@ -55,7 +55,7 @@ import {
 import type { z } from "zod";
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
-import { HookChain } from "../hook/hookChain.js";
+import { HookChain, type LinkedListHook } from "../hook/hookChain.js";
 import {
   processNotificationThroughHooks,
   processRequestThroughHooks,
@@ -282,6 +282,7 @@ export class PassthroughContext {
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
     hookErrorMethodName: TErrorMethodName,
+    startHook: LinkedListHook | null = this._hookChain.tail,
   ): Promise<TResponse> {
     // Annotate request with metadata
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -294,7 +295,7 @@ export class PassthroughContext {
     >(
       annotatedRequest,
       requestExtra,
-      this._hookChain.tail, // Start from tail instead of head
+      startHook, // Start from tail instead of head
       hookRequestMethodName,
       "reverse", // Process in reverse direction
     );
@@ -302,7 +303,10 @@ export class PassthroughContext {
     let response: TResponse | null = null;
     let error: HookChainError | null = null;
 
-    if (requestResult.resultType === "respond") {
+    if (
+      requestResult.resultType === "respond" ||
+      requestResult.resultType === "continueAsync"
+    ) {
       response = requestResult.response;
     } else if (requestResult.resultType === "abort") {
       error = requestResult.error;
@@ -336,9 +340,10 @@ export class PassthroughContext {
       error,
       annotatedRequest,
       requestExtra,
-      requestResult.lastProcessedHook,
       hookResponseMethodName,
       hookErrorMethodName,
+      requestResult.lastProcessedHook,
+      startHook, // we "stop" at the startHook
       "forward", // Process in reverse direction
     );
 
@@ -363,6 +368,7 @@ export class PassthroughContext {
     hookRequestMethodName: TRequestMethodName,
     hookResponseMethodName: TResponseMethodName,
     hookErrorMethodName: TErrorMethodName,
+    startHook: LinkedListHook | null = this._hookChain.head,
   ): Promise<TResponse> {
     // Annotate request
     const annotatedRequest = this.addMetaToRequest<TRequest>(request);
@@ -372,17 +378,16 @@ export class PassthroughContext {
       TRequest,
       TResponse,
       TRequestMethodName
-    >(
-      annotatedRequest,
-      requestExtra,
-      this._hookChain.head,
-      hookRequestMethodName,
-    );
+    >(annotatedRequest, requestExtra, startHook, hookRequestMethodName);
 
     let response: TResponse | undefined = undefined;
     let error: HookChainError | null = null;
 
-    if (requestResult.resultType === "respond") {
+    // respond and continue are the same path
+    if (
+      requestResult.resultType === "respond" ||
+      requestResult.resultType === "continueAsync"
+    ) {
       response = requestResult.response;
     } else if (requestResult.resultType === "abort") {
       error = requestResult.error;
@@ -416,9 +421,10 @@ export class PassthroughContext {
       error,
       annotatedRequest,
       requestExtra,
-      requestResult.lastProcessedHook,
       hookResponseMethodName,
       hookErrorMethodName,
+      requestResult.lastProcessedHook,
+      startHook, // we "stop" at the startHook
     );
 
     if (responseResult.resultType === "abort") {

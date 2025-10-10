@@ -257,6 +257,7 @@ export async function processRequestThroughHooks<
  * @param responseMethodName The method name for processing responses
  * @param errorMethodName The method name for processing errors (optional)
  * @param direction Processing direction through the hook chain
+ * @param stopHook The hook to stop processing at (inclusive). If null, process all hooks
  */
 export async function processResponseThroughHooks<
   TRequest,
@@ -268,9 +269,10 @@ export async function processResponseThroughHooks<
   error: HookChainError | null,
   originalRequest: TRequest,
   originalRequestExtra: RequestExtra,
-  startHook: LinkedListHook | null,
   responseMethodName: TResponseMethodName,
   errorMethodName: TErrorMethodName,
+  startHook: LinkedListHook | null,
+  stopHook: LinkedListHook | null = null,
   direction: "forward" | "reverse" = "reverse",
 ): Promise<ProcessorResponseHookResult<TResponse>> {
   let currentResponse = response;
@@ -346,6 +348,11 @@ export async function processResponseThroughHooks<
       // Convert thrown errors to abort result for backward compatibility
       currentError = toHookChainError(e);
       currentResponse = null;
+    }
+
+    // Check if we've reached the stopHook (inclusive - process it, then stop)
+    if (stopHook && currentHook === stopHook) {
+      break;
     }
 
     if (direction === "forward" && currentHook.next) {
