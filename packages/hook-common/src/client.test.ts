@@ -225,6 +225,26 @@ describe("RemoteHookClient", () => {
         request: toolCall,
       });
     });
+
+    it("should reject continueAsync results from remote hooks", async () => {
+      const toolCall = toToolCall({
+        name: "test-tool",
+        arguments: {},
+        toolDefinition: undefined,
+      });
+
+      const error = new Error(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
+      mockProcessCallToolRequest.mockRejectedValue(error);
+
+      // The client should propagate the continueAsync error
+      await expect(
+        hookClient.processCallToolRequest(toolCall, mockRequestExtra),
+      ).rejects.toThrow(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
+    });
   });
 
   describe("processCallToolResult", () => {
@@ -423,6 +443,25 @@ describe("RemoteHookClient", () => {
         request,
       });
     });
+
+    it("should reject continueAsync results from remote hooks", async () => {
+      const request: ListToolsRequest = {
+        method: "tools/list",
+        params: {},
+      };
+
+      const error = new Error(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
+      mockProcessListToolsRequest.mockRejectedValue(error);
+
+      // The client should propagate the continueAsync error
+      await expect(
+        hookClient.processListToolsRequest(request, mockRequestExtra),
+      ).rejects.toThrow(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
+    });
   });
 
   describe("processListToolsResult", () => {
@@ -512,6 +551,25 @@ describe("RemoteHookClient", () => {
         resultType: "continue",
         request,
       });
+    });
+
+    it("should reject continueAsync results from remote hooks", async () => {
+      const request: ListPromptsRequest = {
+        method: "prompts/list",
+        params: {},
+      };
+
+      const error = new Error(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
+      mockProcessListPromptsRequest.mockRejectedValue(error);
+
+      // The client should propagate the continueAsync error
+      await expect(
+        hookClient.processListPromptsRequest(request, mockRequestExtra),
+      ).rejects.toThrow(
+        "continueAsync is not supported for remote hooks via tRPC",
+      );
     });
   });
 

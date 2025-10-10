@@ -544,9 +544,14 @@ export const NotificationHookResultSchema = z.discriminatedUnion("resultType", [
   }),
 ]);
 
-export type CallToolRequestHookResult = z.infer<
-  typeof CallToolRequestHookResultSchema
->;
+export type CallToolRequestHookResult =
+  | z.infer<typeof CallToolRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: CallToolRequestWithContext;
+      response: CallToolResult;
+      callback: (response: CallToolResult) => Promise<void>;
+    };
 export type CallToolResponseHookResult = z.infer<
   typeof CallToolResponseHookResultSchema
 >;
@@ -570,50 +575,87 @@ export type NotificationErrorHookResult = z.infer<
 export type TargetNotificationErrorHookResult = z.infer<
   typeof TargetNotificationErrorHookResultSchema
 >;
-export type ListPromptsRequestHookResult = z.infer<
-  typeof ListPromptsRequestHookResultSchema
->;
+export type ListPromptsRequestHookResult =
+  | z.infer<typeof ListPromptsRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: ListPromptsRequestWithContext;
+      response: ListPromptsResult;
+      callback: (response: ListPromptsResult) => Promise<void>;
+    };
 export type ListPromptsResponseHookResult = z.infer<
   typeof ListPromptsResponseHookResultSchema
 >;
-export type ListToolsRequestHookResult = z.infer<
-  typeof ListToolsRequestHookResultSchema
->;
+export type ListToolsRequestHookResult =
+  | z.infer<typeof ListToolsRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: ListToolsRequestWithContext;
+      response: ListToolsResult;
+      callback: (response: ListToolsResult) => Promise<void>;
+    };
 export type ListToolsResponseHookResult = z.infer<
   typeof ListToolsResponseHookResultSchema
 >;
-export type InitializeRequestHookResult = z.infer<
-  typeof InitializeRequestHookResultSchema
->;
+export type InitializeRequestHookResult =
+  | z.infer<typeof InitializeRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: InitializeRequestWithContext;
+      response: InitializeResult;
+      callback: (response: InitializeResult) => Promise<void>;
+    };
 export type InitializeResponseHookResult = z.infer<
   typeof InitializeResponseHookResultSchema
 >;
-export type RequestHookResult = z.infer<typeof RequestHookResultSchema>;
+export type RequestHookResult =
+  | z.infer<typeof RequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: Request;
+      response: Result;
+      callback: (response: Result) => Promise<void>;
+    };
 export type ResponseHookResult = z.infer<typeof ResponseHookResultSchema>;
 export type NotificationHookResult = z.infer<
   typeof NotificationHookResultSchema
 >;
-export type ListResourcesRequestHookResult = z.infer<
-  typeof ListResourcesRequestHookResultSchema
->;
+export type ListResourcesRequestHookResult =
+  | z.infer<typeof ListResourcesRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: ListResourcesRequestWithContext;
+      response: ListResourcesResult;
+      callback: (response: ListResourcesResult) => Promise<void>;
+    };
 export type ListResourcesResponseHookResult = z.infer<
   typeof ListResourcesResponseHookResultSchema
 >;
 export type ListResourcesErrorHookResult = z.infer<
   typeof ListResourcesErrorHookResultSchema
 >;
-export type ListResourceTemplatesRequestHookResult = z.infer<
-  typeof ListResourceTemplatesRequestHookResultSchema
->;
+export type ListResourceTemplatesRequestHookResult =
+  | z.infer<typeof ListResourceTemplatesRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: ListResourceTemplatesRequestWithContext;
+      response: ListResourceTemplatesResult;
+      callback: (response: ListResourceTemplatesResult) => Promise<void>;
+    };
 export type ListResourceTemplatesResponseHookResult = z.infer<
   typeof ListResourceTemplatesResponseHookResultSchema
 >;
 export type ListResourceTemplatesErrorHookResult = z.infer<
   typeof ListResourceTemplatesErrorHookResultSchema
 >;
-export type ReadResourceRequestHookResult = z.infer<
-  typeof ReadResourceRequestHookResultSchema
->;
+export type ReadResourceRequestHookResult =
+  | z.infer<typeof ReadResourceRequestHookResultSchema>
+  | {
+      resultType: "continueAsync";
+      request: ReadResourceRequestWithContext;
+      response: ReadResourceResult;
+      callback: (response: ReadResourceResult) => Promise<void>;
+    };
 export type ReadResourceResponseHookResult = z.infer<
   typeof ReadResourceResponseHookResultSchema
 >;
@@ -934,10 +976,18 @@ export interface Hook {
  * Generic type for request hook results
  * - continue: Continue with potentially modified request
  * - respond: Return response directly without forwarding
+ * - continueAsync: Continue with modified request, return immediate response, and register callback for actual response
  */
 export type GenericRequestHookResult<TRequest, TResponse> =
   | { resultType: "continue"; request: TRequest }
-  | { resultType: "respond"; response: TResponse };
+  | { resultType: "respond"; response: TResponse }
+  | ({
+      resultType: "continueAsync";
+      request: TRequest;
+      response: TResponse;
+    } & {
+      callback: (response: TResponse) => Promise<void>;
+    });
 
 /**
  * Generic type for response hook results
