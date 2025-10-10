@@ -62,6 +62,7 @@ import {
   processResponseThroughHooks,
   toHookChainError,
 } from "../hook/processor.js";
+import { logger } from "../logger/logger.js";
 import type { HookDefinition } from "../proxy/config.js";
 import { MetadataHelper } from "./metadataHelper.js";
 import { PassthroughEndpoint } from "./passthroughEndpoint.js";
@@ -303,6 +304,38 @@ export class PassthroughContext {
     let response: TResponse | null = null;
     let error: HookChainError | null = null;
 
+    if (requestResult.resultType === "continueAsync") {
+      // continue async through the chain
+      void (async () => {
+        try {
+          // CAREFUL: in "processClientRequest" next hook is .previous!
+          const newStartHook = requestResult.lastProcessedHook?.previous;
+          // recursively call processClientRequest on the remainder of the chain.
+          const result = await this.processClientRequest<
+            TRequest,
+            TResponse,
+            TResponseSchema,
+            TRequestMethodName,
+            TResponseMethodName,
+            TErrorMethodName
+          >(
+            requestResult.request,
+            requestExtra,
+            responseSchema,
+            hookRequestMethodName,
+            hookResponseMethodName,
+            hookErrorMethodName,
+            newStartHook,
+          );
+          await requestResult.callback(result, null);
+        } catch (e) {
+          const hookChainError = toHookChainError(e);
+          await requestResult.callback(null, hookChainError);
+        }
+        logger.debug("continueAsync: async processing done.");
+      })();
+    }
+
     if (
       requestResult.resultType === "respond" ||
       requestResult.resultType === "continueAsync"
@@ -382,6 +415,37 @@ export class PassthroughContext {
 
     let response: TResponse | undefined = undefined;
     let error: HookChainError | null = null;
+
+    if (requestResult.resultType === "continueAsync") {
+      // continue async through the chain
+      void (async () => {
+        try {
+          const newStartHook = requestResult.lastProcessedHook?.next;
+          // recursively call processServerRequest on the remainder of the chain.
+          const result = await this.processServerRequest<
+            TRequest,
+            TResponse,
+            TResponseSchema,
+            TRequestMethodName,
+            TResponseMethodName,
+            TErrorMethodName
+          >(
+            requestResult.request,
+            requestExtra,
+            responseSchema,
+            hookRequestMethodName,
+            hookResponseMethodName,
+            hookErrorMethodName,
+            newStartHook,
+          );
+          await requestResult.callback(result, null);
+        } catch (e) {
+          const hookChainError = toHookChainError(e);
+          await requestResult.callback(null, hookChainError);
+        }
+        logger.debug("continueAsync: async processing done.");
+      })();
+    }
 
     // respond and continue are the same path
     if (
