@@ -18,11 +18,11 @@
     "@modelcontextprotocol/sdk": "^1.17.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.2.5",
     "@types/node": "^22.10.2",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.19.4",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.4"
   }
 }
