@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.17.1"
+    "@modelcontextprotocol/sdk": "^1.24.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
