@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.17.1",
+    "@modelcontextprotocol/sdk": "^1.24.0",
     "content-type": "^1.0.5",
     "eventsource-parser": "^3.0.3",
     "raw-body": "^3.0.0",
