@@ -79,7 +79,7 @@ export class LocalToolsHook extends AbstractHook {
       sendRequest: <U extends AnySchema>(
         request: ServerRequest,
         resultSchema: U,
-        options?: TaskRequestOptions,
+        options?: RequestOptions,
       ): Promise<SchemaOutput<U>> => {
         throw new Error("Function not implemented.");
       },
