@@ -2,6 +2,7 @@
  * Tests for ServerHook
  */
 
+import type { InitializeRequestWithContext } from "@civic/hook-common";
 import type {
   Implementation,
   Notification,
@@ -218,7 +219,7 @@ describe("ServerHook", () => {
         method: "initialize" as const,
         params: {
           protocolVersion: "2024-11-05",
-          capabilities: { tools: { list: true } },
+          capabilities: {},
           clientInfo: {
             name: "test-client",
             version: "1.0.0",
@@ -226,7 +227,9 @@ describe("ServerHook", () => {
         },
         context: { source: "client" as const },
       };
-      await hook.processInitializeRequest(request);
+      await hook.processInitializeRequest(
+        request as InitializeRequestWithContext,
+      );
 
       // Then set initialized state by processing an initialized notification
       const notification: Notification = {
@@ -241,7 +244,7 @@ describe("ServerHook", () => {
         name: "test-client",
         version: "1.0.0",
       });
-      expect(hook.getClientCapabilities()).toEqual({ tools: { list: true } });
+      expect(hook.getClientCapabilities()).toEqual({});
 
       // Reset and verify everything is cleared
       hook.reset();

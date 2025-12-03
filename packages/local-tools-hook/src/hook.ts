@@ -73,11 +73,7 @@ export class LocalToolsHook extends AbstractHook {
       sendNotification: (notification: ServerNotification): Promise<void> => {
         throw new Error("Function not implemented.");
       },
-      sendRequest: <U extends z.ZodType<object>>(
-        request: ServerRequest,
-        resultSchema: U,
-        options?: RequestOptions,
-      ): Promise<z.TypeOf<U>> => {
+      sendRequest: async (): Promise<never> => {
         throw new Error("Function not implemented.");
       },
     });

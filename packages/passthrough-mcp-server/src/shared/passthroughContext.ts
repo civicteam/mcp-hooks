@@ -11,6 +11,10 @@ import type {
   RequestExtra,
 } from "@civic/hook-common";
 import type {
+  AnySchema,
+  SchemaOutput,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import type {
   RequestHandlerExtra,
   RequestOptions,
 } from "@modelcontextprotocol/sdk/shared/protocol.js";
@@ -52,7 +56,6 @@ import {
   type Result,
   ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { z } from "zod";
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain, type LinkedListHook } from "../hook/hookChain.js";
@@ -97,11 +100,11 @@ export interface TransportInterface {
    * @param options Optional request options
    * @throws McpError if transport is not connected
    */
-  request<T extends z.ZodSchema<object>>(
+  request<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>>;
+  ): Promise<SchemaOutput<T>>;
 
   /**
    * Send a notification through the transport
@@ -272,7 +275,7 @@ export class PassthroughContext {
   private async processClientRequest<
     TRequest extends Request,
     TResponse extends Result,
-    TResponseSchema extends z.ZodSchema<TResponse>,
+    TResponseSchema extends AnySchema,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
     TErrorMethodName extends MethodsWithErrorType<TRequest>,
@@ -404,7 +407,7 @@ export class PassthroughContext {
   private async processServerRequest<
     TRequest extends Request,
     TResponse extends Result,
-    TResponseSchema extends z.ZodSchema<TResponse>,
+    TResponseSchema extends AnySchema,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
     TErrorMethodName extends MethodsWithErrorType<TRequest>,
@@ -583,7 +586,7 @@ export class PassthroughContext {
     return this.processServerRequest(
       request,
       requestExtra,
-      CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
+      CallToolResultSchema,
       "processCallToolRequest",
       "processCallToolResult",
       "processCallToolError",
@@ -839,11 +842,11 @@ export class PassthroughContext {
    * Send a request through the source (server) transport
    * @private
    */
-  private async _sourceRequest<T extends z.ZodSchema<object>>(
+  private async _sourceRequest<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>> {
+  ): Promise<SchemaOutput<T>> {
     if (!this._passthroughServer.transport) {
       throw new McpError(
         MCP_ERROR_CODES.REQUEST_REJECTED,
@@ -879,11 +882,11 @@ export class PassthroughContext {
    * Send a request through the target (client) transport
    * @private
    */
-  private async _targetRequest<T extends z.ZodSchema<object>>(
+  private async _targetRequest<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>> {
+  ): Promise<SchemaOutput<T>> {
     if (!this._passthroughClient.transport) {
       throw new McpError(
         MCP_ERROR_CODES.REQUEST_REJECTED,

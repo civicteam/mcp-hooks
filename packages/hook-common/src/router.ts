@@ -1,61 +1,69 @@
 import {
-  CallToolRequestSchema,
-  InitializeRequestSchema,
-  InitializeResultSchema,
-  ListPromptsRequestSchema,
-  ListPromptsResultSchema,
-  ListResourceTemplatesRequestSchema,
-  ListResourceTemplatesResultSchema,
-  ListResourcesRequestSchema,
-  ListResourcesResultSchema,
-  ListToolsRequestSchema,
-  ListToolsResultSchema,
-  NotificationSchema,
-  ReadResourceRequestSchema,
-  ReadResourceResultSchema,
-  RequestSchema,
-  ResultSchema,
+  type CallToolRequest,
+  type InitializeRequest,
+  type ListPromptsRequest,
+  type ListResourceTemplatesRequest,
+  type ListResourcesRequest,
+  type ListToolsRequest,
+  type Notification,
+  type ReadResourceRequest,
+  CallToolRequestSchema as _CallToolRequestSchema,
+  InitializeRequestSchema as _InitializeRequestSchema,
+  InitializeResultSchema as _InitializeResultSchema,
+  ListPromptsRequestSchema as _ListPromptsRequestSchema,
+  ListPromptsResultSchema as _ListPromptsResultSchema,
+  ListResourceTemplatesRequestSchema as _ListResourceTemplatesRequestSchema,
+  ListResourceTemplatesResultSchema as _ListResourceTemplatesResultSchema,
+  ListResourcesRequestSchema as _ListResourcesRequestSchema,
+  ListResourcesResultSchema as _ListResourcesResultSchema,
+  ListToolsRequestSchema as _ListToolsRequestSchema,
+  ListToolsResultSchema as _ListToolsResultSchema,
+  NotificationSchema as _NotificationSchema,
+  ReadResourceRequestSchema as _ReadResourceRequestSchema,
+  ReadResourceResultSchema as _ReadResourceResultSchema,
+  RequestSchema as _RequestSchema,
+  ResultSchema as _ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
 import {
-  CallToolErrorHookResultSchema,
-  CallToolRequestHookResultSchema,
-  CallToolRequestSchemaWithContext,
-  CallToolResponseHookResultSchema,
-  HookChainErrorSchema,
-  InitializeErrorHookResultSchema,
-  InitializeRequestHookResultSchema,
-  InitializeRequestSchemaWithContext,
-  InitializeResponseHookResultSchema,
-  ListPromptsErrorHookResultSchema,
-  ListPromptsRequestHookResultSchema,
-  ListPromptsRequestSchemaWithContext,
-  ListPromptsResponseHookResultSchema,
-  ListResourceTemplatesErrorHookResultSchema,
-  ListResourceTemplatesRequestHookResultSchema,
-  ListResourceTemplatesRequestSchemaWithContext,
-  ListResourceTemplatesResponseHookResultSchema,
-  ListResourcesErrorHookResultSchema,
-  ListResourcesRequestHookResultSchema,
-  ListResourcesRequestSchemaWithContext,
-  ListResourcesResponseHookResultSchema,
-  ListToolsErrorHookResultSchema,
-  ListToolsRequestHookResultSchema,
-  ListToolsRequestSchemaWithContext,
-  ListToolsResponseHookResultSchema,
-  NotificationErrorHookResultSchema,
-  NotificationHookResultSchema,
-  OtherErrorHookResultSchema,
-  ReadResourceErrorHookResultSchema,
-  ReadResourceRequestHookResultSchema,
-  ReadResourceRequestSchemaWithContext,
-  ReadResourceResponseHookResultSchema,
-  RequestHookResultSchema,
-  ResponseHookResultSchema,
-  TargetErrorHookResultSchema,
-  TargetNotificationErrorHookResultSchema,
+  CallToolErrorHookResultSchema as _CallToolErrorHookResultSchema,
+  CallToolRequestHookResultSchema as _CallToolRequestHookResultSchema,
+  CallToolRequestSchemaWithContext as _CallToolRequestSchemaWithContext,
+  CallToolResponseHookResultSchema as _CallToolResponseHookResultSchema,
+  HookChainErrorSchema as _HookChainErrorSchema,
+  InitializeErrorHookResultSchema as _InitializeErrorHookResultSchema,
+  InitializeRequestHookResultSchema as _InitializeRequestHookResultSchema,
+  InitializeRequestSchemaWithContext as _InitializeRequestSchemaWithContext,
+  InitializeResponseHookResultSchema as _InitializeResponseHookResultSchema,
+  ListPromptsErrorHookResultSchema as _ListPromptsErrorHookResultSchema,
+  ListPromptsRequestHookResultSchema as _ListPromptsRequestHookResultSchema,
+  ListPromptsRequestSchemaWithContext as _ListPromptsRequestSchemaWithContext,
+  ListPromptsResponseHookResultSchema as _ListPromptsResponseHookResultSchema,
+  ListResourceTemplatesErrorHookResultSchema as _ListResourceTemplatesErrorHookResultSchema,
+  ListResourceTemplatesRequestHookResultSchema as _ListResourceTemplatesRequestHookResultSchema,
+  ListResourceTemplatesRequestSchemaWithContext as _ListResourceTemplatesRequestSchemaWithContext,
+  ListResourceTemplatesResponseHookResultSchema as _ListResourceTemplatesResponseHookResultSchema,
+  ListResourcesErrorHookResultSchema as _ListResourcesErrorHookResultSchema,
+  ListResourcesRequestHookResultSchema as _ListResourcesRequestHookResultSchema,
+  ListResourcesRequestSchemaWithContext as _ListResourcesRequestSchemaWithContext,
+  ListResourcesResponseHookResultSchema as _ListResourcesResponseHookResultSchema,
+  ListToolsErrorHookResultSchema as _ListToolsErrorHookResultSchema,
+  ListToolsRequestHookResultSchema as _ListToolsRequestHookResultSchema,
+  ListToolsRequestSchemaWithContext as _ListToolsRequestSchemaWithContext,
+  ListToolsResponseHookResultSchema as _ListToolsResponseHookResultSchema,
+  NotificationErrorHookResultSchema as _NotificationErrorHookResultSchema,
+  NotificationHookResultSchema as _NotificationHookResultSchema,
+  OtherErrorHookResultSchema as _OtherErrorHookResultSchema,
+  ReadResourceErrorHookResultSchema as _ReadResourceErrorHookResultSchema,
+  ReadResourceRequestHookResultSchema as _ReadResourceRequestHookResultSchema,
+  ReadResourceRequestSchemaWithContext as _ReadResourceRequestSchemaWithContext,
+  ReadResourceResponseHookResultSchema as _ReadResourceResponseHookResultSchema,
+  RequestHookResultSchema as _RequestHookResultSchema,
+  ResponseHookResultSchema as _ResponseHookResultSchema,
+  TargetErrorHookResultSchema as _TargetErrorHookResultSchema,
+  TargetNotificationErrorHookResultSchema as _TargetNotificationErrorHookResultSchema,
 } from "./types.js";
 import type {
   CallToolRequestWithContext,
@@ -78,6 +86,166 @@ import type {
   RequestExtra,
   Result,
 } from "./types.js";
+
+/**
+ * Cast MCP SDK schemas for tRPC compatibility with Zod 3.25+ $loose mode.
+ *
+ * Zod 3.25+ uses $loose mode internally which changes the schema's type signature,
+ * causing incompatibility with tRPC's expected ZodType interface.
+ *
+ * This helper preserves the runtime behavior while providing correct types for tRPC.
+ * The explicit output type parameter ensures type safety at call sites.
+ */
+const asSchema = <TOutput>(schema: unknown): z.ZodType<TOutput> =>
+  schema as z.ZodType<TOutput>;
+
+// Cast MCP SDK schemas with explicit types
+const CallToolRequestSchema = asSchema<CallToolRequest>(_CallToolRequestSchema);
+const InitializeRequestSchema = asSchema<InitializeRequest>(
+  _InitializeRequestSchema,
+);
+const InitializeResultSchema = asSchema<InitializeResult>(
+  _InitializeResultSchema,
+);
+const ListPromptsRequestSchema = asSchema<ListPromptsRequest>(
+  _ListPromptsRequestSchema,
+);
+const ListPromptsResultSchema = asSchema<ListPromptsResult>(
+  _ListPromptsResultSchema,
+);
+const ListResourceTemplatesRequestSchema =
+  asSchema<ListResourceTemplatesRequest>(_ListResourceTemplatesRequestSchema);
+const ListResourceTemplatesResultSchema = asSchema<ListResourceTemplatesResult>(
+  _ListResourceTemplatesResultSchema,
+);
+const ListResourcesRequestSchema = asSchema<ListResourcesRequest>(
+  _ListResourcesRequestSchema,
+);
+const ListResourcesResultSchema = asSchema<ListResourcesResult>(
+  _ListResourcesResultSchema,
+);
+const ListToolsRequestSchema = asSchema<ListToolsRequest>(
+  _ListToolsRequestSchema,
+);
+const ListToolsResultSchema = asSchema<ListToolsResult>(_ListToolsResultSchema);
+const NotificationSchema = asSchema<Notification>(_NotificationSchema);
+const ReadResourceRequestSchema = asSchema<ReadResourceRequest>(
+  _ReadResourceRequestSchema,
+);
+const ReadResourceResultSchema = asSchema<ReadResourceResult>(
+  _ReadResourceResultSchema,
+);
+const RequestSchema = asSchema<Request>(_RequestSchema);
+const ResultSchema = asSchema<Result>(_ResultSchema);
+
+// Cast types.js schemas with explicit types
+const CallToolErrorHookResultSchema = asSchema<
+  z.infer<typeof _CallToolErrorHookResultSchema>
+>(_CallToolErrorHookResultSchema);
+const CallToolRequestHookResultSchema = asSchema<
+  z.infer<typeof _CallToolRequestHookResultSchema>
+>(_CallToolRequestHookResultSchema);
+const CallToolRequestSchemaWithContext = asSchema<CallToolRequestWithContext>(
+  _CallToolRequestSchemaWithContext,
+);
+const CallToolResponseHookResultSchema = asSchema<
+  z.infer<typeof _CallToolResponseHookResultSchema>
+>(_CallToolResponseHookResultSchema);
+const HookChainErrorSchema = asSchema<HookChainError>(_HookChainErrorSchema);
+const InitializeErrorHookResultSchema = asSchema<
+  z.infer<typeof _InitializeErrorHookResultSchema>
+>(_InitializeErrorHookResultSchema);
+const InitializeRequestHookResultSchema = asSchema<
+  z.infer<typeof _InitializeRequestHookResultSchema>
+>(_InitializeRequestHookResultSchema);
+const InitializeRequestSchemaWithContext =
+  asSchema<InitializeRequestWithContext>(_InitializeRequestSchemaWithContext);
+const InitializeResponseHookResultSchema = asSchema<
+  z.infer<typeof _InitializeResponseHookResultSchema>
+>(_InitializeResponseHookResultSchema);
+const ListPromptsErrorHookResultSchema = asSchema<
+  z.infer<typeof _ListPromptsErrorHookResultSchema>
+>(_ListPromptsErrorHookResultSchema);
+const ListPromptsRequestHookResultSchema = asSchema<
+  z.infer<typeof _ListPromptsRequestHookResultSchema>
+>(_ListPromptsRequestHookResultSchema);
+const ListPromptsRequestSchemaWithContext =
+  asSchema<ListPromptsRequestWithContext>(_ListPromptsRequestSchemaWithContext);
+const ListPromptsResponseHookResultSchema = asSchema<
+  z.infer<typeof _ListPromptsResponseHookResultSchema>
+>(_ListPromptsResponseHookResultSchema);
+const ListResourceTemplatesErrorHookResultSchema = asSchema<
+  z.infer<typeof _ListResourceTemplatesErrorHookResultSchema>
+>(_ListResourceTemplatesErrorHookResultSchema);
+const ListResourceTemplatesRequestHookResultSchema = asSchema<
+  z.infer<typeof _ListResourceTemplatesRequestHookResultSchema>
+>(_ListResourceTemplatesRequestHookResultSchema);
+const ListResourceTemplatesRequestSchemaWithContext =
+  asSchema<ListResourceTemplatesRequestWithContext>(
+    _ListResourceTemplatesRequestSchemaWithContext,
+  );
+const ListResourceTemplatesResponseHookResultSchema = asSchema<
+  z.infer<typeof _ListResourceTemplatesResponseHookResultSchema>
+>(_ListResourceTemplatesResponseHookResultSchema);
+const ListResourcesErrorHookResultSchema = asSchema<
+  z.infer<typeof _ListResourcesErrorHookResultSchema>
+>(_ListResourcesErrorHookResultSchema);
+const ListResourcesRequestHookResultSchema = asSchema<
+  z.infer<typeof _ListResourcesRequestHookResultSchema>
+>(_ListResourcesRequestHookResultSchema);
+const ListResourcesRequestSchemaWithContext =
+  asSchema<ListResourcesRequestWithContext>(
+    _ListResourcesRequestSchemaWithContext,
+  );
+const ListResourcesResponseHookResultSchema = asSchema<
+  z.infer<typeof _ListResourcesResponseHookResultSchema>
+>(_ListResourcesResponseHookResultSchema);
+const ListToolsErrorHookResultSchema = asSchema<
+  z.infer<typeof _ListToolsErrorHookResultSchema>
+>(_ListToolsErrorHookResultSchema);
+const ListToolsRequestHookResultSchema = asSchema<
+  z.infer<typeof _ListToolsRequestHookResultSchema>
+>(_ListToolsRequestHookResultSchema);
+const ListToolsRequestSchemaWithContext = asSchema<ListToolsRequestWithContext>(
+  _ListToolsRequestSchemaWithContext,
+);
+const ListToolsResponseHookResultSchema = asSchema<
+  z.infer<typeof _ListToolsResponseHookResultSchema>
+>(_ListToolsResponseHookResultSchema);
+const NotificationErrorHookResultSchema = asSchema<
+  z.infer<typeof _NotificationErrorHookResultSchema>
+>(_NotificationErrorHookResultSchema);
+const NotificationHookResultSchema = asSchema<
+  z.infer<typeof _NotificationHookResultSchema>
+>(_NotificationHookResultSchema);
+const OtherErrorHookResultSchema = asSchema<
+  z.infer<typeof _OtherErrorHookResultSchema>
+>(_OtherErrorHookResultSchema);
+const ReadResourceErrorHookResultSchema = asSchema<
+  z.infer<typeof _ReadResourceErrorHookResultSchema>
+>(_ReadResourceErrorHookResultSchema);
+const ReadResourceRequestHookResultSchema = asSchema<
+  z.infer<typeof _ReadResourceRequestHookResultSchema>
+>(_ReadResourceRequestHookResultSchema);
+const ReadResourceRequestSchemaWithContext =
+  asSchema<ReadResourceRequestWithContext>(
+    _ReadResourceRequestSchemaWithContext,
+  );
+const ReadResourceResponseHookResultSchema = asSchema<
+  z.infer<typeof _ReadResourceResponseHookResultSchema>
+>(_ReadResourceResponseHookResultSchema);
+const RequestHookResultSchema = asSchema<
+  z.infer<typeof _RequestHookResultSchema>
+>(_RequestHookResultSchema);
+const ResponseHookResultSchema = asSchema<
+  z.infer<typeof _ResponseHookResultSchema>
+>(_ResponseHookResultSchema);
+const TargetErrorHookResultSchema = asSchema<
+  z.infer<typeof _TargetErrorHookResultSchema>
+>(_TargetErrorHookResultSchema);
+const TargetNotificationErrorHookResultSchema = asSchema<
+  z.infer<typeof _TargetNotificationErrorHookResultSchema>
+>(_TargetNotificationErrorHookResultSchema);
 
 /**
  * Create a tRPC instance with SuperJSON for serialization
