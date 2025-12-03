@@ -123,11 +123,6 @@ describe("LocalToolsHook", () => {
           throw new Error("Tool execution failed");
         },
       };
-      type T = {
-        values:
-          | { type: "text"; text: string }
-          | { type: "error"; message: string }[];
-      };
 
       const hookWithError = new LocalToolsHook([errorTool]);
       const toolCall = toToolCall({
