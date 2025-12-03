@@ -739,7 +739,7 @@ describe("ContinueAsync Integration Tests", () => {
       expect(callbackResponse._meta).toBeDefined();
     });
 
-    it("should call upstream client and return error in callback when upstream client throws", async () => {
+    it("should return isError:true response in callback when tool handler throws", async () => {
       const callbackSpy = vi.fn();
 
       // Hook that returns continueAsync as the last hook
@@ -802,10 +802,13 @@ describe("ContinueAsync Integration Tests", () => {
       // Wait for async processing to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Callback should be called with error response from upstream client
+      // NOTE: MCP SDK catches tool handler errors and wraps them in {isError: true} responses
+      // instead of propagating exceptions. See: https://github.com/modelcontextprotocol/typescript-sdk/pull/1044
+      //
+      // Because the SDK returns a successful response (with isError: true), the callback
+      // receives it as a response, not an error.
       expect(callbackSpy).toHaveBeenCalledOnce();
       const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
-      // When a tool throws, MCP SDK returns a CallToolResult with isError: true
       expect(callbackError).toBeNull();
       expect(callbackResponse).toMatchObject({
         isError: true,
@@ -820,7 +823,7 @@ describe("ContinueAsync Integration Tests", () => {
       expect(callbackResponse._meta).toBeDefined();
     });
 
-    it("should call upstream client and return MCP error in callback when tool not found", async () => {
+    it("should return isError:true response in callback when tool not found", async () => {
       const callbackSpy = vi.fn();
 
       // Hook that returns continueAsync as the last hook
@@ -854,16 +857,14 @@ describe("ContinueAsync Integration Tests", () => {
       };
 
       // Target server tool handler - we won't use it since we'll call a non-existent tool
-      const targetToolHandler = async () => {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "This should not be called",
-            },
-          ],
-        };
-      };
+      const targetToolHandler = async (): Promise<CallToolResult> => ({
+        content: [
+          {
+            type: "text",
+            text: "This should not be called",
+          },
+        ],
+      });
 
       await setupContextWithUpstreamClient([hook1], targetToolHandler);
 
@@ -890,15 +891,15 @@ describe("ContinueAsync Integration Tests", () => {
       // Wait for async processing to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Callback should be called with MCP error
+      // NOTE: MCP SDK returns {isError: true} instead of throwing for non-existent tools.
+      // See: https://github.com/modelcontextprotocol/typescript-sdk/pull/1044
+      // Spec: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#error-handling
+      //
+      // Because the SDK returns a successful response (with isError: true), the callback
+      // receives it as a response, not an error.
       expect(callbackSpy).toHaveBeenCalledOnce();
-      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
-      // MCP errors should be returned as HookChainError
-      expect(callbackResponse).toBeNull();
-      expect(callbackError).toMatchObject({
-        code: expect.any(Number),
-        message: expect.stringMatching(/tool.*not.*found|unknown.*tool/i),
-      });
+      const [callbackResponse] = callbackSpy.mock.calls[0];
+      expect(callbackResponse.isError).toBe(true);
     });
 
     it("should handle errors thrown by callback and report via onerror", async () => {
