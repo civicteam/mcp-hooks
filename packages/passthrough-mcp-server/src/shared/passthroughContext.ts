@@ -15,6 +15,10 @@ import type {
   RequestOptions,
 } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type {
+  AnySchema,
+  SchemaOutput,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import {
   type CallToolRequest,
   type CallToolResult,
@@ -35,68 +39,23 @@ import {
   type ReadResourceResult,
   type Request,
   type Result,
-  CallToolRequestSchema as _CallToolRequestSchema,
-  CallToolResultSchema as _CallToolResultSchema,
-  EmptyResultSchema as _EmptyResultSchema,
-  InitializeRequestSchema as _InitializeRequestSchema,
-  InitializeResultSchema as _InitializeResultSchema,
-  ListPromptsRequestSchema as _ListPromptsRequestSchema,
-  ListPromptsResultSchema as _ListPromptsResultSchema,
-  ListResourceTemplatesRequestSchema as _ListResourceTemplatesRequestSchema,
-  ListResourceTemplatesResultSchema as _ListResourceTemplatesResultSchema,
-  ListResourcesRequestSchema as _ListResourcesRequestSchema,
-  ListResourcesResultSchema as _ListResourcesResultSchema,
-  ListToolsRequestSchema as _ListToolsRequestSchema,
-  ListToolsResultSchema as _ListToolsResultSchema,
-  ReadResourceRequestSchema as _ReadResourceRequestSchema,
-  ReadResourceResultSchema as _ReadResourceResultSchema,
-  ResultSchema as _ResultSchema,
+  CallToolRequestSchema,
+  CallToolResultSchema,
+  EmptyResultSchema,
+  InitializeRequestSchema,
+  InitializeResultSchema,
+  ListPromptsRequestSchema,
+  ListPromptsResultSchema,
+  ListResourceTemplatesRequestSchema,
+  ListResourceTemplatesResultSchema,
+  ListResourcesRequestSchema,
+  ListResourcesResultSchema,
+  ListToolsRequestSchema,
+  ListToolsResultSchema,
+  ReadResourceRequestSchema,
+  ReadResourceResultSchema,
+  ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { z } from "zod";
-
-/**
- * Cast MCP SDK schemas for Zod 3.25+ $loose mode compatibility.
- */
-const asSchema = <TOutput>(schema: unknown): z.ZodType<TOutput> =>
-  schema as z.ZodType<TOutput>;
-
-const CallToolRequestSchema = asSchema<CallToolRequest>(_CallToolRequestSchema);
-const CallToolResultSchema = asSchema<CallToolResult>(_CallToolResultSchema);
-const EmptyResultSchema = asSchema<EmptyResult>(_EmptyResultSchema);
-const InitializeRequestSchema = asSchema<InitializeRequest>(
-  _InitializeRequestSchema,
-);
-const InitializeResultSchema = asSchema<InitializeResult>(
-  _InitializeResultSchema,
-);
-const ListPromptsRequestSchema = asSchema<ListPromptsRequest>(
-  _ListPromptsRequestSchema,
-);
-const ListPromptsResultSchema = asSchema<ListPromptsResult>(
-  _ListPromptsResultSchema,
-);
-const ListResourceTemplatesRequestSchema =
-  asSchema<ListResourceTemplatesRequest>(_ListResourceTemplatesRequestSchema);
-const ListResourceTemplatesResultSchema = asSchema<ListResourceTemplatesResult>(
-  _ListResourceTemplatesResultSchema,
-);
-const ListResourcesRequestSchema = asSchema<ListResourcesRequest>(
-  _ListResourcesRequestSchema,
-);
-const ListResourcesResultSchema = asSchema<ListResourcesResult>(
-  _ListResourcesResultSchema,
-);
-const ListToolsRequestSchema = asSchema<ListToolsRequest>(
-  _ListToolsRequestSchema,
-);
-const ListToolsResultSchema = asSchema<ListToolsResult>(_ListToolsResultSchema);
-const ReadResourceRequestSchema = asSchema<ReadResourceRequest>(
-  _ReadResourceRequestSchema,
-);
-const ReadResourceResultSchema = asSchema<ReadResourceResult>(
-  _ReadResourceResultSchema,
-);
-const ResultSchema = asSchema<Result>(_ResultSchema);
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain, type LinkedListHook } from "../hook/hookChain.js";
@@ -141,11 +100,11 @@ export interface TransportInterface {
    * @param options Optional request options
    * @throws McpError if transport is not connected
    */
-  request<T extends z.ZodSchema<object>>(
+  request<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>>;
+  ): Promise<SchemaOutput<T>>;
 
   /**
    * Send a notification through the transport
@@ -316,7 +275,7 @@ export class PassthroughContext {
   private async processClientRequest<
     TRequest extends Request,
     TResponse extends Result,
-    TResponseSchema extends z.ZodSchema<TResponse>,
+    TResponseSchema extends AnySchema,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
     TErrorMethodName extends MethodsWithErrorType<TRequest>,
@@ -448,7 +407,7 @@ export class PassthroughContext {
   private async processServerRequest<
     TRequest extends Request,
     TResponse extends Result,
-    TResponseSchema extends z.ZodSchema<TResponse>,
+    TResponseSchema extends AnySchema,
     TRequestMethodName extends MethodsWithRequestType<TRequest>,
     TResponseMethodName extends MethodsWithResponseType<TResponse, TRequest>,
     TErrorMethodName extends MethodsWithErrorType<TRequest>,
@@ -627,7 +586,7 @@ export class PassthroughContext {
     return this.processServerRequest(
       request,
       requestExtra,
-      CallToolResultSchema as z.ZodSchema<CallToolResult>, // TODO: The cast here should NOT be required.
+      CallToolResultSchema,
       "processCallToolRequest",
       "processCallToolResult",
       "processCallToolError",
@@ -883,11 +842,11 @@ export class PassthroughContext {
    * Send a request through the source (server) transport
    * @private
    */
-  private async _sourceRequest<T extends z.ZodSchema<object>>(
+  private async _sourceRequest<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>> {
+  ): Promise<SchemaOutput<T>> {
     if (!this._passthroughServer.transport) {
       throw new McpError(
         MCP_ERROR_CODES.REQUEST_REJECTED,
@@ -923,11 +882,11 @@ export class PassthroughContext {
    * Send a request through the target (client) transport
    * @private
    */
-  private async _targetRequest<T extends z.ZodSchema<object>>(
+  private async _targetRequest<T extends AnySchema>(
     request: Request,
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>> {
+  ): Promise<SchemaOutput<T>> {
     if (!this._passthroughClient.transport) {
       throw new McpError(
         MCP_ERROR_CODES.REQUEST_REJECTED,
