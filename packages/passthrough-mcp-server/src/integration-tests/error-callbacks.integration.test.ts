@@ -391,7 +391,7 @@ describe("Error Callback Integration Tests", () => {
       expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
     });
 
-    it("should not handle client mcp errors with error callbacks", async () => {
+    it("should return isError:true for non-existent tools without invoking error callbacks", async () => {
       await realClient.connect(realClientTransport);
 
       // Reset hook state
@@ -403,29 +403,34 @@ describe("Error Callback Integration Tests", () => {
         arguments: { message: "test" },
       });
 
-      // Should get an MCP error from the server (not a jsonrpc/http error)
+      // NOTE: MCP SDK intentionally returns {isError: true} instead of throwing an exception
+      // for tool-not-found errors. This deviates from the spec which says "If the tool does
+      // not exist, the server MUST return an error."
+      // See: https://github.com/modelcontextprotocol/typescript-sdk/pull/1044
+      // Spec: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#error-handling
+      //
+      // Because the SDK returns a successful response (with isError: true), not an exception,
+      // our passthrough proxy treats this as a successful response and does NOT invoke error callbacks.
       expect(failure.isError).toBe(true);
 
-      // The error callback should not have been invoked
+      // The error callback should not have been invoked since this is a response, not an error
       expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
     });
 
-    it("should not handle server mcp errors with error callbacks", async () => {
+    it("should return isError:true from tool handlers without invoking error callbacks", async () => {
       await realClient.connect(realClientTransport);
 
       // Reset hook state
       errorTestHook.resetState();
 
-      // Try to call a non-existent tool
       const failure = await realClient.callTool({
         name: "trigger-mcp-error",
         arguments: { message: "test" },
       });
 
-      // Should get an MCP error from the server (not a jsonrpc/http error)
       expect(failure.isError).toBe(true);
 
-      // The error callback should not have been invoked
+      // The error callback should not have been invoked since this is a response, not an error
       expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
     });
 
