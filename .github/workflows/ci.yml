@@ -11,32 +11,32 @@ jobs:
     strategy:
       matrix:
         node-version: [24.x]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run build
         run: pnpm turbo run build
-      
+
       - name: Run lint
         run: pnpm turbo run lint
-      
+
       - name: Run unit tests with coverage
         run: pnpm turbo run test -- --coverage --run
-      
+
       - name: Upload coverage to Codecov
         if: matrix.node-version == '20.x'
         uses: codecov/codecov-action@v5
@@ -49,52 +49,52 @@ jobs:
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Run type check
         run: pnpm turbo run typecheck
 
   integration-test:
     name: Integration Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build all packages
         run: pnpm build
-      
+
       - name: Install Claude Code CLI
         run: pnpm install -g @anthropic-ai/claude-code
-      
+
       - name: Start all test servers
         run: |
           ./test/integration/setup-test-servers.sh --ci
@@ -104,7 +104,7 @@ jobs:
         run: |
           cd test/integration
           pnpm test:integration
-      
+
       - name: Run E2E test with Claude
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -117,16 +117,16 @@ jobs:
           cat test-output.txt
           
           # Check for successful fetch of Civic docs
-          # Look for JSON with type:"user" containing tool_result with "Civic Auth"
-          if grep -q '"type":"user"' test-output.txt && grep -q '"type":"tool_result"' test-output.txt && grep -q "Civic Auth" test-output.txt; then
+          # Look for JSON with type:"user" containing tool_result with "Civic Nexus"
+          if grep -q '"type":"user"' test-output.txt && grep -q '"type":"tool_result"' test-output.txt && grep -q "Civic Nexus" test-output.txt; then
             echo "✅ Integration test passed - found expected tool_result with Civic content"
             exit 0
           else
             echo "❌ Integration test failed - expected content not found"
-            echo "Looking for JSON with type:\"user\" containing type:\"tool_result\" and 'Civic Auth'"
+            echo "Looking for JSON with type:\"user\" containing type:\"tool_result\" and 'Civic Nexus'"
             exit 1
           fi
-      
+
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
