@@ -1,6 +1,6 @@
 {
   "name": "@civic/explain-hook",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP hook that adds a 'reason' parameter to all tools for explaining tool usage",
   "keywords": ["mcp", "hook", "explain", "reasoning", "tool-usage"],
   "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/explain-hook",
