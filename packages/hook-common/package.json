@@ -29,11 +29,11 @@
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.24.1",
     "@trpc/client": "^11.1.2",
     "@trpc/server": "^11.1.2",
     "superjson": "^2.2.2",
-    "zod": "^3.25.76"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

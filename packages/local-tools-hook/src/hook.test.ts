@@ -106,8 +106,11 @@ describe("LocalToolsHook", () => {
       // The tool will be executed but may fail due to missing argument
       expect(result.resultType).toBe("respond");
       if (result.resultType === "respond") {
-        const response = result.response as CallToolResult;
-        expect(response.content[0].text).toContain("Echo: undefined");
+        const content = result.response.content[0] as Extract<
+          CallToolResult["content"][number],
+          { type: "text" }
+        >;
+        expect(content.text).toContain("Echo: undefined");
       }
     });
 
@@ -119,6 +122,11 @@ describe("LocalToolsHook", () => {
         cb: async () => {
           throw new Error("Tool execution failed");
         },
+      };
+      type T = {
+        values:
+          | { type: "text"; text: string }
+          | { type: "error"; message: string }[];
       };
 
       const hookWithError = new LocalToolsHook([errorTool]);

@@ -82,7 +82,7 @@ export type {
  * gradual adoption. Future fields might include cookies, query params, etc.
  */
 export const RequestContextSchemaRaw = {
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   host: z.string().optional(),
   path: z.string().optional(),
 };

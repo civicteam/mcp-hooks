@@ -34,11 +34,10 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.24.6"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.24.1",
     "@types/node": "^20.10.0",
     "@vitest/coverage-v8": "^2.1.8",
     "tsx": "^4.19.4",

@@ -854,16 +854,14 @@ describe("ContinueAsync Integration Tests", () => {
       };
 
       // Target server tool handler - we won't use it since we'll call a non-existent tool
-      const targetToolHandler = async () => {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "This should not be called",
-            },
-          ],
-        };
-      };
+      const targetToolHandler = async (): Promise<CallToolResult> => ({
+        content: [
+          {
+            type: "text",
+            text: "This should not be called",
+          },
+        ],
+      });
 
       await setupContextWithUpstreamClient([hook1], targetToolHandler);
 
@@ -892,13 +890,8 @@ describe("ContinueAsync Integration Tests", () => {
 
       // Callback should be called with MCP error
       expect(callbackSpy).toHaveBeenCalledOnce();
-      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
-      // MCP errors should be returned as HookChainError
-      expect(callbackResponse).toBeNull();
-      expect(callbackError).toMatchObject({
-        code: expect.any(Number),
-        message: expect.stringMatching(/tool.*not.*found|unknown.*tool/i),
-      });
+      const [callbackResponse] = callbackSpy.mock.calls[0];
+      expect(callbackResponse.isError).toBe(true);
     });
 
     it("should handle errors thrown by callback and report via onerror", async () => {

@@ -169,11 +169,28 @@ describe("Error Callback Integration Tests", () => {
       },
     );
 
+    realMcpServer.tool(
+      "trigger-mcp-error",
+      "Tool that can trigger MCP errors for testing",
+      async () => {
+        // This tool will fail with an mcp error
+        throw new McpError(-32003, "MCP error triggered");
+      },
+    );
+
+    realMcpServer.tool(
+      "trigger-server-error",
+      "Tool that can trigger server errors for testing",
+      async () => {
+        // This tool will fail at the server level because "undefined" is not a valid response
+        return undefined;
+      },
+    );
+
     // Set up real server transport and HTTP server
     realServerTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
     });
-
     await realMcpServer.connect(realServerTransport);
 
     realServer = createServer();
@@ -374,16 +391,53 @@ describe("Error Callback Integration Tests", () => {
       expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
     });
 
-    it("should handle server errors through error callbacks", async () => {
+    it("should not handle client mcp errors with error callbacks", async () => {
       await realClient.connect(realClientTransport);
 
       // Reset hook state
       errorTestHook.resetState();
 
       // Try to call a non-existent tool
-      const callPromise = realClient.callTool({
+      const failure = await realClient.callTool({
         name: "non-existent-tool",
         arguments: { message: "test" },
+      });
+
+      // Should get an MCP error from the server (not a jsonrpc/http error)
+      expect(failure.isError).toBe(true);
+
+      // The error callback should not have been invoked
+      expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
+    });
+
+    it("should not handle server mcp errors with error callbacks", async () => {
+      await realClient.connect(realClientTransport);
+
+      // Reset hook state
+      errorTestHook.resetState();
+
+      // Try to call a non-existent tool
+      const failure = await realClient.callTool({
+        name: "trigger-mcp-error",
+        arguments: { message: "test" },
+      });
+
+      // Should get an MCP error from the server (not a jsonrpc/http error)
+      expect(failure.isError).toBe(true);
+
+      // The error callback should not have been invoked
+      expect(errorTestHook.wasErrorCallbackInvoked()).toBe(false);
+    });
+
+    it("should handle server errors through error callbacks", async () => {
+      await realClient.connect(realClientTransport);
+
+      // Reset hook state
+      errorTestHook.resetState();
+
+      // Call a tool that fails
+      const callPromise = realClient.callTool({
+        name: "trigger-server-error",
       });
 
       // Should get an error from the server
@@ -439,9 +493,9 @@ describe("Error Callback Integration Tests", () => {
 
       await realClient.connect(realClientTransport);
 
-      // Call a non-existent tool to trigger an error from the server
+      // Trigger an error from the server
       const callPromise = realClient.callTool({
-        name: "non-existent-tool",
+        name: "trigger-server-error",
         arguments: { message: "test" },
       });
 
@@ -489,9 +543,9 @@ describe("Error Callback Integration Tests", () => {
 
       await realClient.connect(realClientTransport);
 
-      // Call a non-existent tool to trigger an error from the server
+      // trigger an error from the server
       const result = (await realClient.callTool({
-        name: "non-existent-tool",
+        name: "trigger-server-error",
         arguments: { message: "test" },
       })) as CallToolResult;
 

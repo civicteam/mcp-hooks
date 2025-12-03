@@ -4,7 +4,14 @@ import {
   type CallToolResponseHookResult,
   type ListToolsResponseHookResult,
 } from "@civic/hook-common";
-import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type {
+  AnySchema,
+  SchemaOutput,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import type {
+  RequestOptions,
+  TaskRequestOptions,
+} from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   CallToolRequest,
   CallToolResult,
@@ -15,10 +22,6 @@ import type {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { type ZodRawShape, z } from "zod";
-import {
-  type JsonSchema7ObjectType,
-  zodToJsonSchema,
-} from "zod-to-json-schema";
 import type { ToolDefinition } from "./types.js";
 
 const toolDefinitionToTool = <Args extends ZodRawShape>(
@@ -26,9 +29,9 @@ const toolDefinitionToTool = <Args extends ZodRawShape>(
 ): Tool => ({
   name: tool.name,
   description: tool.description,
-  inputSchema: zodToJsonSchema(
+  inputSchema: z.toJSONSchema(
     z.object(tool.paramsSchema),
-  ) as JsonSchema7ObjectType,
+  ) as Tool["inputSchema"],
 });
 
 export class LocalToolsHook extends AbstractHook {
@@ -73,11 +76,11 @@ export class LocalToolsHook extends AbstractHook {
       sendNotification: (notification: ServerNotification): Promise<void> => {
         throw new Error("Function not implemented.");
       },
-      sendRequest: <U extends z.ZodType<object>>(
+      sendRequest: <U extends AnySchema>(
         request: ServerRequest,
         resultSchema: U,
-        options?: RequestOptions,
-      ): Promise<z.TypeOf<U>> => {
+        options?: TaskRequestOptions,
+      ): Promise<SchemaOutput<U>> => {
         throw new Error("Function not implemented.");
       },
     });

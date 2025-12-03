@@ -56,8 +56,8 @@ importers:
         version: 8.16.3
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.25
@@ -77,8 +77,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.7.2(typescript@5.9.3)
@@ -99,8 +99,8 @@ importers:
         specifier: workspace:*
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.7.2(typescript@5.9.3)
@@ -118,14 +118,14 @@ importers:
   packages/fetch-docs:
     dependencies:
       fastmcp:
-        specifier: ^1.25.0
-        version: 1.27.7
+        specifier: ^3.24.0
+        version: 3.24.0
       turndown:
-        specifier: ^7.1.2
+        specifier: ^7.2.2
         version: 7.2.2
       zod:
-        specifier: ^3.24.3
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -150,8 +150,8 @@ importers:
         version: 11.7.2(typescript@5.9.3)
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.25
@@ -165,8 +165,8 @@ importers:
   packages/hook-common:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@trpc/client':
         specifier: ^11.1.2
         version: 11.7.2(@trpc/server@11.7.2(typescript@5.9.3))(typescript@5.9.3)
@@ -177,8 +177,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.6
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -199,15 +199,12 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-      zod-to-json-schema:
-        specifier: ^3.24.6
-        version: 3.25.0(zod@3.25.76)
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.25
@@ -230,8 +227,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       content-type:
         specifier: ^1.0.5
         version: 1.0.5
@@ -242,8 +239,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.2
       zod:
-        specifier: ^3.23.8
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@civic/server-hook':
         specifier: workspace:^
@@ -292,8 +289,8 @@ importers:
         specifier: workspace:*
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.4
@@ -320,8 +317,8 @@ importers:
         specifier: workspace:^
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       '@trpc/server':
         specifier: ^11.1.2
         version: 11.7.2(typescript@5.9.3)
@@ -340,10 +337,10 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.2-alpha.0
-        version: 0.2.7(@modelcontextprotocol/sdk@1.24.0(zod@3.25.76))(express@4.22.1)
+        version: 0.2.7(@modelcontextprotocol/sdk@1.24.1(zod@4.1.13))(express@4.22.1)
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -371,7 +368,7 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.1
-        version: 0.2.7(@modelcontextprotocol/sdk@1.24.0(zod@3.25.76))(express@5.2.1)
+        version: 0.2.7(@modelcontextprotocol/sdk@1.24.1(zod@4.1.13))(express@5.2.1)
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
@@ -379,11 +376,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       zod:
-        specifier: ^3.25.74
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -404,8 +401,8 @@ importers:
         specifier: workspace:*
         version: link:../../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -417,8 +414,8 @@ importers:
   test/integration/servers/api-key-protected:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -426,8 +423,8 @@ importers:
         specifier: ^4.22.0
         version: 4.22.1
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -448,8 +445,8 @@ importers:
   test/integration/servers/broken-server:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -464,8 +461,8 @@ importers:
   test/integration/servers/echo:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -473,8 +470,8 @@ importers:
         specifier: ^4.22.0
         version: 4.22.1
       zod:
-        specifier: ^3.25.67
-        version: 3.25.76
+        specifier: ^4.1.13
+        version: 4.1.13
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -492,8 +489,8 @@ importers:
   test/integration/servers/local-stdio:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.24.0
-        version: 1.24.0(zod@3.25.76)
+        specifier: ^1.24.1
+        version: 1.24.1(zod@4.1.13)
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -603,6 +600,9 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@borewit/text-codec@0.1.1':
+    resolution: {integrity: sha512-5L/uBxmjaCIX5h8Z+uu+kA9BQLkc/Wl06UGR5ajNRxu+/XjonB5i8JpgFMrPj3LXTCPA0pv8yxUvbUi+QthGGA==}
 
   '@civic/auth-mcp@0.2.7':
     resolution: {integrity: sha512-fjAtEpUiRSNC68Zr5W6IeL7lrggcXQlczyhQJeBYJkle+vSy9qdwWFIyqBl0IclPpFwxrrMtUNec3WFOulvO6w==}
@@ -1088,8 +1088,8 @@ packages:
   '@mixmark-io/domino@2.2.0':
     resolution: {integrity: sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw==}
 
-  '@modelcontextprotocol/sdk@1.24.0':
-    resolution: {integrity: sha512-D8h5KXY2vHFW8zTuxn2vuZGN0HGrQ5No6LkHwlEA9trVgNdPL3TF1dSqKA7Dny6BbBYKSW/rOBDXdC8KJAjUCg==}
+  '@modelcontextprotocol/sdk@1.24.1':
+    resolution: {integrity: sha512-YTg4v6bKSst8EJM8NXHC3nGm8kgHD08IbIBbognUeLAgGLVgLpYrgQswzLQd4OyTL4l614ejhqsDrV1//t02Qw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -1312,8 +1312,8 @@ packages:
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
 
-  '@tokenizer/inflate@0.2.7':
-    resolution: {integrity: sha512-MADQgmZT1eKjp06jpI2yozxaU9uVs4GzzgSL+uEq7bVcJ9V1ZXQkeGNql1fsSI0gMy1vhvNTNbUqrx+pZfJVmg==}
+  '@tokenizer/inflate@0.4.1':
+    resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
     engines: {node: '>=18'}
 
   '@tokenizer/token@0.3.0':
@@ -1559,9 +1559,9 @@ packages:
     resolution: {integrity: sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==}
     engines: {node: '>= 16'}
 
-  cliui@8.0.1:
-    resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
-    engines: {node: '>=12'}
+  cliui@9.0.1:
+    resolution: {integrity: sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==}
+    engines: {node: '>=20'}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -1657,6 +1657,9 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
+  emoji-regex@10.6.0:
+    resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -1723,10 +1726,6 @@ packages:
     resolution: {integrity: sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==}
     engines: {node: '>=18.0.0'}
 
-  eventsource@4.1.0:
-    resolution: {integrity: sha512-2GuF51iuHX6A9xdTccMTsNb7VO0lHZihApxhvQzJB5A03DvHDd2FQepodbMaztPBmBcE/ox7o2gqaxGhYB9LhQ==}
-    engines: {node: '>=20.0.0'}
-
   execa@9.6.0:
     resolution: {integrity: sha512-jpWzZ1ZhwUmeWRhS7Qv3mhpOhLfwI+uAX4e5fOcXqwMR7EcJ0pj2kV1CVzHVMX/LphnKWD3LObjZCoJ71lKpHw==}
     engines: {node: ^18.19.0 || >=20.5.0}
@@ -1759,9 +1758,14 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
-  fastmcp@1.27.7:
-    resolution: {integrity: sha512-ozMJl5mTIWd2WMR6/hxBNEeSnFLUS9+PzzfLxQmejHOVg3A6IfRdCPVLGeNnXBhGjsK80JB2GPd4HDqd/szqLA==}
+  fastmcp@3.24.0:
+    resolution: {integrity: sha512-HBdDOwnboVDR1wDZZM9HNiukw3qNMN/jK29JzH5IrO1yfZUgbESO1Ovse4xrQV0ia3+Vcu2aOzlYrIxlPEaS9g==}
     hasBin: true
+    peerDependencies:
+      jose: ^5.0.0
+    peerDependenciesMeta:
+      jose:
+        optional: true
 
   fdir@6.4.6:
     resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
@@ -1771,16 +1775,13 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
     engines: {node: '>=18'}
 
-  file-type@20.5.0:
-    resolution: {integrity: sha512-BfHZtG/l9iMm4Ecianu7P8HRD2tBHLtjXinm4X62XBOYzi7CYA7jyqfJzOvXHqzVrVPYqBo2/GvbARMaaJkKVg==}
-    engines: {node: '>=18'}
+  file-type@21.1.1:
+    resolution: {integrity: sha512-ifJXo8zUqbQ/bLbl9sFoqHNTNWbnPY1COImFfM6CCy7z+E+jC1eY9YfOKkx0fckIg+VljAy2/87T61fp0+eEkg==}
+    engines: {node: '>=20'}
 
   finalhandler@1.3.2:
     resolution: {integrity: sha512-aA4RyPcd3badbdABGDuTXCMTtOneUCAYH/gxoYRTZlIJdF0YPWuGqiAsIrhNnnqdXGswYk6dGujem4w80UJFhg==}
@@ -1821,6 +1822,10 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
+
+  get-east-asian-width@1.4.0:
+    resolution: {integrity: sha512-QZjmEOC+IT1uk6Rx0sX22V6uHWVwbdbxf1faPqJ1QhLdGgsRGCZoyaQBm/piRdJy/D2um6hM1UP7ZEeQ4EkP+Q==}
+    engines: {node: '>=18'}
 
   get-intrinsic@1.3.0:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
@@ -1970,8 +1975,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  mcp-proxy@2.14.3:
-    resolution: {integrity: sha512-2jmpBclH72z5ViXhdVWopKDLAyhnFGyIhR7MrjE3BLzgYv3pZwVMHKLOogu1aIWZN/J4OrlZp0jraHKjEPD1RQ==}
+  mcp-proxy@5.12.0:
+    resolution: {integrity: sha512-HiuAl+SP3ZclvB4RKEm9MUEAjzBWp6uGeiGVu6SEI+qHbgWJ2WIbm9SRvqEkEi4copCyJrG/qHXILj7xkLcuWA==}
     hasBin: true
 
   media-typer@0.3.0:
@@ -2188,10 +2193,6 @@ packages:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
 
-  require-directory@2.1.1:
-    resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
-    engines: {node: '>=0.10.0'}
-
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
@@ -2311,6 +2312,10 @@ packages:
     resolution: {integrity: sha512-HnLOCR3vjcY8beoNLtcjZ5/nxn2afmME6lhrDrebokqMap+XbeW8n9TXpPDOqdGK5qcI3oT0GKTW6wC7EMiVqA==}
     engines: {node: '>=12'}
 
+  string-width@7.2.0:
+    resolution: {integrity: sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==}
+    engines: {node: '>=18'}
+
   strip-ansi@6.0.1:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
     engines: {node: '>=8'}
@@ -2326,8 +2331,8 @@ packages:
   strip-literal@3.0.0:
     resolution: {integrity: sha512-TcccoMhJOM3OebGhSBEmp3UZ2SfDMZUEBdRA/9ynfLi8yYajyWX3JiXArcJt4Umh4vISpspkQIY8ZZoCqjbviA==}
 
-  strtok3@10.3.1:
-    resolution: {integrity: sha512-3JWEZM6mfix/GCJBBUrkA8p2Id2pBkyTkVCJKto55w080QBKZ+8R171fGrbiSp+yMO/u6F8/yUh7K4V9K+YCnw==}
+  strtok3@10.3.4:
+    resolution: {integrity: sha512-KIy5nylvC5le1OdaaoCJ07L+8iQzJHGH6pWDuzS+d07Cu7n1MZ2x26P8ZKIWfbK02+XIL8Mp4RkWeqdUCrDMfg==}
     engines: {node: '>=18'}
 
   superjson@2.2.6:
@@ -2376,8 +2381,8 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
-  token-types@6.0.3:
-    resolution: {integrity: sha512-IKJ6EzuPPWtKtEIEPpIdXv9j5j2LGJEYk0CKY2efgKoYKLBiZdh6iQkLVBow/CB3phyWAWCyk+bZeaimJn6uRQ==}
+  token-types@6.1.1:
+    resolution: {integrity: sha512-kh9LVIWH5CnL63Ipf0jhlBIy0UsrMj/NJDfpsy1SqOXlLKEVyXXYrnFxFT1yOOYVGBSApeVnjPw/sBz5BfEjAQ==}
     engines: {node: '>=14.16'}
 
   tsx@4.21.0:
@@ -2445,8 +2450,8 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici@7.11.0:
-    resolution: {integrity: sha512-heTSIac3iLhsmZhUCjyS3JQEkZELateufzZuBaVM5RHXdSBMb1LPMQf5x+FH7qjsZYDP0ttAc3nnVpUB+wYbOg==}
+  undici@7.16.0:
+    resolution: {integrity: sha512-QEg3HPMll0o3t2ourKwOeUAZ159Kn9mx5pnzHRQO8+Wixmh88YdZRiIwat0iNzNNXn0yoEtXJqFpyW7eM8BV7g==}
     engines: {node: '>=20.18.1'}
 
   unicorn-magic@0.3.0:
@@ -2620,15 +2625,21 @@ packages:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
 
+  wrap-ansi@9.0.2:
+    resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
+    engines: {node: '>=18'}
+
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  xsschema@0.2.0-beta.3:
-    resolution: {integrity: sha512-ViOZ1a1kAPHvFjDJp4ITeutdlbnEs56lx/NotlvcitwN04eHnU3DhR+P5GvXT7A+69qKrXAx0YrccvmfwGnUGw==}
+  xsschema@0.4.0-beta.5:
+    resolution: {integrity: sha512-73pYwf1hMy++7SnOkghJdgdPaGi+Y5I0SaO6rIlxb1ouV6tEyDbEcXP82kyr32KQVTlUbFj6qewi9eUVEiXm+g==}
     peerDependencies:
       '@valibot/to-json-schema': ^1.0.0
-      arktype: ^2.1.16
-      effect: ^3.14.5
+      arktype: ^2.1.20
+      effect: ^3.16.0
+      sury: ^10.0.0
+      zod: ^3.25.0 || ^4.0.0
       zod-to-json-schema: ^3.24.5
     peerDependenciesMeta:
       '@valibot/to-json-schema':
@@ -2636,6 +2647,10 @@ packages:
       arktype:
         optional: true
       effect:
+        optional: true
+      sury:
+        optional: true
+      zod:
         optional: true
       zod-to-json-schema:
         optional: true
@@ -2648,22 +2663,17 @@ packages:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
 
-  yargs-parser@21.1.1:
-    resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
-    engines: {node: '>=12'}
+  yargs-parser@22.0.0:
+    resolution: {integrity: sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
 
-  yargs@17.7.2:
-    resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
-    engines: {node: '>=12'}
+  yargs@18.0.0:
+    resolution: {integrity: sha512-4UEqdc2RYGHZc7Doyqkrqiln3p9X2DZVxaGbwhn2pi7MrRagKaOcIKe8L3OxYcbhXLgLFUS3zAYuQjKBQgmuNg==}
+    engines: {node: ^20.19.0 || ^22.12.0 || >=23}
 
   yoctocolors@2.1.1:
     resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
     engines: {node: '>=18'}
-
-  zod-to-json-schema@3.24.6:
-    resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
-    peerDependencies:
-      zod: ^3.24.1
 
   zod-to-json-schema@3.25.0:
     resolution: {integrity: sha512-HvWtU2UG41LALjajJrML6uQejQhNJx+JBO9IflpSja4R03iNWfKXrj6W2h7ljuLyc1nKS+9yDyL/9tD1U/yBnQ==}
@@ -2672,6 +2682,9 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zod@4.1.13:
+    resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
 
 snapshots:
 
@@ -2732,17 +2745,19 @@ snapshots:
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
 
-  '@civic/auth-mcp@0.2.7(@modelcontextprotocol/sdk@1.24.0(zod@3.25.76))(express@4.22.1)':
+  '@borewit/text-codec@0.1.1': {}
+
+  '@civic/auth-mcp@0.2.7(@modelcontextprotocol/sdk@1.24.1(zod@4.1.13))(express@4.22.1)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.24.0(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.24.1(zod@4.1.13)
       escape-html: 1.0.3
       jose: 6.0.11
     optionalDependencies:
       express: 4.22.1
 
-  '@civic/auth-mcp@0.2.7(@modelcontextprotocol/sdk@1.24.0(zod@3.25.76))(express@5.2.1)':
+  '@civic/auth-mcp@0.2.7(@modelcontextprotocol/sdk@1.24.1(zod@4.1.13))(express@5.2.1)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.24.0(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.24.1(zod@4.1.13)
       escape-html: 1.0.3
       jose: 6.0.11
     optionalDependencies:
@@ -3000,7 +3015,7 @@ snapshots:
 
   '@mixmark-io/domino@2.2.0': {}
 
-  '@modelcontextprotocol/sdk@1.24.0(zod@3.25.76)':
+  '@modelcontextprotocol/sdk@1.24.1(zod@3.25.76)':
     dependencies:
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
@@ -3016,6 +3031,25 @@ snapshots:
       raw-body: 3.0.2
       zod: 3.25.76
       zod-to-json-schema: 3.25.0(zod@3.25.76)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@modelcontextprotocol/sdk@1.24.1(zod@4.1.13)':
+    dependencies:
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      content-type: 1.0.5
+      cors: 2.8.5
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.0.6
+      express: 5.2.1
+      express-rate-limit: 7.5.1(express@5.2.1)
+      jose: 6.1.3
+      pkce-challenge: 5.0.1
+      raw-body: 3.0.2
+      zod: 4.1.13
+      zod-to-json-schema: 3.25.0(zod@4.1.13)
     transitivePeerDependencies:
       - supports-color
 
@@ -3148,11 +3182,10 @@ snapshots:
 
   '@standard-schema/spec@1.0.0': {}
 
-  '@tokenizer/inflate@0.2.7':
+  '@tokenizer/inflate@0.4.1':
     dependencies:
       debug: 4.4.3
-      fflate: 0.8.2
-      token-types: 6.0.3
+      token-types: 6.1.1
     transitivePeerDependencies:
       - supports-color
 
@@ -3509,11 +3542,11 @@ snapshots:
 
   check-error@2.1.1: {}
 
-  cliui@8.0.1:
+  cliui@9.0.1:
     dependencies:
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      wrap-ansi: 7.0.0
+      string-width: 7.2.0
+      strip-ansi: 7.1.0
+      wrap-ansi: 9.0.2
 
   color-convert@2.0.1:
     dependencies:
@@ -3579,6 +3612,8 @@ snapshots:
   eastasianwidth@0.2.0: {}
 
   ee-first@1.1.1: {}
+
+  emoji-regex@10.6.0: {}
 
   emoji-regex@8.0.0: {}
 
@@ -3698,10 +3733,6 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.6
 
-  eventsource@4.1.0:
-    dependencies:
-      eventsource-parser: 3.0.6
-
   execa@9.6.0:
     dependencies:
       '@sindresorhus/merge-streams': 4.0.0
@@ -3798,43 +3829,42 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
-  fastmcp@1.27.7:
+  fastmcp@3.24.0:
     dependencies:
-      '@modelcontextprotocol/sdk': 1.24.0(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.24.1(zod@3.25.76)
       '@standard-schema/spec': 1.0.0
       execa: 9.6.0
-      file-type: 20.5.0
+      file-type: 21.1.1
       fuse.js: 7.1.0
-      mcp-proxy: 2.14.3(zod@3.25.76)
+      mcp-proxy: 5.12.0
       strict-event-emitter-types: 2.0.0
-      undici: 7.11.0
+      undici: 7.16.0
       uri-templates: 0.2.0
-      xsschema: 0.2.0-beta.3(zod-to-json-schema@3.24.6(zod@3.25.76))
-      yargs: 17.7.2
+      xsschema: 0.4.0-beta.5(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@3.25.76)
+      yargs: 18.0.0
       zod: 3.25.76
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
+      zod-to-json-schema: 3.25.0(zod@3.25.76)
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - '@valibot/to-json-schema'
       - arktype
       - effect
       - supports-color
+      - sury
 
   fdir@6.4.6(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
 
-  fflate@0.8.2: {}
-
   figures@6.1.0:
     dependencies:
       is-unicode-supported: 2.1.0
 
-  file-type@20.5.0:
+  file-type@21.1.1:
     dependencies:
-      '@tokenizer/inflate': 0.2.7
-      strtok3: 10.3.1
-      token-types: 6.0.3
+      '@tokenizer/inflate': 0.4.1
+      strtok3: 10.3.4
+      token-types: 6.1.1
       uint8array-extras: 1.4.0
     transitivePeerDependencies:
       - supports-color
@@ -3881,6 +3911,8 @@ snapshots:
   fuse.js@7.1.0: {}
 
   get-caller-file@2.0.5: {}
+
+  get-east-asian-width@1.4.0: {}
 
   get-intrinsic@1.3.0:
     dependencies:
@@ -4033,15 +4065,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-proxy@2.14.3(zod@3.25.76):
-    dependencies:
-      '@modelcontextprotocol/sdk': 1.24.0(zod@3.25.76)
-      eventsource: 4.1.0
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - supports-color
-      - zod
+  mcp-proxy@5.12.0: {}
 
   media-typer@0.3.0: {}
 
@@ -4210,8 +4234,6 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.0
       unpipe: 1.0.0
-
-  require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
 
@@ -4421,6 +4443,12 @@ snapshots:
       emoji-regex: 9.2.2
       strip-ansi: 7.1.0
 
+  string-width@7.2.0:
+    dependencies:
+      emoji-regex: 10.6.0
+      get-east-asian-width: 1.4.0
+      strip-ansi: 7.1.0
+
   strip-ansi@6.0.1:
     dependencies:
       ansi-regex: 5.0.1
@@ -4435,7 +4463,7 @@ snapshots:
     dependencies:
       js-tokens: 9.0.1
 
-  strtok3@10.3.1:
+  strtok3@10.3.4:
     dependencies:
       '@tokenizer/token': 0.3.0
 
@@ -4474,8 +4502,9 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
-  token-types@6.0.3:
+  token-types@6.1.1:
     dependencies:
+      '@borewit/text-codec': 0.1.1
       '@tokenizer/token': 0.3.0
       ieee754: 1.2.1
 
@@ -4536,7 +4565,7 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici@7.11.0: {}
+  undici@7.16.0: {}
 
   unicorn-magic@0.3.0: {}
 
@@ -4768,36 +4797,44 @@ snapshots:
       string-width: 5.1.2
       strip-ansi: 7.1.0
 
+  wrap-ansi@9.0.2:
+    dependencies:
+      ansi-styles: 6.2.1
+      string-width: 7.2.0
+      strip-ansi: 7.1.0
+
   wrappy@1.0.2: {}
 
-  xsschema@0.2.0-beta.3(zod-to-json-schema@3.24.6(zod@3.25.76)):
+  xsschema@0.4.0-beta.5(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@3.25.76):
     optionalDependencies:
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.0(zod@3.25.76)
 
   xtend@4.0.2: {}
 
   y18n@5.0.8: {}
 
-  yargs-parser@21.1.1: {}
+  yargs-parser@22.0.0: {}
 
-  yargs@17.7.2:
+  yargs@18.0.0:
     dependencies:
-      cliui: 8.0.1
+      cliui: 9.0.1
       escalade: 3.2.0
       get-caller-file: 2.0.5
-      require-directory: 2.1.1
-      string-width: 4.2.3
+      string-width: 7.2.0
       y18n: 5.0.8
-      yargs-parser: 21.1.1
+      yargs-parser: 22.0.0
 
   yoctocolors@2.1.1: {}
-
-  zod-to-json-schema@3.24.6(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
 
   zod-to-json-schema@3.25.0(zod@3.25.76):
     dependencies:
       zod: 3.25.76
 
+  zod-to-json-schema@3.25.0(zod@4.1.13):
+    dependencies:
+      zod: 4.1.13
+
   zod@3.25.76: {}
+
+  zod@4.1.13: {}
