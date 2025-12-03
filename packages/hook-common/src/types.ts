@@ -1,44 +1,91 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import {
   type CallToolRequest,
-  CallToolRequestSchema,
   type CallToolResult,
-  CallToolResultSchema,
   type InitializeRequest,
-  InitializeRequestSchema,
   type InitializeResult,
-  InitializeResultSchema,
   type ListPromptsRequest,
-  ListPromptsRequestSchema,
   type ListPromptsResult,
-  ListPromptsResultSchema,
   type ListResourceTemplatesRequest,
-  ListResourceTemplatesRequestSchema,
   type ListResourceTemplatesResult,
-  ListResourceTemplatesResultSchema,
   type ListResourcesRequest,
-  ListResourcesRequestSchema,
   type ListResourcesResult,
-  ListResourcesResultSchema,
   type ListToolsRequest,
-  ListToolsRequestSchema,
   type ListToolsResult,
-  ListToolsResultSchema,
   type Notification,
-  NotificationSchema,
   type ReadResourceRequest,
-  ReadResourceRequestSchema,
   type ReadResourceResult,
-  ReadResourceResultSchema,
   type Request,
   type RequestId,
   type RequestInfo,
   type RequestMeta,
-  RequestSchema,
   type Result,
-  ResultSchema,
+  CallToolRequestSchema as _CallToolRequestSchema,
+  CallToolResultSchema as _CallToolResultSchema,
+  InitializeRequestSchema as _InitializeRequestSchema,
+  InitializeResultSchema as _InitializeResultSchema,
+  ListPromptsRequestSchema as _ListPromptsRequestSchema,
+  ListPromptsResultSchema as _ListPromptsResultSchema,
+  ListResourceTemplatesRequestSchema as _ListResourceTemplatesRequestSchema,
+  ListResourceTemplatesResultSchema as _ListResourceTemplatesResultSchema,
+  ListResourcesRequestSchema as _ListResourcesRequestSchema,
+  ListResourcesResultSchema as _ListResourcesResultSchema,
+  ListToolsRequestSchema as _ListToolsRequestSchema,
+  ListToolsResultSchema as _ListToolsResultSchema,
+  NotificationSchema as _NotificationSchema,
+  ReadResourceRequestSchema as _ReadResourceRequestSchema,
+  ReadResourceResultSchema as _ReadResourceResultSchema,
+  RequestSchema as _RequestSchema,
+  ResultSchema as _ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+
+/**
+ * Cast MCP SDK schemas for Zod 3.25+ $loose mode compatibility.
+ * This helper preserves runtime behavior while providing correct types.
+ */
+const asSchema = <TOutput>(schema: unknown): z.ZodType<TOutput> =>
+  schema as z.ZodType<TOutput>;
+
+// Cast all MCP SDK schemas to be compatible with Zod's type system
+const CallToolRequestSchema = asSchema<CallToolRequest>(_CallToolRequestSchema);
+const CallToolResultSchema = asSchema<CallToolResult>(_CallToolResultSchema);
+const InitializeRequestSchema = asSchema<InitializeRequest>(
+  _InitializeRequestSchema,
+);
+const InitializeResultSchema = asSchema<InitializeResult>(
+  _InitializeResultSchema,
+);
+const ListPromptsRequestSchema = asSchema<ListPromptsRequest>(
+  _ListPromptsRequestSchema,
+);
+const ListPromptsResultSchema = asSchema<ListPromptsResult>(
+  _ListPromptsResultSchema,
+);
+const ListResourceTemplatesRequestSchema =
+  asSchema<ListResourceTemplatesRequest>(_ListResourceTemplatesRequestSchema);
+const ListResourceTemplatesResultSchema = asSchema<ListResourceTemplatesResult>(
+  _ListResourceTemplatesResultSchema,
+);
+const ListResourcesRequestSchema = asSchema<ListResourcesRequest>(
+  _ListResourcesRequestSchema,
+);
+const ListResourcesResultSchema = asSchema<ListResourcesResult>(
+  _ListResourcesResultSchema,
+);
+const ListToolsRequestSchema = asSchema<ListToolsRequest>(
+  _ListToolsRequestSchema,
+);
+const ListToolsResultSchema = asSchema<ListToolsResult>(_ListToolsResultSchema);
+const NotificationSchema = asSchema<Notification>(_NotificationSchema);
+const ReadResourceRequestSchema = asSchema<ReadResourceRequest>(
+  _ReadResourceRequestSchema,
+);
+const ReadResourceResultSchema = asSchema<ReadResourceResult>(
+  _ReadResourceResultSchema,
+);
+const RequestSchema = asSchema<Request>(_RequestSchema);
+const ResultSchema = asSchema<Result>(_ResultSchema);
 
 /**
  * Re-export MCP types for convenience
@@ -91,35 +138,33 @@ export const RequestContextSchema = z.object(RequestContextSchemaRaw);
 
 export type RequestContext = z.infer<typeof RequestContextSchema>;
 
-export const CallToolRequestSchemaWithContext = CallToolRequestSchema.extend({
+// Use .and() instead of .extend() because the MCP SDK schemas use $loose mode
+// which isn't compatible with z.ZodType after casting
+const RequestContextExtension = z.object({
   requestContext: RequestContextSchema.optional(),
 });
-export const ListPromptsRequestSchemaWithContext =
-  ListPromptsRequestSchema.extend({
-    requestContext: RequestContextSchema.optional(),
-  });
-export const ListToolsRequestSchemaWithContext = ListToolsRequestSchema.extend({
-  requestContext: RequestContextSchema.optional(),
-});
-export const InitializeRequestSchemaWithContext =
-  InitializeRequestSchema.extend({
-    requestContext: RequestContextSchema.optional(),
-  });
+
+export const CallToolRequestSchemaWithContext = CallToolRequestSchema.and(
+  RequestContextExtension,
+);
+export const ListPromptsRequestSchemaWithContext = ListPromptsRequestSchema.and(
+  RequestContextExtension,
+);
+export const ListToolsRequestSchemaWithContext = ListToolsRequestSchema.and(
+  RequestContextExtension,
+);
+export const InitializeRequestSchemaWithContext = InitializeRequestSchema.and(
+  RequestContextExtension,
+);
 
 export const ListResourcesRequestSchemaWithContext =
-  ListResourcesRequestSchema.extend({
-    requestContext: RequestContextSchema.optional(),
-  });
+  ListResourcesRequestSchema.and(RequestContextExtension);
 
 export const ListResourceTemplatesRequestSchemaWithContext =
-  ListResourceTemplatesRequestSchema.extend({
-    requestContext: RequestContextSchema.optional(),
-  });
+  ListResourceTemplatesRequestSchema.and(RequestContextExtension);
 
 export const ReadResourceRequestSchemaWithContext =
-  ReadResourceRequestSchema.extend({
-    requestContext: RequestContextSchema.optional(),
-  });
+  ReadResourceRequestSchema.and(RequestContextExtension);
 
 /**
  * Extended request types that include request context for hooks

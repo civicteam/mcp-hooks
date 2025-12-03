@@ -7,10 +7,10 @@
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.0"
+    "@modelcontextprotocol/sdk": "^1.24.1"
   },
   "devDependencies": {
-    "tsx": "^4.20.3",
-    "@types/node": "^20.10.0"
+    "@types/node": "^20.10.0",
+    "tsx": "^4.20.3"
   }
 }

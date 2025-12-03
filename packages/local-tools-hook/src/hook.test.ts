@@ -107,7 +107,11 @@ describe("LocalToolsHook", () => {
       expect(result.resultType).toBe("respond");
       if (result.resultType === "respond") {
         const response = result.response as CallToolResult;
-        expect(response.content[0].text).toContain("Echo: undefined");
+        const content = response.content[0];
+        expect(content.type).toBe("text");
+        if (content.type === "text") {
+          expect(content.text).toContain("Echo: undefined");
+        }
       }
     });
 

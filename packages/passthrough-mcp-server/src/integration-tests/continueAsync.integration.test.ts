@@ -890,14 +890,20 @@ describe("ContinueAsync Integration Tests", () => {
       // Wait for async processing to complete
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Callback should be called with MCP error
+      // Callback should be called with response containing error info
+      // Note: MCP SDK now returns tool errors as success responses with isError: true
       expect(callbackSpy).toHaveBeenCalledOnce();
       const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
-      // MCP errors should be returned as HookChainError
-      expect(callbackResponse).toBeNull();
-      expect(callbackError).toMatchObject({
-        code: expect.any(Number),
-        message: expect.stringMatching(/tool.*not.*found|unknown.*tool/i),
+      // Tool not found is now returned as a successful response with isError flag
+      expect(callbackError).toBeNull();
+      expect(callbackResponse).toMatchObject({
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: expect.stringMatching(/tool.*not.*found/i),
+          },
+        ],
       });
     });
 

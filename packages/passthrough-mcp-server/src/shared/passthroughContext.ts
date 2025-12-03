@@ -17,42 +17,86 @@ import type {
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type CallToolRequest,
-  CallToolRequestSchema,
   type CallToolResult,
-  CallToolResultSchema,
   type EmptyResult,
-  EmptyResultSchema,
   type InitializeRequest,
-  InitializeRequestSchema,
   type InitializeResult,
-  InitializeResultSchema,
   type ListPromptsRequest,
-  ListPromptsRequestSchema,
   type ListPromptsResult,
-  ListPromptsResultSchema,
   type ListResourceTemplatesRequest,
-  ListResourceTemplatesRequestSchema,
   type ListResourceTemplatesResult,
-  ListResourceTemplatesResultSchema,
   type ListResourcesRequest,
-  ListResourcesRequestSchema,
   type ListResourcesResult,
-  ListResourcesResultSchema,
   type ListToolsRequest,
-  ListToolsRequestSchema,
   type ListToolsResult,
-  ListToolsResultSchema,
   McpError,
   type Notification,
   type ReadResourceRequest,
-  ReadResourceRequestSchema,
   type ReadResourceResult,
-  ReadResourceResultSchema,
   type Request,
   type Result,
-  ResultSchema,
+  CallToolRequestSchema as _CallToolRequestSchema,
+  CallToolResultSchema as _CallToolResultSchema,
+  EmptyResultSchema as _EmptyResultSchema,
+  InitializeRequestSchema as _InitializeRequestSchema,
+  InitializeResultSchema as _InitializeResultSchema,
+  ListPromptsRequestSchema as _ListPromptsRequestSchema,
+  ListPromptsResultSchema as _ListPromptsResultSchema,
+  ListResourceTemplatesRequestSchema as _ListResourceTemplatesRequestSchema,
+  ListResourceTemplatesResultSchema as _ListResourceTemplatesResultSchema,
+  ListResourcesRequestSchema as _ListResourcesRequestSchema,
+  ListResourcesResultSchema as _ListResourcesResultSchema,
+  ListToolsRequestSchema as _ListToolsRequestSchema,
+  ListToolsResultSchema as _ListToolsResultSchema,
+  ReadResourceRequestSchema as _ReadResourceRequestSchema,
+  ReadResourceResultSchema as _ReadResourceResultSchema,
+  ResultSchema as _ResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
+
+/**
+ * Cast MCP SDK schemas for Zod 3.25+ $loose mode compatibility.
+ */
+const asSchema = <TOutput>(schema: unknown): z.ZodType<TOutput> =>
+  schema as z.ZodType<TOutput>;
+
+const CallToolRequestSchema = asSchema<CallToolRequest>(_CallToolRequestSchema);
+const CallToolResultSchema = asSchema<CallToolResult>(_CallToolResultSchema);
+const EmptyResultSchema = asSchema<EmptyResult>(_EmptyResultSchema);
+const InitializeRequestSchema = asSchema<InitializeRequest>(
+  _InitializeRequestSchema,
+);
+const InitializeResultSchema = asSchema<InitializeResult>(
+  _InitializeResultSchema,
+);
+const ListPromptsRequestSchema = asSchema<ListPromptsRequest>(
+  _ListPromptsRequestSchema,
+);
+const ListPromptsResultSchema = asSchema<ListPromptsResult>(
+  _ListPromptsResultSchema,
+);
+const ListResourceTemplatesRequestSchema =
+  asSchema<ListResourceTemplatesRequest>(_ListResourceTemplatesRequestSchema);
+const ListResourceTemplatesResultSchema = asSchema<ListResourceTemplatesResult>(
+  _ListResourceTemplatesResultSchema,
+);
+const ListResourcesRequestSchema = asSchema<ListResourcesRequest>(
+  _ListResourcesRequestSchema,
+);
+const ListResourcesResultSchema = asSchema<ListResourcesResult>(
+  _ListResourcesResultSchema,
+);
+const ListToolsRequestSchema = asSchema<ListToolsRequest>(
+  _ListToolsRequestSchema,
+);
+const ListToolsResultSchema = asSchema<ListToolsResult>(_ListToolsResultSchema);
+const ReadResourceRequestSchema = asSchema<ReadResourceRequest>(
+  _ReadResourceRequestSchema,
+);
+const ReadResourceResultSchema = asSchema<ReadResourceResult>(
+  _ReadResourceResultSchema,
+);
+const ResultSchema = asSchema<Result>(_ResultSchema);
 import { ERROR_MESSAGES, MCP_ERROR_CODES } from "../error/errorCodes.js";
 import { createAbortException } from "../error/mcpErrorUtils.js";
 import { HookChain, type LinkedListHook } from "../hook/hookChain.js";

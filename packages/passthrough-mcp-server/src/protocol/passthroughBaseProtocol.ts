@@ -1,5 +1,10 @@
 import type { RequestContext } from "@civic/hook-common";
 import {
+  type AnySchema,
+  type SchemaOutput,
+  safeParse,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import {
   DEFAULT_REQUEST_TIMEOUT_MSEC,
   Protocol,
   type ProtocolOptions,
@@ -8,19 +13,16 @@ import {
 } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
+  CancelledNotificationSchema,
   ErrorCode,
   type JSONRPCRequest,
   McpError,
   type Notification,
+  PingRequestSchema,
+  ProgressNotificationSchema,
   type Request,
   type Result,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  CancelledNotificationSchema,
-  PingRequestSchema,
-  ProgressNotificationSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { ZodType, z } from "zod";
 
 export abstract class PassthroughBaseProtocol<
   SendRequestT extends Request,
@@ -39,6 +41,14 @@ export abstract class PassthroughBaseProtocol<
 
   protected assertRequestHandlerCapability(method: string): void {
     // accept all
+  }
+
+  protected assertTaskCapability(): void {
+    // accept all - passthrough proxy supports all capabilities
+  }
+
+  protected assertTaskHandlerCapability(): void {
+    // accept all - passthrough proxy supports all capabilities
   }
 
   constructor(
@@ -74,11 +84,11 @@ export abstract class PassthroughBaseProtocol<
    *
    * Do not use this method to emit notifications! Use notification() instead.
    */
-  override request<T extends ZodType<object>>(
+  override request<T extends AnySchema>(
     requestWithContext: SendRequestT & { requestContext?: RequestContext }, // extended with type
     resultSchema: T,
     options?: RequestOptions,
-  ): Promise<z.infer<T>> {
+  ): Promise<SchemaOutput<T>> {
     const { relatedRequestId, resumptionToken, onresumptiontoken } =
       options ?? {};
 
@@ -162,11 +172,11 @@ export abstract class PassthroughBaseProtocol<
           return reject(response);
         }
 
-        try {
-          const result = resultSchema.parse(response.result);
-          resolve(result);
-        } catch (error) {
-          reject(error);
+        const parseResult = safeParse(resultSchema, response.result);
+        if (parseResult.success) {
+          resolve(parseResult.data);
+        } else {
+          reject(parseResult.error);
         }
       });
 
