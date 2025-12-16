@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.24.1",
-    "@trpc/server": "^11.1.2",
+    "@trpc/server": "^11.8.0",
     "@civic/hook-common": "workspace:^"
   },
   "devDependencies": {
