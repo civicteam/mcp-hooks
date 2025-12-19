@@ -2,7 +2,13 @@
   "name": "@civic/hook-common",
   "version": "0.8.0",
   "description": "Common utilities and types for implementing MCP server hooks",
-  "keywords": ["mcp", "hooks", "middleware", "toolcall", "interceptor"],
+  "keywords": [
+    "mcp",
+    "hooks",
+    "middleware",
+    "toolcall",
+    "interceptor"
+  ],
   "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/hook-common",
   "repository": {
     "type": "git",
@@ -13,7 +19,11 @@
   "author": "Civic Technologies, Inc.",
   "main": "./dist/index.js",
   "type": "module",
-  "files": ["dist", "README.md", "package.json"],
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
   "exports": "./dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -29,16 +39,16 @@
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.1",
-    "@trpc/client": "^11.1.2",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@trpc/client": "^11.8.0",
     "@trpc/server": "^11.8.0",
-    "superjson": "^2.2.2",
-    "zod": "^4.1.13"
+    "superjson": "^2.2.6",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "typescript": "^5.2.2",
-    "vitest": "^2.1.8"
+    "@types/node": "^25.0.3",
+    "@vitest/coverage-v8": "^4.0.16",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

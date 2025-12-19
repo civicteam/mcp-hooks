@@ -1,11 +1,7 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { PingRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  createAuthenticatedClient,
-  createUnauthenticatedClient,
-} from "../test-client";
-import { TEST_CONFIG } from "../test-config";
+import { createUnauthenticatedClient } from "../test-client";
 
 // Type for tool call results
 interface ToolResult {

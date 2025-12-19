@@ -5,7 +5,7 @@ import cors from "cors";
 import express from "express";
 import testJwk from "../test/fixture/jwk.json" with { type: "json" };
 
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33008;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33008;
 
 // Create your Express app
 const app = express();

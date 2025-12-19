@@ -62,7 +62,7 @@ class SimpleLogHook extends AbstractHook {
 }
 
 // Configuration
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33006;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33006;
 
 // Create and start the server
 const hook = new SimpleLogHook();

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Server, createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { RequestExtra } from "@civic/hook-common";
 import { ServerHook } from "@civic/server-hook";
@@ -9,7 +9,6 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import {
   ListPromptsResultSchema,
   ListToolsResultSchema,
-  McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -50,7 +49,10 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       get name() {
         return "ToolsHook";
       },
-      async processListToolsRequest(request: any, requestExtra: RequestExtra) {
+      async processListToolsRequest(
+        _request: any,
+        _requestExtra: RequestExtra,
+      ) {
         return {
           resultType: "respond",
           response: {
@@ -69,7 +71,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
           },
         };
       },
-      async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+      async processCallToolRequest(request: any, _requestExtra: RequestExtra) {
         if (request.params.name === "greet") {
           return {
             resultType: "respond",
@@ -90,8 +92,8 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       },
       async processCallToolResult(
         response: any,
-        originalRequest: any,
-        requestExtra: RequestExtra,
+        _originalRequest: any,
+        _requestExtra: RequestExtra,
       ) {
         // Just pass through the response for this test
         return {
@@ -107,8 +109,8 @@ describe("Passthrough Hook-Only Integration Tests", () => {
         return "PromptsHook";
       },
       async processListPromptsRequest(
-        request: any,
-        requestExtra: RequestExtra,
+        _request: any,
+        _requestExtra: RequestExtra,
       ) {
         return {
           resultType: "respond",
@@ -328,7 +330,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
 
       async processCallToolResult(
         response: any,
-        originalRequest: any,
+        _originalRequest: any,
         requestExtra: RequestExtra,
       ) {
         // Match the response to its request using requestId
@@ -379,7 +381,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
 
       async processInitializeResult(
         response: any,
-        originalRequest: any,
+        _originalRequest: any,
         requestExtra: RequestExtra,
       ) {
         // Track initialize responses
@@ -426,7 +428,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
 
       async processListToolsResult(
         response: any,
-        originalRequest: any,
+        _originalRequest: any,
         requestExtra: RequestExtra,
       ) {
         // Track list tools responses
@@ -489,7 +491,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       await trackingClient.connect(trackingClientTransport);
 
       // Make multiple requests to test tracking
-      const toolsResult = await trackingClient.request(
+      const _toolsResult = await trackingClient.request(
         {
           method: "tools/list",
           params: {},
@@ -497,7 +499,7 @@ describe("Passthrough Hook-Only Integration Tests", () => {
         ListToolsResultSchema,
       );
 
-      const toolCallResult = await trackingClient.request(
+      const _toolCallResult = await trackingClient.request(
         {
           method: "tools/call",
           params: {

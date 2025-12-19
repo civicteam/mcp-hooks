@@ -7,7 +7,7 @@ import {
   StreamableHTTPServerTransport,
   type StreamableHTTPServerTransportOptions,
 } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   createHttpPassthroughProxy,
   createPassthroughProxy,
@@ -15,7 +15,6 @@ import {
 } from "./createProxies.js";
 import type { HttpPassthroughProxy } from "./http/httpPassthroughProxy";
 import type { StdioPassthroughProxy } from "./stdio/stdioPassthroughProxy";
-import type { PassthroughProxy } from "./types";
 
 describe("createPassthroughProxy type inference", () => {
   it("should work with stdio source transport", async () => {

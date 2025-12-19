@@ -5,13 +5,12 @@
  * The HTTP server itself is an implementation detail and not exposed.
  */
 
+import { randomUUID } from "node:crypto";
 import type {
   Server as HttpServer,
   IncomingMessage,
   ServerResponse,
 } from "node:http";
-
-import { randomUUID } from "node:crypto";
 import {
   StreamableHTTPServerTransport,
   type StreamableHTTPServerTransportOptions,

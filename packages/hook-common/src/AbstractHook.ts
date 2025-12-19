@@ -2,8 +2,8 @@ import type {
   CallToolResult,
   InitializeResult,
   ListPromptsResult,
-  ListResourceTemplatesResult,
   ListResourcesResult,
+  ListResourceTemplatesResult,
   ListToolsResult,
   Notification,
   ReadResourceResult,
@@ -25,14 +25,14 @@ import type {
   ListPromptsRequestHookResult,
   ListPromptsRequestWithContext,
   ListPromptsResponseHookResult,
-  ListResourceTemplatesErrorHookResult,
-  ListResourceTemplatesRequestHookResult,
-  ListResourceTemplatesRequestWithContext,
-  ListResourceTemplatesResponseHookResult,
   ListResourcesErrorHookResult,
   ListResourcesRequestHookResult,
   ListResourcesRequestWithContext,
   ListResourcesResponseHookResult,
+  ListResourceTemplatesErrorHookResult,
+  ListResourceTemplatesRequestHookResult,
+  ListResourceTemplatesRequestWithContext,
+  ListResourceTemplatesResponseHookResult,
   ListToolsErrorHookResult,
   ListToolsRequestHookResult,
   ListToolsRequestWithContext,
@@ -67,7 +67,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processCallToolRequest(
     request: CallToolRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     return {
       resultType: "continue",
@@ -81,8 +81,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processCallToolResult(
     response: CallToolResult,
-    originalCallToolRequest: CallToolRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalCallToolRequest: CallToolRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     return {
       resultType: "continue",
@@ -95,9 +95,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processCallToolError(
-    error: HookChainError,
-    originalCallToolRequest: CallToolRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalCallToolRequest: CallToolRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<CallToolErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -108,7 +108,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processListPromptsRequest(
     request: ListPromptsRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListPromptsRequestHookResult> {
     return {
       resultType: "continue",
@@ -122,8 +122,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processListPromptsResult(
     response: ListPromptsResult,
-    originalRequest: ListPromptsRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListPromptsRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListPromptsResponseHookResult> {
     return {
       resultType: "continue",
@@ -136,9 +136,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processListPromptsError(
-    error: HookChainError,
-    originalRequest: ListPromptsRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: ListPromptsRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListPromptsErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -149,7 +149,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processListToolsRequest(
     request: ListToolsRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult> {
     return {
       resultType: "continue",
@@ -163,8 +163,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processListToolsResult(
     response: ListToolsResult,
-    originalRequest: ListToolsRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListToolsRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult> {
     return {
       resultType: "continue",
@@ -177,9 +177,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processListToolsError(
-    error: HookChainError,
-    originalRequest: ListToolsRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: ListToolsRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListToolsErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -190,7 +190,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processInitializeRequest(
     request: InitializeRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<InitializeRequestHookResult> {
     return {
       resultType: "continue",
@@ -204,8 +204,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processInitializeResult(
     response: InitializeResult,
-    originalRequest: InitializeRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: InitializeRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<InitializeResponseHookResult> {
     return {
       resultType: "continue",
@@ -218,9 +218,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processInitializeError(
-    error: HookChainError,
-    originalRequest: InitializeRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: InitializeRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<InitializeErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -231,7 +231,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processOtherRequest(
     request: Request,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<RequestHookResult> {
     return {
       resultType: "continue",
@@ -245,8 +245,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processOtherResult(
     response: Result,
-    originalRequest: Request,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: Request,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     return {
       resultType: "continue",
@@ -259,9 +259,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processOtherError(
-    error: HookChainError,
-    originalRequest: Request,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: Request,
+    _originalRequestExtra: RequestExtra,
   ): Promise<OtherErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -272,7 +272,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processTargetRequest(
     request: Request,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<RequestHookResult> {
     return {
       resultType: "continue",
@@ -286,8 +286,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processTargetResult(
     response: Result,
-    originalRequest: Request,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: Request,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ResponseHookResult> {
     return {
       resultType: "continue",
@@ -300,9 +300,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processTargetError(
-    error: HookChainError,
-    originalRequest: Request,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: Request,
+    _originalRequestExtra: RequestExtra,
   ): Promise<TargetErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -325,8 +325,8 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processNotificationError(
-    error: HookChainError,
-    originalNotification: Notification,
+    _error: HookChainError,
+    _originalNotification: Notification,
   ): Promise<NotificationErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -349,8 +349,8 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processTargetNotificationError(
-    error: HookChainError,
-    originalNotification: Notification,
+    _error: HookChainError,
+    _originalNotification: Notification,
   ): Promise<TargetNotificationErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -361,7 +361,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processListResourcesRequest(
     request: ListResourcesRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListResourcesRequestHookResult> {
     return {
       resultType: "continue",
@@ -375,8 +375,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processListResourcesResult(
     response: ListResourcesResult,
-    originalRequest: ListResourcesRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListResourcesRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListResourcesResponseHookResult> {
     return {
       resultType: "continue",
@@ -389,9 +389,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processListResourcesError(
-    error: HookChainError,
-    originalRequest: ListResourcesRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: ListResourcesRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListResourcesErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -402,7 +402,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processListResourceTemplatesRequest(
     request: ListResourceTemplatesRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListResourceTemplatesRequestHookResult> {
     return {
       resultType: "continue",
@@ -416,8 +416,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processListResourceTemplatesResult(
     response: ListResourceTemplatesResult,
-    originalRequest: ListResourceTemplatesRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListResourceTemplatesRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListResourceTemplatesResponseHookResult> {
     return {
       resultType: "continue",
@@ -430,9 +430,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processListResourceTemplatesError(
-    error: HookChainError,
-    originalRequest: ListResourceTemplatesRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: ListResourceTemplatesRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListResourceTemplatesErrorHookResult> {
     return { resultType: "continue" };
   }
@@ -443,7 +443,7 @@ export abstract class AbstractHook implements Hook {
    */
   async processReadResourceRequest(
     request: ReadResourceRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ReadResourceRequestHookResult> {
     return {
       resultType: "continue",
@@ -457,8 +457,8 @@ export abstract class AbstractHook implements Hook {
    */
   async processReadResourceResult(
     response: ReadResourceResult,
-    originalRequest: ReadResourceRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ReadResourceRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ReadResourceResponseHookResult> {
     return {
       resultType: "continue",
@@ -471,9 +471,9 @@ export abstract class AbstractHook implements Hook {
    * Default implementation continues with the error unchanged.
    */
   async processReadResourceError(
-    error: HookChainError,
-    originalRequest: ReadResourceRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _error: HookChainError,
+    _originalRequest: ReadResourceRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ReadResourceErrorHookResult> {
     return { resultType: "continue" };
   }

@@ -10,12 +10,12 @@ import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { RateLimitHook } from "./RateLimitHook.js";
 
 // Configuration from environment variables
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33007;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33007;
 const LIMIT_PER_MINUTE = process.env.RATE_LIMIT_PER_MINUTE
-  ? Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE)
+  ? Number.parseInt(process.env.RATE_LIMIT_PER_MINUTE, 10)
   : 10;
 const LIMIT_PER_HOUR = process.env.RATE_LIMIT_PER_HOUR
-  ? Number.parseInt(process.env.RATE_LIMIT_PER_HOUR)
+  ? Number.parseInt(process.env.RATE_LIMIT_PER_HOUR, 10)
   : 100;
 
 // Create the hook instance

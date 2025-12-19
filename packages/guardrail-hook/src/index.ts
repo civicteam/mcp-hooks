@@ -13,7 +13,7 @@ import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { GuardrailHook } from "./hook.js";
 
 // Configuration
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33005;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33005;
 
 // Create the guardrail hook
 const guardrailHook = new GuardrailHook();

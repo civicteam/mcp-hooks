@@ -8,10 +8,10 @@
 
 import { createServer } from "node:http";
 
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33200;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33200;
 
 // Create an HTTP server that always returns 500
-const server = createServer((req, res) => {
+const server = createServer((_req, res) => {
   res.writeHead(500, { "Content-Type": "text/plain" });
   res.end("Internal Server Error");
 });

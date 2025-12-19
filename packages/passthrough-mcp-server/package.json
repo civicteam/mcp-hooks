@@ -37,7 +37,12 @@
   "bin": {
     "passthrough-mcp-server": "./dist/cli.js"
   },
-  "files": ["dist/", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "dev": "tsx watch src/cli.ts",
     "dev:stdio": "tsx watch src/cli.ts -- --stdio",
@@ -63,19 +68,19 @@
   },
   "dependencies": {
     "@civic/hook-common": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.24.1",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "content-type": "^1.0.5",
-    "eventsource-parser": "^3.0.3",
-    "raw-body": "^3.0.0",
-    "zod": "^4.1.13"
+    "eventsource-parser": "^3.0.6",
+    "raw-body": "^3.0.2",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@civic/server-hook": "workspace:^",
     "@types/content-type": "^1.1.9",
-    "@types/node": "^24.1.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "@types/node": "^25.0.3",
+    "@vitest/coverage-v8": "^4.0.16",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

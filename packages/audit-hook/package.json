@@ -16,16 +16,16 @@
     "export-logs": "tsx scripts/export-logs.ts"
   },
   "dependencies": {
-    "@trpc/server": "^11.8.0",
-    "dotenv": "^16.3.1",
     "@civic/hook-common": "workspace:^",
-    "pg": "^8.11.3"
+    "@trpc/server": "^11.8.0",
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.1",
-    "@types/node": "^20.10.0",
-    "@types/pg": "^8.10.9",
-    "tsx": "^4.19.4",
-    "typescript": "^5.2.2"
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

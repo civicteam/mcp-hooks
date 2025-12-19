@@ -13,13 +13,13 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@trpc/server": "^11.8.0",
-    "@civic/hook-common": "workspace:^"
+    "@civic/hook-common": "workspace:^",
+    "@trpc/server": "^11.8.0"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.1",
-    "@types/node": "^20.10.0",
-    "tsx": "^4.19.4",
-    "typescript": "^5.2.2"
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@types/node": "^25.0.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

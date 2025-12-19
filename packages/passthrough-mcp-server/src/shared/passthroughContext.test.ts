@@ -4,13 +4,12 @@
 
 import {
   type CallToolRequest,
-  type CallToolResult,
-  type ListResourceTemplatesRequest,
-  type ListResourceTemplatesResult,
-  ListResourceTemplatesResultSchema,
   type ListResourcesRequest,
   type ListResourcesResult,
   ListResourcesResultSchema,
+  type ListResourceTemplatesRequest,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
   McpError,
   type Notification,
   type ReadResourceRequest,
@@ -425,13 +424,13 @@ describe("PassthroughContext Source and Target Interfaces", () => {
         request: sourceRequest,
         notification: sourceNotification,
         ping: sourcePing,
-        transport: sourceTransport,
+        transport: _sourceTransport,
       } = context.source;
       const {
         request: targetRequest,
         notification: targetNotification,
         ping: targetPing,
-        transport: targetTransport,
+        transport: _targetTransport,
       } = context.target;
 
       const testRequest: Request = { method: "test", params: {} };

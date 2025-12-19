@@ -8,10 +8,7 @@ import type {
   AnySchema,
   SchemaOutput,
 } from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import type {
-  RequestOptions,
-  TaskRequestOptions,
-} from "@modelcontextprotocol/sdk/shared/protocol.js";
+import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
   CallToolRequest,
   CallToolResult,
@@ -73,13 +70,13 @@ export class LocalToolsHook extends AbstractHook {
     const result = await localTool.cb(request.params.arguments as ZodRawShape, {
       signal: AbortSignal.timeout(this.timeoutMs),
       requestId: "",
-      sendNotification: (notification: ServerNotification): Promise<void> => {
+      sendNotification: (_notification: ServerNotification): Promise<void> => {
         throw new Error("Function not implemented.");
       },
       sendRequest: <U extends AnySchema>(
-        request: ServerRequest,
-        resultSchema: U,
-        options?: RequestOptions,
+        _request: ServerRequest,
+        _resultSchema: U,
+        _options?: RequestOptions,
       ): Promise<SchemaOutput<U>> => {
         throw new Error("Function not implemented.");
       },
@@ -97,7 +94,7 @@ export class LocalToolsHook extends AbstractHook {
    */
   async processCallToolResult(
     response: CallToolResult,
-    originalRequest: CallToolRequest,
+    _originalRequest: CallToolRequest,
   ): Promise<CallToolResponseHookResult> {
     // Local tools are handled in processCallToolRequest,
     // so we always continue with the response as-is
@@ -109,7 +106,7 @@ export class LocalToolsHook extends AbstractHook {
 
   async processListToolsResult(
     response: ListToolsResult,
-    originalRequest: ListToolsRequest,
+    _originalRequest: ListToolsRequest,
   ): Promise<ListToolsResponseHookResult> {
     // Convert local tool definitions to MCP Tool format
     const localToolDescriptions: Tool[] = this.tools.map(toolDefinitionToTool);

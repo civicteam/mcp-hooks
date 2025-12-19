@@ -2,7 +2,7 @@ import { FastMCP } from "fastmcp";
 import TurndownService from "turndown";
 import { z } from "zod";
 
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33003;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33003;
 const USE_STDIO =
   process.argv.includes("--stdio") || process.env.USE_STDIO === "true";
 

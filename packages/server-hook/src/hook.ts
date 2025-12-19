@@ -18,8 +18,8 @@ import {
   InitializedNotificationSchema,
   McpError,
   type Notification,
-  SUPPORTED_PROTOCOL_VERSIONS,
   type ServerCapabilities,
+  SUPPORTED_PROTOCOL_VERSIONS,
 } from "@modelcontextprotocol/sdk/types.js";
 
 /**

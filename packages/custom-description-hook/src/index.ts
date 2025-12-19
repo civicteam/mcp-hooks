@@ -11,7 +11,7 @@ import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { CustomDescriptionHook } from "./hook.js";
 
 // Configuration
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33008;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33008;
 
 // Create and start the server
 const hook = new CustomDescriptionHook();

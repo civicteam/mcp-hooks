@@ -26,9 +26,9 @@ import type {
 } from "@civic/hook-common";
 import {
   ErrorCode,
+  McpError,
   type Notification,
 } from "@modelcontextprotocol/sdk/types.js";
-import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "../logger/logger.js";
 import type { LinkedListHook } from "./hookChain.js";
 

@@ -16,7 +16,7 @@ class MockHook implements Hook {
 
   async processCallToolResult(
     response: any,
-    originalCallToolRequest: any,
+    _originalCallToolRequest: any,
   ): Promise<any> {
     return { resultType: "continue", response };
   }
@@ -215,7 +215,9 @@ describe("HookChain", () => {
         new MockHook("third"),
       ];
 
-      hooks.forEach((hook) => chain.append(hook));
+      for (const hook of hooks) {
+        chain.append(hook);
+      }
 
       expect(chain.length).toBe(3);
       expect(chain.getNames()).toEqual(["first", "second", "third"]);

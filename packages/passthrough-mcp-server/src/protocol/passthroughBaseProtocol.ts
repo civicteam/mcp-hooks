@@ -13,36 +13,33 @@ import {
 } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
+  CancelledNotificationSchema,
   ErrorCode,
   type JSONRPCRequest,
   McpError,
   type Notification,
+  PingRequestSchema,
+  ProgressNotificationSchema,
   type Request,
   type Result,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  CancelledNotificationSchema,
-  PingRequestSchema,
-  ProgressNotificationSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { z } from "zod";
 
 export abstract class PassthroughBaseProtocol<
   SendRequestT extends Request,
   SendNotificationT extends Notification,
   SendResultT extends Result,
 > extends Protocol<SendRequestT, SendNotificationT, SendResultT> {
-  protected assertCapabilityForMethod(method: SendRequestT["method"]): void {
+  protected assertCapabilityForMethod(_method: SendRequestT["method"]): void {
     // accept all
   }
 
   protected assertNotificationCapability(
-    method: SendNotificationT["method"],
+    _method: SendNotificationT["method"],
   ): void {
     // accept all
   }
 
-  protected assertRequestHandlerCapability(method: string): void {
+  protected assertRequestHandlerCapability(_method: string): void {
     // accept all
   }
 
@@ -165,7 +162,6 @@ export abstract class PassthroughBaseProtocol<
       };
 
       // biome-ignore lint/suspicious/noExplicitAny: Accessing private Protocol member
-      // biome-ignore lint/suspicious/noExplicitAny: Response type from Protocol internals
       (this as any)._responseHandlers.set(messageId, (response: any) => {
         if (options?.signal?.aborted) {
           return;

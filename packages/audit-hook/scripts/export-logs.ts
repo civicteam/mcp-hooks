@@ -8,8 +8,7 @@
  */
 
 import fs from "node:fs/promises";
-import path from "node:path";
-import { dirname } from "node:path";
+import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "dotenv";
 import pg from "pg";

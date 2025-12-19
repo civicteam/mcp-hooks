@@ -25,7 +25,7 @@ import { AuditHook } from "./hook.js";
 dotenv.config();
 
 // Configuration
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33004;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33004;
 const LOG_FILE = process.env.LOG_FILE || path.join(process.cwd(), "audit.log");
 const POSTGRES_URL = process.env.POSTGRES_URL;
 const ENABLE_CONSOLE_LOGGER = process.env.ENABLE_CONSOLE_LOGGER === "true";

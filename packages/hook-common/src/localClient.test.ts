@@ -38,7 +38,7 @@ class TestLoggingHook extends AbstractHook {
 
   async processCallToolRequest(
     request: CallToolRequest,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     this.logs.push(`REQUEST: ${request.params.name}`);
     return {
@@ -50,7 +50,7 @@ class TestLoggingHook extends AbstractHook {
   async processCallToolResult(
     response: CallToolResult,
     originalCallToolRequest: CallToolRequest,
-    originalRequestExtra: RequestExtra,
+    _originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     this.logs.push(`RESPONSE: ${originalCallToolRequest.params.name}`);
     return {
@@ -68,7 +68,7 @@ class TestValidationHook extends AbstractHook {
 
   async processCallToolRequest(
     request: CallToolRequest,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     if (request.params.name.includes("dangerous")) {
       // Instead of returning abort, throw an error
@@ -169,8 +169,8 @@ describe("LocalHookClient", () => {
       }
 
       async processCallToolRequest(
-        request: CallToolRequest,
-        requestExtra: RequestExtra,
+        _request: CallToolRequest,
+        _requestExtra: RequestExtra,
       ): Promise<CallToolRequestHookResult> {
         throw new Error("Hook error");
       }
@@ -202,7 +202,7 @@ describe("LocalHookClient", () => {
 
         async processListToolsRequest(
           request: ListToolsRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ListToolsRequestHookResult> {
           return {
             resultType: "continue",
@@ -236,8 +236,8 @@ describe("LocalHookClient", () => {
 
         async processListToolsResult(
           response: ListToolsResult,
-          originalRequest: ListToolsRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListToolsRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListToolsResponseHookResult> {
           return {
             resultType: "continue",
@@ -284,9 +284,9 @@ describe("LocalHookClient", () => {
         }
 
         async processListToolsError(
-          error: HookChainError,
-          originalRequest: ListToolsRequest,
-          originalRequestExtra: RequestExtra,
+          _error: HookChainError,
+          _originalRequest: ListToolsRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListToolsErrorHookResult> {
           return {
             resultType: "continue",
@@ -344,7 +344,7 @@ describe("LocalHookClient", () => {
 
         async processListPromptsRequest(
           request: ListPromptsRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ListPromptsRequestHookResult> {
           return {
             resultType: "continue",
@@ -378,8 +378,8 @@ describe("LocalHookClient", () => {
 
         async processListPromptsResult(
           response: ListPromptsResult,
-          originalRequest: ListPromptsRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListPromptsRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListPromptsResponseHookResult> {
           return {
             resultType: "continue",
@@ -422,9 +422,9 @@ describe("LocalHookClient", () => {
         }
 
         async processListPromptsError(
-          error: HookChainError,
-          originalRequest: ListPromptsRequest,
-          originalRequestExtra: RequestExtra,
+          _error: HookChainError,
+          _originalRequest: ListPromptsRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListPromptsErrorHookResult> {
           return {
             resultType: "continue",
@@ -480,8 +480,8 @@ describe("LocalHookClient", () => {
 
         async processListPromptsResult(
           response: ListPromptsResult,
-          originalRequest: ListPromptsRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListPromptsRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListPromptsResponseHookResult> {
           // Add a custom prompt to the response
           const modifiedResponse = {

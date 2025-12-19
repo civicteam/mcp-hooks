@@ -6,7 +6,6 @@ import type {
   Hook,
   HookChainError,
   InitializeErrorHookResult,
-  ListPromptsErrorHookResult,
   ListPromptsRequestHookResult,
   ListPromptsResponseHookResult,
   ListToolsErrorHookResult,
@@ -95,45 +94,45 @@ class MockHook implements Hook {
   // Default implementations that satisfy the interface
   async processCallToolRequest(
     request: CallToolRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     return { resultType: "continue", request };
   }
 
   async processCallToolResult(
     response: CallToolResult,
-    originalRequest: CallToolRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: CallToolRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<CallToolResponseHookResult> {
     return { resultType: "continue", response };
   }
 
   async processListPromptsRequest?(
     request: ListPromptsRequest,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListPromptsRequestHookResult> {
     return { resultType: "continue", request };
   }
 
   async processListPromptsResult?(
     response: ListPromptsResult,
-    originalRequest: ListPromptsRequest,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListPromptsRequest,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListPromptsResponseHookResult> {
     return { resultType: "continue", response };
   }
 
   async processListToolsRequest?(
     request: ListToolsRequest,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<ListToolsRequestHookResult> {
     return { resultType: "continue", request };
   }
 
   async processListToolsResult?(
     response: ListToolsResult,
-    originalRequest: ListToolsRequest,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: ListToolsRequest,
+    _originalRequestExtra: RequestExtra,
   ): Promise<ListToolsResponseHookResult> {
     return { resultType: "continue", response };
   }
@@ -682,7 +681,7 @@ describe("Hook Processor", () => {
         class ToolsListHook extends MockHook {
           async processListToolsResult(
             response: ListToolsResult,
-            originalRequest: ListToolsRequest,
+            _originalRequest: ListToolsRequest,
           ): Promise<ListToolsResponseHookResult> {
             return { resultType: "continue", response };
           }
@@ -730,7 +729,7 @@ describe("Hook Processor", () => {
         class PromptsListHook extends MockHook {
           async processListPromptsResult(
             response: ListPromptsResult,
-            originalRequest: ListPromptsRequest,
+            _originalRequest: ListPromptsRequest,
           ): Promise<ListPromptsResponseHookResult> {
             return { resultType: "continue", response };
           }

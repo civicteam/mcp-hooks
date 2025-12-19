@@ -23,7 +23,7 @@ export class RateLimitHook extends AbstractHook {
 
   constructor(
     private limitPerMinute = 10,
-    private limitPerHour = 100,
+    _limitPerHour = 100,
     private cleanupIntervalMs = 300000, // 5 minutes
   ) {
     super();

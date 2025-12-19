@@ -21,7 +21,7 @@ export class McpSessionManager {
   addSession(
     sessionId: string,
     context: PassthroughContext,
-    metadata?: Record<string, unknown>,
+    _metadata?: Record<string, unknown>,
   ): McpSession {
     const session: McpSession = {
       id: sessionId,
