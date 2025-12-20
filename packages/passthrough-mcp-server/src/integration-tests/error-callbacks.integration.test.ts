@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Server, createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import type {
   CallToolErrorHookResult,
@@ -53,7 +53,7 @@ class ErrorTestHook implements Hook {
 
   async processCallToolRequest(
     request: CallToolRequestWithContext,
-    requestExtra: RequestExtra,
+    _requestExtra: RequestExtra,
   ): Promise<CallToolRequestHookResult> {
     // Trigger an error for specific tool names (for single hook tests)
     if (request.params.name === "trigger-error") {
@@ -67,8 +67,8 @@ class ErrorTestHook implements Hook {
 
   async processCallToolResult(
     response: any,
-    originalRequest: CallToolRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: CallToolRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<any> {
     // Default implementation - pass through
     return {
@@ -79,8 +79,8 @@ class ErrorTestHook implements Hook {
 
   async processCallToolError(
     error: HookChainError,
-    originalRequest: CallToolRequestWithContext,
-    originalRequestExtra: RequestExtra,
+    _originalRequest: CallToolRequestWithContext,
+    _originalRequestExtra: RequestExtra,
   ): Promise<CallToolErrorHookResult> {
     this.errorCallbackInvoked = true;
     this.lastError = error;

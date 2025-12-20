@@ -15,14 +15,14 @@
     "start:stdio": "node dist/index.js --stdio"
   },
   "dependencies": {
-    "fastmcp": "^3.24.0",
+    "fastmcp": "^3.25.4",
     "turndown": "^7.2.2",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@types/turndown": "^5.0.4",
-    "tsx": "^4.19.4",
-    "typescript": "^5.2.2"
+    "@types/node": "^25.0.3",
+    "@types/turndown": "^5.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

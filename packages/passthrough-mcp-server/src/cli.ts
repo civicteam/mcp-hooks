@@ -10,7 +10,6 @@
 import { logger } from "./logger/logger.js";
 import { loadConfig } from "./proxy/config.js";
 import { createPassthroughProxy } from "./proxy/createProxies.js";
-import type { PassthroughProxy } from "./proxy/types.js";
 
 /**
  * Main function to start the passthrough MCP server

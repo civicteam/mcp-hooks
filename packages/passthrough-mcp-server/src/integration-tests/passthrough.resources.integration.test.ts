@@ -1,15 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { type Server as HTTPServer, createServer } from "node:http";
+import { createServer, type Server as HTTPServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import type {
   Hook,
   HookChainError,
-  ListResourceTemplatesErrorHookResult,
-  ListResourceTemplatesRequestHookResult,
-  ListResourceTemplatesResponseHookResult,
   ListResourcesErrorHookResult,
   ListResourcesRequestHookResult,
   ListResourcesResponseHookResult,
+  ListResourceTemplatesRequestHookResult,
+  ListResourceTemplatesResponseHookResult,
   ReadResourceErrorHookResult,
   ReadResourceRequestHookResult,
   ReadResourceResponseHookResult,
@@ -17,16 +16,15 @@ import type {
 } from "@civic/hook-common";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
-  type ListResourceTemplatesRequest,
-  type ListResourceTemplatesResult,
-  ListResourceTemplatesResultSchema,
   type ListResourcesRequest,
   type ListResourcesResult,
   ListResourcesResultSchema,
+  type ListResourceTemplatesRequest,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
   McpError,
   type ReadResourceRequest,
   type ReadResourceResult,
@@ -255,7 +253,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processListResourcesRequest(
           request: ListResourcesRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ListResourcesRequestHookResult> {
           // Add a cursor to the request
           return {
@@ -295,8 +293,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processListResourcesResult(
           result: ListResourcesResult,
-          originalRequest: ListResourcesRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListResourcesRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListResourcesResponseHookResult> {
           // Filter out txt files
           return {
@@ -335,8 +333,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
           return "InterceptHook";
         },
         async processListResourcesRequest(
-          request: ListResourcesRequest,
-          requestExtra: RequestExtra,
+          _request: ListResourcesRequest,
+          _requestExtra: RequestExtra,
         ): Promise<ListResourcesRequestHookResult> {
           // Respond directly without forwarding to server
           return {
@@ -377,16 +375,16 @@ describe("Passthrough Resources Hook Integration Tests", () => {
           return "ErrorHandlerHook";
         },
         async processListResourcesRequest(
-          request: ListResourcesRequest,
-          requestExtra: RequestExtra,
+          _request: ListResourcesRequest,
+          _requestExtra: RequestExtra,
         ): Promise<ListResourcesRequestHookResult> {
           // Force an error
           throw new McpError(-32603, "Simulated error");
         },
         async processListResourcesError(
-          error: HookChainError,
-          originalRequest: ListResourcesRequest,
-          originalRequestExtra: RequestExtra,
+          _error: HookChainError,
+          _originalRequest: ListResourcesRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListResourcesErrorHookResult> {
           // Replace error with a successful response
           return {
@@ -449,8 +447,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processListResourceTemplatesResult(
           result: ListResourceTemplatesResult,
-          originalRequest: ListResourceTemplatesRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListResourceTemplatesRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListResourceTemplatesResponseHookResult> {
           // Add an extra template
           return {
@@ -492,8 +490,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
           return "TemplateInterceptHook";
         },
         async processListResourceTemplatesRequest(
-          request: ListResourceTemplatesRequest,
-          requestExtra: RequestExtra,
+          _request: ListResourceTemplatesRequest,
+          _requestExtra: RequestExtra,
         ): Promise<ListResourceTemplatesRequestHookResult> {
           return {
             resultType: "respond",
@@ -555,7 +553,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processReadResourceRequest(
           request: ReadResourceRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ReadResourceRequestHookResult> {
           // Redirect to a different resource
           if (request.params.uri === "redirect://config") {
@@ -600,8 +598,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processReadResourceResult(
           result: ReadResourceResult,
-          originalRequest: ReadResourceRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ReadResourceRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ReadResourceResponseHookResult> {
           // Transform the content
           return {
@@ -640,7 +638,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processReadResourceRequest(
           request: ReadResourceRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ReadResourceRequestHookResult> {
           if (request.params.uri === "cache://data") {
             return {
@@ -687,7 +685,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         async processReadResourceError(
           error: HookChainError,
           originalRequest: ReadResourceRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ReadResourceErrorHookResult> {
           // Provide fallback content for missing resources
           if (error.message?.includes("not found")) {
@@ -757,8 +755,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processListResourcesResult(
           result: ListResourcesResult,
-          originalRequest: ListResourcesRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListResourcesRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListResourcesResponseHookResult> {
           // Add a prefix to all resource names
           return {
@@ -780,8 +778,8 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processListResourcesResult(
           result: ListResourcesResult,
-          originalRequest: ListResourcesRequest,
-          originalRequestExtra: RequestExtra,
+          _originalRequest: ListResourcesRequest,
+          _originalRequestExtra: RequestExtra,
         ): Promise<ListResourcesResponseHookResult> {
           // Add another prefix
           return {
@@ -820,7 +818,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processReadResourceRequest(
           request: ReadResourceRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ReadResourceRequestHookResult> {
           if (request.params.uri === "special://resource") {
             return {
@@ -849,7 +847,7 @@ describe("Passthrough Resources Hook Integration Tests", () => {
         },
         async processReadResourceRequest(
           request: ReadResourceRequest,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<ReadResourceRequestHookResult> {
           // This should not be called for special://resource
           if (request.params.uri === "special://resource") {

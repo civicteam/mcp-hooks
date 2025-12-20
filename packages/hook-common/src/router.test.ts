@@ -2,8 +2,8 @@ import {
   CallToolRequestSchema,
   InitializeRequestSchema,
   ListPromptsRequestSchema,
-  ListResourceTemplatesRequestSchema,
   ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
   RequestSchema,
@@ -23,7 +23,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processCallToolRequest(request, requestExtra) {
+      async processCallToolRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -55,7 +55,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processListToolsRequest(request, requestExtra) {
+      async processListToolsRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -83,7 +83,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processListPromptsRequest(request, requestExtra) {
+      async processListPromptsRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -111,7 +111,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processInitializeRequest(request, requestExtra) {
+      async processInitializeRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -147,7 +147,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processOtherRequest(request, requestExtra) {
+      async processOtherRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -175,7 +175,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processTargetRequest(request, requestExtra) {
+      async processTargetRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -203,7 +203,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processListResourcesRequest(request, requestExtra) {
+      async processListResourcesRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -231,7 +231,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processListResourceTemplatesRequest(request, requestExtra) {
+      async processListResourceTemplatesRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -261,7 +261,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processReadResourceRequest(request, requestExtra) {
+      async processReadResourceRequest(request, _requestExtra) {
         return {
           resultType: "continueAsync",
           request,
@@ -289,7 +289,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processCallToolRequest(request, requestExtra) {
+      async processCallToolRequest(request, _requestExtra) {
         return {
           resultType: "continue",
           request,
@@ -316,7 +316,7 @@ describe("createHookRouter continueAsync rejection", () => {
       get name() {
         return "TestHook";
       },
-      async processCallToolRequest(request, requestExtra) {
+      async processCallToolRequest(_request, _requestExtra) {
         return {
           resultType: "respond",
           response: {

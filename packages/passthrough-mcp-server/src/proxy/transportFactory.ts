@@ -8,7 +8,7 @@
 import { URL } from "node:url";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { RequestContextAwareStreamableHTTPClientTransport } from "../transports/requestContextAwareStreamableHTTPClientTransport.js";
-import type { Config, SourceConfig, TargetConfig } from "./config.js";
+import type { TargetConfig } from "./config.js";
 
 /**
  * Helper function to get URL from target config safely

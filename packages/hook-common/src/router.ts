@@ -1,17 +1,11 @@
 import {
   CallToolRequestSchema,
-  InitializeRequestSchema,
   InitializeResultSchema,
-  ListPromptsRequestSchema,
   ListPromptsResultSchema,
-  ListResourceTemplatesRequestSchema,
-  ListResourceTemplatesResultSchema,
-  ListResourcesRequestSchema,
   ListResourcesResultSchema,
-  ListToolsRequestSchema,
+  ListResourceTemplatesResultSchema,
   ListToolsResultSchema,
   NotificationSchema,
-  ReadResourceRequestSchema,
   ReadResourceResultSchema,
   RequestSchema,
   ResultSchema,
@@ -19,6 +13,7 @@ import {
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
+import type { Hook } from "./types.js";
 import {
   CallToolErrorHookResultSchema,
   CallToolRequestHookResultSchema,
@@ -33,14 +28,14 @@ import {
   ListPromptsRequestHookResultSchema,
   ListPromptsRequestSchemaWithContext,
   ListPromptsResponseHookResultSchema,
-  ListResourceTemplatesErrorHookResultSchema,
-  ListResourceTemplatesRequestHookResultSchema,
-  ListResourceTemplatesRequestSchemaWithContext,
-  ListResourceTemplatesResponseHookResultSchema,
   ListResourcesErrorHookResultSchema,
   ListResourcesRequestHookResultSchema,
   ListResourcesRequestSchemaWithContext,
   ListResourcesResponseHookResultSchema,
+  ListResourceTemplatesErrorHookResultSchema,
+  ListResourceTemplatesRequestHookResultSchema,
+  ListResourceTemplatesRequestSchemaWithContext,
+  ListResourceTemplatesResponseHookResultSchema,
   ListToolsErrorHookResultSchema,
   ListToolsRequestHookResultSchema,
   ListToolsRequestSchemaWithContext,
@@ -56,27 +51,6 @@ import {
   ResponseHookResultSchema,
   TargetErrorHookResultSchema,
   TargetNotificationErrorHookResultSchema,
-} from "./types.js";
-import type {
-  CallToolRequestWithContext,
-  CallToolResult,
-  Hook,
-  HookChainError,
-  InitializeRequestWithContext,
-  InitializeResult,
-  ListPromptsRequestWithContext,
-  ListPromptsResult,
-  ListResourceTemplatesRequestWithContext,
-  ListResourceTemplatesResult,
-  ListResourcesRequestWithContext,
-  ListResourcesResult,
-  ListToolsRequestWithContext,
-  ListToolsResult,
-  ReadResourceRequestWithContext,
-  ReadResourceResult,
-  Request,
-  RequestExtra,
-  Result,
 } from "./types.js";
 
 /**
@@ -101,7 +75,7 @@ const baseRouter = t.router({
       }),
     )
     .output(CallToolRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processRequest not implemented");
     }),
 
@@ -117,7 +91,7 @@ const baseRouter = t.router({
       }),
     )
     .output(CallToolResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processResponse not implemented");
     }),
 
@@ -133,7 +107,7 @@ const baseRouter = t.router({
       }),
     )
     .output(CallToolErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processCallToolError not implemented");
     }),
 });
@@ -153,7 +127,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListPromptsRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListPromptsRequest not implemented");
     }),
   /**
@@ -168,7 +142,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListPromptsResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListPromptsResult not implemented");
     }),
   /**
@@ -183,7 +157,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListPromptsErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListPromptsError not implemented");
     }),
   /**
@@ -197,7 +171,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListToolsRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListToolsRequest not implemented");
     }),
 
@@ -213,7 +187,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListToolsResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListToolsResult not implemented");
     }),
 
@@ -229,7 +203,7 @@ const toolsListRouter = t.router({
       }),
     )
     .output(ListToolsErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListToolsError not implemented");
     }),
 });
@@ -249,7 +223,7 @@ const initializeRouter = t.router({
       }),
     )
     .output(InitializeRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processInitializeRequest not implemented");
     }),
 
@@ -265,7 +239,7 @@ const initializeRouter = t.router({
       }),
     )
     .output(InitializeResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processInitializeResult not implemented");
     }),
 
@@ -281,7 +255,7 @@ const initializeRouter = t.router({
       }),
     )
     .output(InitializeErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processInitializeError not implemented");
     }),
 });
@@ -301,7 +275,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourcesRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourcesRequest not implemented");
     }),
 
@@ -317,7 +291,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourcesResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourcesResult not implemented");
     }),
 
@@ -333,7 +307,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourcesErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourcesError not implemented");
     }),
 
@@ -348,7 +322,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourceTemplatesRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourceTemplatesRequest not implemented");
     }),
 
@@ -364,7 +338,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourceTemplatesResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourceTemplatesResult not implemented");
     }),
 
@@ -380,7 +354,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ListResourceTemplatesErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processListResourceTemplatesError not implemented");
     }),
 
@@ -395,7 +369,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ReadResourceRequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processReadResourceRequest not implemented");
     }),
 
@@ -411,7 +385,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ReadResourceResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processReadResourceResult not implemented");
     }),
 
@@ -427,7 +401,7 @@ const resourceRouter = t.router({
       }),
     )
     .output(ReadResourceErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processReadResourceError not implemented");
     }),
 });
@@ -447,7 +421,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(RequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processOtherRequest not implemented");
     }),
 
@@ -463,7 +437,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(ResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processOtherResult not implemented");
     }),
 
@@ -479,7 +453,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(OtherErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processOtherError not implemented");
     }),
 
@@ -494,7 +468,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(RequestHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processTargetRequest not implemented");
     }),
 
@@ -510,7 +484,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(ResponseHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processTargetResult not implemented");
     }),
 
@@ -526,7 +500,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(TargetErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processTargetError not implemented");
     }),
 
@@ -536,7 +510,7 @@ const targetAndNotificationRouter = t.router({
   processNotification: t.procedure
     .input(NotificationSchema)
     .output(NotificationHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processNotification not implemented");
     }),
 
@@ -551,7 +525,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(NotificationErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processNotificationError not implemented");
     }),
 
@@ -561,7 +535,7 @@ const targetAndNotificationRouter = t.router({
   processTargetNotification: t.procedure
     .input(NotificationSchema)
     .output(NotificationHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processTargetNotification not implemented");
     }),
 
@@ -576,7 +550,7 @@ const targetAndNotificationRouter = t.router({
       }),
     )
     .output(TargetNotificationErrorHookResultSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: _input }) => {
       throw new Error("processTargetNotificationError not implemented");
     }),
 });

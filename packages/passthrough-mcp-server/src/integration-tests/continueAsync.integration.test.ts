@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Server, createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import type {
   CallToolRequestHookResult,
@@ -104,7 +104,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -132,7 +132,10 @@ describe("ContinueAsync Integration Tests", () => {
         get name() {
           return "Hook2";
         },
-        async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+        async processCallToolRequest(
+          request: any,
+          _requestExtra: RequestExtra,
+        ) {
           hook2Spy(request);
           return {
             resultType: "continue",
@@ -146,7 +149,10 @@ describe("ContinueAsync Integration Tests", () => {
         get name() {
           return "Hook3";
         },
-        async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+        async processCallToolRequest(
+          request: any,
+          _requestExtra: RequestExtra,
+        ) {
           hook3Spy(request);
           return {
             resultType: "respond",
@@ -220,7 +226,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -248,7 +254,10 @@ describe("ContinueAsync Integration Tests", () => {
         get name() {
           return "ErrorHook";
         },
-        async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+        async processCallToolRequest(
+          request: any,
+          _requestExtra: RequestExtra,
+        ) {
           hook2Spy(request);
           throw new Error("Hook2 error");
         },
@@ -308,7 +317,10 @@ describe("ContinueAsync Integration Tests", () => {
         get name() {
           return "Hook1";
         },
-        async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+        async processCallToolRequest(
+          request: any,
+          _requestExtra: RequestExtra,
+        ) {
           hook1RequestSpy(request);
           return {
             resultType: "continue",
@@ -317,8 +329,8 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolResult(
           response: any,
-          originalRequest: any,
-          requestExtra: RequestExtra,
+          _originalRequest: any,
+          _requestExtra: RequestExtra,
         ) {
           hook1ResponseSpy(response);
           return {
@@ -335,7 +347,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           hook2RequestSpy(request);
           return {
@@ -359,8 +371,8 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolResult(
           response: any,
-          originalRequest: any,
-          requestExtra: RequestExtra,
+          _originalRequest: any,
+          _requestExtra: RequestExtra,
         ) {
           hook2ResponseSpy(response);
           return {
@@ -381,7 +393,10 @@ describe("ContinueAsync Integration Tests", () => {
         get name() {
           return "Hook3";
         },
-        async processCallToolRequest(request: any, requestExtra: RequestExtra) {
+        async processCallToolRequest(
+          request: any,
+          _requestExtra: RequestExtra,
+        ) {
           hook3RequestSpy(request);
           return {
             resultType: "respond",
@@ -397,8 +412,8 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolResult(
           response: any,
-          originalRequest: any,
-          requestExtra: RequestExtra,
+          _originalRequest: any,
+          _requestExtra: RequestExtra,
         ) {
           hook3ResponseSpy(response);
           return {
@@ -479,7 +494,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -663,7 +678,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -749,7 +764,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -833,7 +848,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -913,7 +928,7 @@ describe("ContinueAsync Integration Tests", () => {
         },
         async processCallToolRequest(
           request: any,
-          requestExtra: RequestExtra,
+          _requestExtra: RequestExtra,
         ): Promise<CallToolRequestHookResult> {
           return {
             resultType: "continueAsync",
@@ -927,8 +942,8 @@ describe("ContinueAsync Integration Tests", () => {
               ],
             },
             callback: async (
-              response: CallToolResult | null,
-              error: HookChainError | null,
+              _response: CallToolResult | null,
+              _error: HookChainError | null,
             ) => {
               // Callback throws an error
               throw callbackError;

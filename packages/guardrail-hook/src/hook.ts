@@ -86,7 +86,7 @@ export class GuardrailHook implements Hook {
               `Tool call to '${name}' was blocked by guardrails: URL domain '${url.hostname}' is not in the allowed domains list`,
             );
           }
-        } catch (error) {
+        } catch (_error) {
           throw new Error(
             `Tool call to '${name}' was blocked by guardrails: invalid URL provided`,
           );

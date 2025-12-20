@@ -66,7 +66,7 @@ async function example2_manualStart() {
 async function example3_withRemoteHooks() {
   logger.info("\nExample 3: With Remote Hooks");
 
-  const proxy = await createPassthroughProxy({
+  const _proxy = await createPassthroughProxy({
     source: {
       transportType: "httpStream",
       port: 34002,
@@ -149,7 +149,7 @@ async function example4_withProgrammaticHooks() {
   }
 
   // Mix programmatic hooks with remote hooks
-  const proxy = await createPassthroughProxy({
+  const _proxy = await createPassthroughProxy({
     source: {
       transportType: "httpStream",
       port: 34002,
@@ -178,7 +178,7 @@ async function example5_stdioProxy() {
   logger.info("\nExample 5: Stdio Proxy");
 
   // Example of stdio proxy (useful for direct command-line integration)
-  const proxy = await createPassthroughProxy({
+  const _proxy = await createPassthroughProxy({
     source: {
       transportType: "stdio",
     },

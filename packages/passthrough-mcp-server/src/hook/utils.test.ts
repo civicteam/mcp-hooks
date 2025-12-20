@@ -18,11 +18,14 @@ vi.mock("@civic/hook-common", async () => {
   const actual = await vi.importActual("@civic/hook-common");
   return {
     ...actual,
-    RemoteHookClient: vi.fn().mockImplementation((config) => ({
-      name: config.name || config.url,
-      processRequest: vi.fn(),
-      processResponse: vi.fn(),
-    })),
+    RemoteHookClient: class {
+      name: string;
+      processRequest = vi.fn();
+      processResponse = vi.fn();
+      constructor(config: { name?: string; url: string }) {
+        this.name = config.name || config.url;
+      }
+    },
   };
 });
 
@@ -45,7 +48,7 @@ class MockHook implements Hook {
 
   async processCallToolResult(
     response: CallToolResult,
-    originalCallToolRequest: CallToolRequestWithContext,
+    _originalCallToolRequest: CallToolRequestWithContext,
   ): Promise<CallToolResponseHookResult> {
     return { resultType: "continue", response };
   }
@@ -64,10 +67,7 @@ describe("createHookClient", () => {
     const config = { url: "http://example.com/hook", name: "remote-hook" };
     const client = createHookClient(config);
 
-    expect(RemoteHookClient).toHaveBeenCalledWith({
-      url: "http://example.com/hook",
-      name: "remote-hook",
-    });
+    expect(client).toBeInstanceOf(RemoteHookClient);
     expect(client.name).toBe("remote-hook");
   });
 
@@ -75,10 +75,8 @@ describe("createHookClient", () => {
     const config = { url: "http://example.com/hook" };
     const client = createHookClient(config);
 
-    expect(RemoteHookClient).toHaveBeenCalledWith({
-      url: "http://example.com/hook",
-      name: "http://example.com/hook",
-    });
+    expect(client).toBeInstanceOf(RemoteHookClient);
+    expect(client.name).toBe("http://example.com/hook");
   });
 });
 

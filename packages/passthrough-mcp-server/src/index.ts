@@ -7,72 +7,61 @@
  * For CLI usage, see cli.ts
  */
 
-// Export transport-specific factory functions
-export {
-  createStdioPassthroughProxy,
-  createHttpPassthroughProxy,
-  createPassthroughProxy,
-} from "./proxy/createProxies.js";
-
-// Export types
-export type { PassthroughProxy } from "./proxy/types.js";
-
-export type { StdioProxyConfig } from "./proxy/stdio/stdioPassthroughProxy.js";
-export type { HttpProxyConfig } from "./proxy/http/httpPassthroughProxy.js";
-
-// Export config types
-export type {
-  Config,
-  TargetConfig,
-  SourceConfig,
-  HookDefinition,
-  RemoteHookConfig,
-} from "./proxy/config.js";
-
 // Export hook-related types and interfaces
 export type {
-  Hook,
   CallToolRequest,
-  CallToolResult,
-  ListToolsRequest,
-  ListToolsResult,
-  LocalHookClient,
   CallToolRequestHookResult,
   CallToolResponseHookResult,
+  CallToolResult,
+  Hook,
+  ListToolsRequest,
   ListToolsRequestHookResult,
   ListToolsResponseHookResult,
+  ListToolsResult,
+  LocalHookClient,
 } from "@civic/hook-common";
-
 export { AbstractHook } from "@civic/hook-common";
-
+export type { McpErrorCode, McpErrorMessage } from "./error/errorCodes.js";
+// Export error constants
+export { ERROR_MESSAGES, MCP_ERROR_CODES } from "./error/errorCodes.js";
+// Export hook utilities
+export { getHookClients } from "./hook/manager.js";
 // Export hook processor functions
 export {
   processRequestThroughHooks,
   processResponseThroughHooks,
 } from "./hook/processor.js";
-
-// Export hook utilities
-export { getHookClients } from "./hook/manager.js";
 export { createHookClient, createHookClients } from "./hook/utils.js";
-
+// Export config types
+export type {
+  Config,
+  HookDefinition,
+  RemoteHookConfig,
+  SourceConfig,
+  TargetConfig,
+} from "./proxy/config.js";
 // Export utility functions that users might need
 export { loadConfig } from "./proxy/config.js";
-
-// Export custom transports
-export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";
-
-// Export core passthrough classes and interfaces
+// Export transport-specific factory functions
 export {
-  PassthroughContext,
-  type TransportInterface,
-  type PassthroughContextOptions,
-} from "./shared/passthroughContext.js";
+  createHttpPassthroughProxy,
+  createPassthroughProxy,
+  createStdioPassthroughProxy,
+} from "./proxy/createProxies.js";
+export type { HttpProxyConfig } from "./proxy/http/httpPassthroughProxy.js";
+export type { StdioProxyConfig } from "./proxy/stdio/stdioPassthroughProxy.js";
+// Export types
+export type { PassthroughProxy } from "./proxy/types.js";
 
 export {
   MetadataHelper,
   type PassthroughMetadata,
 } from "./shared/metadataHelper.js";
-
-// Export error constants
-export { MCP_ERROR_CODES, ERROR_MESSAGES } from "./error/errorCodes.js";
-export type { McpErrorCode, McpErrorMessage } from "./error/errorCodes.js";
+// Export core passthrough classes and interfaces
+export {
+  PassthroughContext,
+  type PassthroughContextOptions,
+  type TransportInterface,
+} from "./shared/passthroughContext.js";
+// Export custom transports
+export { RequestContextAwareStreamableHTTPClientTransport } from "./transports/requestContextAwareStreamableHTTPClientTransport.js";

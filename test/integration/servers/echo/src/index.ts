@@ -6,7 +6,7 @@ import cors from "cors";
 import express from "express";
 import z from "zod";
 
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33100;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33100;
 
 // Store server instances by session ID
 export const sessions = new Map<
@@ -196,7 +196,7 @@ function createExpressApp() {
   app.get("/mcp", handleSessionRequest);
 
   // Health check endpoint
-  app.get("/health", (req, res) => {
+  app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
       sessions: sessions.size,

@@ -1,9 +1,6 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  createAuthenticatedClient,
-  createUnauthenticatedClient,
-} from "../test-client";
+import { createUnauthenticatedClient } from "../test-client";
 import { TEST_CONFIG } from "../test-config";
 
 describe("Session Management Tests", () => {

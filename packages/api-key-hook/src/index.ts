@@ -9,7 +9,7 @@ import { startHookServer } from "@civic/hook-common";
 import { ApiKeyHook } from "./hook.js";
 
 // Configuration
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33010;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33010;
 const API_KEY = process.env.API_KEY || "test-api-key-12345";
 const HEADER_NAME = process.env.API_KEY_HEADER || "X-API-Key";
 
@@ -30,6 +30,6 @@ console.log("\nReady to add authentication headers!");
 // Start the server
 startHookServer(apiKeyHook, PORT);
 
+export type { ApiKeyHookConfig } from "./hook.js";
 // Export for programmatic use
 export { ApiKeyHook } from "./hook.js";
-export type { ApiKeyHookConfig } from "./hook.js";

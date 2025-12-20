@@ -9,9 +9,9 @@ import type {
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  createRemoteHookClients,
   RemoteHookClient,
   type RemoteHookConfig,
-  createRemoteHookClients,
 } from "./client.js";
 import type {
   CallToolRequestHookResult,
@@ -125,7 +125,6 @@ describe("RemoteHookClient", () => {
       const request: CallToolRequest = toToolCall({
         name: "test-tool",
         arguments: { key: "value" },
-        toolDefinition: undefined,
       });
 
       const adaptedToolCall: CallToolRequest = {
@@ -161,8 +160,7 @@ describe("RemoteHookClient", () => {
       const toolCall = toToolCall({
         name: "test-tool",
         arguments: { key: "value" },
-        toolDefinition: undefined,
-        metadata: {
+        _meta: {
           sessionId: "session-123",
           timestamp: "2024-01-01T00:00:00Z",
           source: "test",
@@ -192,7 +190,6 @@ describe("RemoteHookClient", () => {
       const toolCall = toToolCall({
         name: "dangerous-tool",
         arguments: {},
-        toolDefinition: undefined,
       });
 
       const error = new Error("Tool not allowed");
@@ -208,7 +205,6 @@ describe("RemoteHookClient", () => {
       const toolCall = toToolCall({
         name: "test-tool",
         arguments: {},
-        toolDefinition: undefined,
       });
 
       const error = new Error("processCallToolRequest not implemented");
@@ -230,7 +226,6 @@ describe("RemoteHookClient", () => {
       const toolCall = toToolCall({
         name: "test-tool",
         arguments: {},
-        toolDefinition: undefined,
       });
 
       const error = new Error(

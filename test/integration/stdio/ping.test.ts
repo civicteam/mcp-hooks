@@ -1,8 +1,5 @@
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { PingRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import type {
-  CallToolResult,
-  PingRequest,
-} from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TEST_CONFIG } from "../test-config";
 import { StdioTestClient } from "./sdk-client";

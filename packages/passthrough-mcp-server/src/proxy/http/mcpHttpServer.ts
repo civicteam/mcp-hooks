@@ -7,11 +7,10 @@
  * - Preserves all headers including authorization
  */
 
-import * as http from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import * as http from "node:http";
 import * as https from "node:https";
 import { URL } from "node:url";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { logger } from "../../logger/logger.js";
 
 export interface ProxyOptions {

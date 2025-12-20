@@ -30,14 +30,14 @@ import {
   ListPromptsRequestSchema,
   type ListPromptsResult,
   ListPromptsResultSchema,
-  type ListResourceTemplatesRequest,
-  ListResourceTemplatesRequestSchema,
-  type ListResourceTemplatesResult,
-  ListResourceTemplatesResultSchema,
   type ListResourcesRequest,
   ListResourcesRequestSchema,
   type ListResourcesResult,
   ListResourcesResultSchema,
+  type ListResourceTemplatesRequest,
+  ListResourceTemplatesRequestSchema,
+  type ListResourceTemplatesResult,
+  ListResourceTemplatesResultSchema,
   type ListToolsRequest,
   ListToolsRequestSchema,
   type ListToolsResult,
@@ -427,7 +427,7 @@ export class PassthroughContext {
       TRequestMethodName
     >(annotatedRequest, requestExtra, startHook, hookRequestMethodName);
 
-    let response: TResponse | undefined = undefined;
+    let response: TResponse | undefined;
     let error: HookChainError | null = null;
 
     if (requestResult.resultType === "continueAsync") {

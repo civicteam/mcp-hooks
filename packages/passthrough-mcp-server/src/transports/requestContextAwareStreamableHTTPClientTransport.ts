@@ -1,33 +1,23 @@
 import type { RequestContext } from "@civic/hook-common";
 import {
-  type AuthResult,
-  type OAuthClientProvider,
-  UnauthorizedError,
   auth,
   extractResourceMetadataUrl,
+  UnauthorizedError,
 } from "@modelcontextprotocol/sdk/client/auth.js";
 import {
-  type StartSSEOptions,
   StreamableHTTPClientTransport,
-  type StreamableHTTPClientTransportOptions,
   StreamableHTTPError,
   type StreamableHTTPReconnectionOptions,
 } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type {
-  FetchLike,
-  Transport,
-} from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
-  type JSONRPCMessage,
-  JSONRPCMessageSchema,
   isInitializedNotification,
   isJSONRPCRequest,
-  isJSONRPCResponse,
+  type JSONRPCMessage,
+  JSONRPCMessageSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { EventSourceParserStream } from "eventsource-parser/stream";
 
 // Default reconnection options for StreamableHTTP connections
-const DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOptions =
+const _DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS: StreamableHTTPReconnectionOptions =
   {
     initialReconnectionDelay: 1000,
     maxReconnectionDelay: 30000,

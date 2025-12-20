@@ -137,7 +137,9 @@ export function loadConfig(): Config {
       },
     };
   } else if (sourceTransportType === "httpStream") {
-    const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34000;
+    const port = process.env.PORT
+      ? Number.parseInt(process.env.PORT, 10)
+      : 34000;
     config = {
       source: {
         transportType: "httpStream",

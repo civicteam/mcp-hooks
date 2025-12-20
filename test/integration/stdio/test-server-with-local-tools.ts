@@ -5,8 +5,8 @@
  * to add local tools to a stdio passthrough proxy
  */
 
-import { LocalToolsHook } from "@civic/local-tools-hook";
 import type { ToolDefinition } from "@civic/local-tools-hook";
+import { LocalToolsHook } from "@civic/local-tools-hook";
 import { createStdioPassthroughProxy } from "@civic/passthrough-mcp-server";
 import { type ZodRawShape, z } from "zod";
 

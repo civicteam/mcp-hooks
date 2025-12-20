@@ -5,16 +5,22 @@ import { getHookClients } from "./manager.js";
 
 // Mock the hook-common module
 vi.mock("@civic/hook-common", () => ({
-  RemoteHookClient: vi.fn().mockImplementation((config) => ({
-    name: config.name,
-    processCallToolRequest: vi.fn(),
-    processCallToolResult: vi.fn(),
-  })),
-  LocalHookClient: vi.fn().mockImplementation((hook) => ({
-    name: hook.name,
-    processCallToolRequest: vi.fn(),
-    processCallToolResult: vi.fn(),
-  })),
+  RemoteHookClient: class {
+    name: string;
+    processCallToolRequest = vi.fn();
+    processCallToolResult = vi.fn();
+    constructor(config: { name: string }) {
+      this.name = config.name;
+    }
+  },
+  LocalHookClient: class {
+    name: string;
+    processCallToolRequest = vi.fn();
+    processCallToolResult = vi.fn();
+    constructor(hook: { name: string }) {
+      this.name = hook.name;
+    }
+  },
 }));
 
 describe("Hook Manager", () => {

@@ -6,7 +6,7 @@ import cors from "cors";
 import express from "express";
 import z from "zod";
 
-const PORT = process.env.PORT ? Number.parseInt(process.env.PORT) : 33200;
+const PORT = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 33200;
 const REQUIRED_API_KEY = process.env.API_KEY || "test-api-key-12345";
 
 // Store server instances by session ID
@@ -160,7 +160,7 @@ function createExpressApp() {
   });
 
   // Health check endpoint (no API key required)
-  app.get("/health", (req, res) => {
+  app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
       sessions: sessions.size,

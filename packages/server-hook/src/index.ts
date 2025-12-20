@@ -6,5 +6,5 @@
  * when initialization completes.
  */
 
-export { ServerHook } from "./hook.js";
 export type { ServerHookConfig, ServerHookOptions } from "./hook.js";
+export { ServerHook } from "./hook.js";

@@ -11,7 +11,7 @@ import { CallCounterHook } from "@test/integration-hooks/CallCounterHook";
 import { ReadSessionIdHook } from "@test/integration-hooks/ReadSessionIdHook";
 
 async function main() {
-  const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 34101;
+  const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 34101;
   const targetUrl = process.env.TARGET_SERVER_URL || "http://localhost:33100"; // Echo server
 
   console.log(`Starting programmatic passthrough server on port ${port}`);

@@ -9,12 +9,12 @@ import {
   type CallToolRequestHookResult,
   type ListToolsResponseHookResult,
 } from "@civic/hook-common";
-import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import type {
   CallToolRequest,
   ListToolsRequest,
   ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
+import { McpError } from "@modelcontextprotocol/sdk/types.js";
 
 export class ExplainHook extends AbstractHook {
   /**
