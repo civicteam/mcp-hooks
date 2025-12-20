@@ -585,7 +585,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(CallToolRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processCallToolRequest) {
           throw new Error("processCallToolRequest not implemented");
@@ -614,7 +614,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(CallToolResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processCallToolResult) {
           throw new Error("processCallToolResult not implemented");
@@ -638,7 +638,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(CallToolErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processCallToolError) {
           throw new Error("processCallToolError not implemented");
@@ -660,7 +660,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListPromptsRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListPromptsRequest) {
           throw new Error("processListPromptsRequest not implemented");
@@ -687,7 +687,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListPromptsResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListPromptsResult) {
           throw new Error("processListPromptsResult not implemented");
@@ -710,7 +710,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListPromptsErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListPromptsError) {
           throw new Error("processListPromptsError not implemented");
@@ -731,7 +731,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListToolsRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListToolsRequest) {
           throw new Error("processListToolsRequest not implemented");
@@ -759,7 +759,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListToolsResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListToolsResult) {
           throw new Error("processListToolsResult not implemented");
@@ -783,7 +783,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListToolsErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListToolsError) {
           throw new Error("processListToolsError not implemented");
@@ -806,7 +806,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(InitializeRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processInitializeRequest) {
           throw new Error("processInitializeRequest not implemented");
@@ -835,7 +835,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(InitializeResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processInitializeResult) {
           throw new Error("processInitializeResult not implemented");
@@ -859,7 +859,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(InitializeErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processInitializeError) {
           throw new Error("processInitializeError not implemented");
@@ -882,7 +882,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(RequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processOtherRequest) {
           throw new Error("processOtherRequest not implemented");
@@ -911,7 +911,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processOtherResult) {
           throw new Error("processOtherResult not implemented");
@@ -935,7 +935,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(OtherErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processOtherError) {
           throw new Error("processOtherError not implemented");
@@ -958,7 +958,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(RequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processTargetRequest) {
           throw new Error("processTargetRequest not implemented");
@@ -987,7 +987,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processTargetResult) {
           throw new Error("processTargetResult not implemented");
@@ -1011,7 +1011,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(TargetErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processTargetError) {
           throw new Error("processTargetError not implemented");
@@ -1029,7 +1029,7 @@ export function createHookRouter(hook: Hook) {
     procedures.processNotification = t.procedure
       .input(NotificationSchema)
       .output(NotificationHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processNotification) {
           throw new Error("processNotification not implemented");
@@ -1048,7 +1048,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(NotificationErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processNotificationError) {
           throw new Error("processNotificationError not implemented");
@@ -1065,7 +1065,7 @@ export function createHookRouter(hook: Hook) {
     procedures.processTargetNotification = t.procedure
       .input(NotificationSchema)
       .output(NotificationHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processTargetNotification) {
           throw new Error("processTargetNotification not implemented");
@@ -1084,7 +1084,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(TargetNotificationErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processTargetNotificationError) {
           throw new Error("processTargetNotificationError not implemented");
@@ -1106,7 +1106,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourcesRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourcesRequest) {
           throw new Error("processListResourcesRequest not implemented");
@@ -1135,7 +1135,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourcesResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourcesResult) {
           throw new Error("processListResourcesResult not implemented");
@@ -1159,7 +1159,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourcesErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourcesError) {
           throw new Error("processListResourcesError not implemented");
@@ -1182,7 +1182,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourceTemplatesRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourceTemplatesRequest) {
           throw new Error(
@@ -1213,7 +1213,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourceTemplatesResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourceTemplatesResult) {
           throw new Error("processListResourceTemplatesResult not implemented");
@@ -1237,7 +1237,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ListResourceTemplatesErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processListResourceTemplatesError) {
           throw new Error("processListResourceTemplatesError not implemented");
@@ -1260,7 +1260,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ReadResourceRequestHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processReadResourceRequest) {
           throw new Error("processReadResourceRequest not implemented");
@@ -1289,7 +1289,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ReadResourceResponseHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processReadResourceResult) {
           throw new Error("processReadResourceResult not implemented");
@@ -1313,7 +1313,7 @@ export function createHookRouter(hook: Hook) {
         }),
       )
       .output(ReadResourceErrorHookResultSchema)
-      .mutation(async ({ input: _input }) => {
+      .mutation(async ({ input }) => {
         // This should never happen since we check for the method existence
         if (!hook.processReadResourceError) {
           throw new Error("processReadResourceError not implemented");
