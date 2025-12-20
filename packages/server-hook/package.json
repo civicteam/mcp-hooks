@@ -1,6 +1,6 @@
 {
   "name": "@civic/server-hook",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "MCP hook that provides server-side initialization handling and callbacks",
   "author": "Civic",
   "license": "MIT",
