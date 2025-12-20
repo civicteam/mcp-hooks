@@ -1,6 +1,7 @@
 {
   "name": "@test/programmatic-passthrough-server",
   "version": "1.0.0",
+  "private": true,
   "description": "Test passthrough server with programmatic hooks for integration testing",
   "type": "module",
   "main": "src/index.ts",
