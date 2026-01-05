@@ -72,7 +72,7 @@
     "content-type": "^1.0.5",
     "eventsource-parser": "^3.0.6",
     "raw-body": "^3.0.2",
-    "zod": "^4.2.1"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@civic/server-hook": "workspace:^",
