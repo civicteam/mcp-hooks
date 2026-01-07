@@ -10,7 +10,7 @@
     "@civic/auth-mcp": "^0.2.8",
     "@civic/local-tools-hook": "workspace:^",
     "@civic/passthrough-mcp-server": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "zod": "^4.3.5"
   },
   "devDependencies": {

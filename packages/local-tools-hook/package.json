@@ -48,7 +48,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "@types/node": "^25.0.3",
     "@vitest/coverage-v8": "^4.0.16",
     "tsx": "^4.21.0",
