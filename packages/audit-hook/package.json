@@ -19,7 +19,7 @@
     "@civic/hook-common": "workspace:^",
     "@trpc/server": "^11.8.0",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "pg": "^8.17.1"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
