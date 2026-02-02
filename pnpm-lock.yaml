@@ -12,11 +12,11 @@ importers:
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.3.12
-        version: 2.3.12
+        specifier: ^2.3.13
+        version: 2.3.13
       turbo:
         specifier: ^2.7.5
-        version: 2.7.6
+        version: 2.8.1
 
   packages/api-key-hook:
     dependencies:
@@ -25,11 +25,11 @@ importers:
         version: link:../hook-common
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.3.12
-        version: 2.3.12
+        specifier: ^2.3.13
+        version: 2.3.13
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -38,7 +38,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   packages/audit-hook:
     dependencies:
@@ -47,20 +47,20 @@ importers:
         version: link:../hook-common
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
       pg:
         specifier: ^8.16.3
-        version: 8.17.2
+        version: 8.18.0
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@types/pg':
         specifier: ^8.16.0
         version: 8.16.0
@@ -78,14 +78,14 @@ importers:
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -100,14 +100,14 @@ importers:
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -119,7 +119,7 @@ importers:
     dependencies:
       fastmcp:
         specifier: ^3.25.4
-        version: 3.30.0(hono@4.11.1)
+        version: 3.31.0
       turndown:
         specifier: ^7.2.2
         version: 7.2.2
@@ -129,7 +129,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@types/turndown':
         specifier: ^5.0.6
         version: 5.0.6
@@ -147,14 +147,14 @@ importers:
         version: link:../hook-common
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -166,13 +166,13 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@trpc/client':
         specifier: ^11.8.0
-        version: 11.8.1(@trpc/server@11.8.1(typescript@5.9.3))(typescript@5.9.3)
+        version: 11.9.0(@trpc/server@11.9.0(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
       superjson:
         specifier: ^2.2.6
         version: 2.2.6
@@ -182,16 +182,16 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@vitest/coverage-v8':
         specifier: ^4.0.16
-        version: 4.0.18(vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0))
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   packages/local-tools-hook:
     dependencies:
@@ -204,13 +204,13 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@vitest/coverage-v8':
         specifier: ^4.0.16
-        version: 4.0.18(vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0))
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -219,7 +219,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   packages/passthrough-mcp-server:
     dependencies:
@@ -228,7 +228,7 @@ importers:
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       content-type:
         specifier: ^1.0.5
         version: 1.0.5
@@ -250,10 +250,10 @@ importers:
         version: 1.1.9
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@vitest/coverage-v8':
         specifier: ^4.0.16
-        version: 4.0.18(vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0))
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -262,7 +262,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   packages/rate-limit-hook:
     dependencies:
@@ -271,11 +271,11 @@ importers:
         version: link:../hook-common
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -290,17 +290,17 @@ importers:
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.3.12
-        version: 2.3.12
+        specifier: ^2.3.13
+        version: 2.3.13
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       '@vitest/coverage-v8':
         specifier: ^4.0.16
-        version: 4.0.18(vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0))
+        version: 4.0.18(vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0))
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -309,7 +309,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   packages/simple-log-hook:
     dependencies:
@@ -318,14 +318,14 @@ importers:
         version: link:../hook-common
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       '@trpc/server':
         specifier: ^11.8.0
-        version: 11.8.1(typescript@5.9.3)
+        version: 11.9.0(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -337,10 +337,10 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.8
-        version: 0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.1)(zod@4.3.6))(express@5.2.1)
+        version: 0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(express@5.2.1)
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -356,7 +356,7 @@ importers:
         version: 5.0.6
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -368,7 +368,7 @@ importers:
     dependencies:
       '@civic/auth-mcp':
         specifier: ^0.2.8
-        version: 0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.1)(zod@4.3.6))(express@5.2.1)
+        version: 0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(express@5.2.1)
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
@@ -377,14 +377,14 @@ importers:
         version: link:../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       zod:
         specifier: ^4.3.5
         version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -393,7 +393,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
-        version: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+        version: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   test/integration/hooks:
     dependencies:
@@ -402,11 +402,11 @@ importers:
         version: link:../../../packages/passthrough-mcp-server
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -415,7 +415,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -434,7 +434,7 @@ importers:
         version: 5.0.6
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -446,11 +446,11 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -462,7 +462,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -481,7 +481,7 @@ importers:
         version: 5.0.6
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -490,11 +490,11 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
-        version: 1.25.3(hono@4.11.1)(zod@4.3.6)
+        version: 1.25.3(hono@4.11.7)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -510,7 +510,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
-        version: 25.0.10
+        version: 25.2.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -541,55 +541,55 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@biomejs/biome@2.3.12':
-    resolution: {integrity: sha512-AR7h4aSlAvXj7TAajW/V12BOw2EiS0AqZWV5dGozf4nlLoUF/ifvD0+YgKSskT0ylA6dY1A8AwgP8kZ6yaCQnA==}
+  '@biomejs/biome@2.3.13':
+    resolution: {integrity: sha512-Fw7UsV0UAtWIBIm0M7g5CRerpu1eKyKAXIazzxhbXYUyMkwNrkX/KLkGI7b+uVDQ5cLUMfOC9vR60q9IDYDstA==}
     engines: {node: '>=14.21.3'}
     hasBin: true
 
-  '@biomejs/cli-darwin-arm64@2.3.12':
-    resolution: {integrity: sha512-cO6fn+KiMBemva6EARDLQBxeyvLzgidaFRJi8G7OeRqz54kWK0E+uSjgFaiHlc3DZYoa0+1UFE8mDxozpc9ieg==}
+  '@biomejs/cli-darwin-arm64@2.3.13':
+    resolution: {integrity: sha512-0OCwP0/BoKzyJHnFdaTk/i7hIP9JHH9oJJq6hrSCPmJPo8JWcJhprK4gQlhFzrwdTBAW4Bjt/RmCf3ZZe59gwQ==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [darwin]
 
-  '@biomejs/cli-darwin-x64@2.3.12':
-    resolution: {integrity: sha512-/fiF/qmudKwSdvmSrSe/gOTkW77mHHkH8Iy7YC2rmpLuk27kbaUOPa7kPiH5l+3lJzTUfU/t6x1OuIq/7SGtxg==}
+  '@biomejs/cli-darwin-x64@2.3.13':
+    resolution: {integrity: sha512-AGr8OoemT/ejynbIu56qeil2+F2WLkIjn2d8jGK1JkchxnMUhYOfnqc9sVzcRxpG9Ycvw4weQ5sprRvtb7Yhcw==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [darwin]
 
-  '@biomejs/cli-linux-arm64-musl@2.3.12':
-    resolution: {integrity: sha512-aqkeSf7IH+wkzFpKeDVPSXy9uDjxtLpYA6yzkYsY+tVjwFFirSuajHDI3ul8en90XNs1NA0n8kgBrjwRi5JeyA==}
+  '@biomejs/cli-linux-arm64-musl@2.3.13':
+    resolution: {integrity: sha512-TUdDCSY+Eo/EHjhJz7P2GnWwfqet+lFxBZzGHldrvULr59AgahamLs/N85SC4+bdF86EhqDuuw9rYLvLFWWlXA==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
 
-  '@biomejs/cli-linux-arm64@2.3.12':
-    resolution: {integrity: sha512-nbOsuQROa3DLla5vvsTZg+T5WVPGi9/vYxETm9BOuLHBJN3oWQIg3MIkE2OfL18df1ZtNkqXkH6Yg9mdTPem7A==}
+  '@biomejs/cli-linux-arm64@2.3.13':
+    resolution: {integrity: sha512-xvOiFkrDNu607MPMBUQ6huHmBG1PZLOrqhtK6pXJW3GjfVqJg0Z/qpTdhXfcqWdSZHcT+Nct2fOgewZvytESkw==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [linux]
 
-  '@biomejs/cli-linux-x64-musl@2.3.12':
-    resolution: {integrity: sha512-kVGWtupRRsOjvw47YFkk5mLiAdpCPMWBo1jOwAzh+juDpUb2sWarIp+iq+CPL1Wt0LLZnYtP7hH5kD6fskcxmg==}
+  '@biomejs/cli-linux-x64-musl@2.3.13':
+    resolution: {integrity: sha512-0bdwFVSbbM//Sds6OjtnmQGp4eUjOTt6kHvR/1P0ieR9GcTUAlPNvPC3DiavTqq302W34Ae2T6u5VVNGuQtGlQ==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
 
-  '@biomejs/cli-linux-x64@2.3.12':
-    resolution: {integrity: sha512-CQtqrJ+qEEI8tgRSTjjzk6wJAwfH3wQlkIGsM5dlecfRZaoT+XCms/mf7G4kWNexrke6mnkRzNy6w8ebV177ow==}
+  '@biomejs/cli-linux-x64@2.3.13':
+    resolution: {integrity: sha512-s+YsZlgiXNq8XkgHs6xdvKDFOj/bwTEevqEY6rC2I3cBHbxXYU1LOZstH3Ffw9hE5tE1sqT7U23C00MzkXztMw==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [linux]
 
-  '@biomejs/cli-win32-arm64@2.3.12':
-    resolution: {integrity: sha512-Re4I7UnOoyE4kHMqpgtG6UvSBGBbbtvsOvBROgCCoH7EgANN6plSQhvo2W7OCITvTp7gD6oZOyZy72lUdXjqZg==}
+  '@biomejs/cli-win32-arm64@2.3.13':
+    resolution: {integrity: sha512-QweDxY89fq0VvrxME+wS/BXKmqMrOTZlN9SqQ79kQSIc3FrEwvW/PvUegQF6XIVaekncDykB5dzPqjbwSKs9DA==}
     engines: {node: '>=14.21.3'}
     cpu: [arm64]
     os: [win32]
 
-  '@biomejs/cli-win32-x64@2.3.12':
-    resolution: {integrity: sha512-qqGVWqNNek0KikwPZlOIoxtXgsNGsX+rgdEzgw82Re8nF02W+E2WokaQhpF5TdBh/D/RQ3TLppH+otp6ztN0lw==}
+  '@biomejs/cli-win32-x64@2.3.13':
+    resolution: {integrity: sha512-trDw2ogdM2lyav9WFQsdsfdVy1dvZALymRpgmWsvSez0BJzBjulhOT/t+wyKeh3pZWvwP3VMs1SoOKwO3wecMQ==}
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
@@ -935,14 +935,14 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@trpc/client@11.8.1':
-    resolution: {integrity: sha512-L/SJFGanr9xGABmuDoeXR4xAdHJmsXsiF9OuH+apecJ+8sUITzVT1EPeqp0ebqA6lBhEl5pPfg3rngVhi/h60Q==}
+  '@trpc/client@11.9.0':
+    resolution: {integrity: sha512-3r4RT/GbR263QO+2gCPyrs5fEYaXua3/AzCs+GbWC09X0F+mVkyBpO3GRSDObiNU/N1YB597U7WGW3WA1d1TVw==}
     peerDependencies:
-      '@trpc/server': 11.8.1
+      '@trpc/server': 11.9.0
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.8.1':
-    resolution: {integrity: sha512-P4rzZRpEL7zDFgjxK65IdyH0e41FMFfTkQkuq0BA5tKcr7E6v9/v38DEklCpoDN6sPiB1Sigy/PUEzHENhswDA==}
+  '@trpc/server@11.9.0':
+    resolution: {integrity: sha512-T8gC4NOCzx8tCsQEQ5sSjf24bN+9AEqXZRfpThG+YCEmcEwXfS7RP8VVrl5Vodt1S+zGEDyQSof4YVAj1zq/mg==}
     peerDependencies:
       typescript: '>=5.7.2'
 
@@ -976,8 +976,8 @@ packages:
   '@types/http-errors@2.0.5':
     resolution: {integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==}
 
-  '@types/node@25.0.10':
-    resolution: {integrity: sha512-zWW5KPngR/yvakJgGOmZ5vTBemDoSqF3AcV/LrO5u5wTWyEAVVh+IT39G4gtyAkh3CtTZs8aX/yRM82OfzHJRg==}
+  '@types/node@25.2.0':
+    resolution: {integrity: sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w==}
 
   '@types/pg@8.16.0':
     resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
@@ -1265,8 +1265,8 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
-  fastmcp@3.30.0:
-    resolution: {integrity: sha512-F7rB8q0qXR3G0lpR7k/gQ8odgx7vW/vAVSoPeUNdRcdYbmYTtEyV6BJdf0g76xSandlPrCsk312exJVISDM3KQ==}
+  fastmcp@3.31.0:
+    resolution: {integrity: sha512-e2LlF8EmPnwjyAg+JMyXnsMq2ametV3PuSWuhVONP2yZitDXkmDo40TiPQ0qUvU9j7TvdPm5YrjCMsxkkU1XXw==}
     hasBin: true
     peerDependencies:
       jose: ^5.0.0
@@ -1375,8 +1375,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hono@4.11.1:
-    resolution: {integrity: sha512-KsFcH0xxHes0J4zaQgWbYwmz3UPOOskdqZmItstUG93+Wk1ePBLkLGwbP9zlmh1BFUiL8Qp+Xfu9P7feJWpGNg==}
+  hono@4.11.7:
+    resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
     engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
@@ -1586,8 +1586,8 @@ packages:
   pg-cloudflare@1.3.0:
     resolution: {integrity: sha512-6lswVVSztmHiRtD6I8hw4qP/nDm1EJbKMRhf3HCYaqud7frGysPv7FYJ5noZQdhQtN2xJnimfMtvQq21pdbzyQ==}
 
-  pg-connection-string@2.10.1:
-    resolution: {integrity: sha512-iNzslsoeSH2/gmDDKiyMqF64DATUCWj3YJ0wP14kqcsf2TUklwimd+66yYojKwZCA7h2yRNLGug71hCBA2a4sw==}
+  pg-connection-string@2.11.0:
+    resolution: {integrity: sha512-kecgoJwhOpxYU21rZjULrmrBJ698U2RxXofKVzOn5UDj61BPj/qMb7diYUR1nLScCDbrztQFl1TaQZT0t1EtzQ==}
 
   pg-int8@1.0.1:
     resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
@@ -1608,8 +1608,8 @@ packages:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
     engines: {node: '>=4'}
 
-  pg@8.17.2:
-    resolution: {integrity: sha512-vjbKdiBJRqzcYw1fNU5KuHyYvdJ1qpcQg1CeBrHFqV1pWgHeVR6j/+kX0E1AAXfyuLUGY1ICrN2ELKA/z2HWzw==}
+  pg@8.18.0:
+    resolution: {integrity: sha512-xqrUDL1b9MbkydY/s+VZ6v+xiMUmOUk7SS9d/1kpyQxoJ6U9AO1oIJyUWVZojbfe5Cc/oluutcgFG4L9RDP1iQ==}
     engines: {node: '>= 16.0.0'}
     peerDependencies:
       pg-native: '>=3.0.1'
@@ -1840,38 +1840,38 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  turbo-darwin-64@2.7.6:
-    resolution: {integrity: sha512-bYu0qnWju2Ha3EbIkPCk1SMLT3sltKh1P/Jy5FER6BmH++H5z+T5MHh3W1Xoers9rk4N1VdKvog9FO1pxQyjhw==}
+  turbo-darwin-64@2.8.1:
+    resolution: {integrity: sha512-FQ6Uqxty/H1Nvn1dpBe8KUlMRclTuiyNSc1PCeDL/ad7M9ykpWutB51YpMpf9ibTA32M6wLdIRf+D96W6hDAtQ==}
     cpu: [x64]
     os: [darwin]
 
-  turbo-darwin-arm64@2.7.6:
-    resolution: {integrity: sha512-KCxTf3Y1hgNLYIWRLw8bwH8Zie9RyCGoxAlXYsCBI/YNqBSR+ZZK9KYzFxAqDaVaNvTwLFv3rJRGsXOFWg4+Uw==}
+  turbo-darwin-arm64@2.8.1:
+    resolution: {integrity: sha512-4bCcEpGP2/aSXmeN2gl5SuAmS1q5ykjubnFvSoXjQoCKtDOV+vc4CTl/DduZzUUutCVUWXjl8OyfIQ+DGCaV4A==}
     cpu: [arm64]
     os: [darwin]
 
-  turbo-linux-64@2.7.6:
-    resolution: {integrity: sha512-vjoU8zIfNgvJR3cMitgw7inEoi6bmuVuFawDl5yKtxjAEhDktFdRBpGS3WojD4l3BklBbIK689ssXcGf21LxRA==}
+  turbo-linux-64@2.8.1:
+    resolution: {integrity: sha512-m99JRlWlEgXPR7mkThAbKh6jbTmWSOXM/c6rt8yd4Uxh0+wjq7+DYcQbead6aoOqmCP9akswZ8EXIv1ogKBblg==}
     cpu: [x64]
     os: [linux]
 
-  turbo-linux-arm64@2.7.6:
-    resolution: {integrity: sha512-TcMpBvTqZf+1DptrVYLbZls7WY1UVNDTGaf0bo7/GCgWYv5eZHCVo4Td7kCJeDU4glbXg67REX0md0S0V6ghMg==}
+  turbo-linux-arm64@2.8.1:
+    resolution: {integrity: sha512-AsPlza3AsavJdl2o7FE67qyv0aLfmT1XwFQGzvwpoAO6Bj7S4a03tpUchZKNuGjNAkKVProQRFnB7PgUAScFXA==}
     cpu: [arm64]
     os: [linux]
 
-  turbo-windows-64@2.7.6:
-    resolution: {integrity: sha512-1/MhkYldiihjneY8QnnDMbAkHXn/udTWSVYS94EMlkE9AShozsLTTOT1gDOpX06EfEW5njP09suhMvxbvwuwpQ==}
+  turbo-windows-64@2.8.1:
+    resolution: {integrity: sha512-GdqNO6bYShRsr79B+2G/2ssjLEp9uBTvLBJSWRtRCiac/SEmv8T6RYv9hu+h5oGbFALtnKNp6BQBw78RJURsPw==}
     cpu: [x64]
     os: [win32]
 
-  turbo-windows-arm64@2.7.6:
-    resolution: {integrity: sha512-0wDVnUJLFAWm4ZzOQFDkbyyUqaszorTGf3Rdc22IRIyJTTLd6ajqdb+cWD89UZ1RKr953+PZR1gqgWQY4PDuhA==}
+  turbo-windows-arm64@2.8.1:
+    resolution: {integrity: sha512-n40E6IpkzrShRo3yMdRpgnn1/sAbGC6tZXwyNu8fe9RsufeD7KBiaoRSvw8xLyqV3pd2yoTL2rdCXq24MnTCWA==}
     cpu: [arm64]
     os: [win32]
 
-  turbo@2.7.6:
-    resolution: {integrity: sha512-PO9AvJLEsNLO+EYhF4zB+v10hOjsJe5kJW+S6tTbRv+TW7gf1Qer4mfjP9h3/y9h8ZiPvOrenxnEgDtFgaM5zw==}
+  turbo@2.8.1:
+    resolution: {integrity: sha512-pbSMlRflA0RAuk/0jnAt8pzOYh1+sKaT8nVtcs75OFGVWD0evleQRmKtHJJV42QOhaC3Hx9mUUSOom/irasbjA==}
     hasBin: true
 
   turndown@7.2.2:
@@ -2076,46 +2076,46 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@biomejs/biome@2.3.12':
+  '@biomejs/biome@2.3.13':
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 2.3.12
-      '@biomejs/cli-darwin-x64': 2.3.12
-      '@biomejs/cli-linux-arm64': 2.3.12
-      '@biomejs/cli-linux-arm64-musl': 2.3.12
-      '@biomejs/cli-linux-x64': 2.3.12
-      '@biomejs/cli-linux-x64-musl': 2.3.12
-      '@biomejs/cli-win32-arm64': 2.3.12
-      '@biomejs/cli-win32-x64': 2.3.12
+      '@biomejs/cli-darwin-arm64': 2.3.13
+      '@biomejs/cli-darwin-x64': 2.3.13
+      '@biomejs/cli-linux-arm64': 2.3.13
+      '@biomejs/cli-linux-arm64-musl': 2.3.13
+      '@biomejs/cli-linux-x64': 2.3.13
+      '@biomejs/cli-linux-x64-musl': 2.3.13
+      '@biomejs/cli-win32-arm64': 2.3.13
+      '@biomejs/cli-win32-x64': 2.3.13
 
-  '@biomejs/cli-darwin-arm64@2.3.12':
+  '@biomejs/cli-darwin-arm64@2.3.13':
     optional: true
 
-  '@biomejs/cli-darwin-x64@2.3.12':
+  '@biomejs/cli-darwin-x64@2.3.13':
     optional: true
 
-  '@biomejs/cli-linux-arm64-musl@2.3.12':
+  '@biomejs/cli-linux-arm64-musl@2.3.13':
     optional: true
 
-  '@biomejs/cli-linux-arm64@2.3.12':
+  '@biomejs/cli-linux-arm64@2.3.13':
     optional: true
 
-  '@biomejs/cli-linux-x64-musl@2.3.12':
+  '@biomejs/cli-linux-x64-musl@2.3.13':
     optional: true
 
-  '@biomejs/cli-linux-x64@2.3.12':
+  '@biomejs/cli-linux-x64@2.3.13':
     optional: true
 
-  '@biomejs/cli-win32-arm64@2.3.12':
+  '@biomejs/cli-win32-arm64@2.3.13':
     optional: true
 
-  '@biomejs/cli-win32-x64@2.3.12':
+  '@biomejs/cli-win32-x64@2.3.13':
     optional: true
 
   '@borewit/text-codec@0.1.1': {}
 
-  '@civic/auth-mcp@0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.1)(zod@4.3.6))(express@5.2.1)':
+  '@civic/auth-mcp@0.2.8(@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6))(express@5.2.1)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(hono@4.11.1)(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(hono@4.11.7)(zod@4.3.6)
       escape-html: 1.0.3
       jose: 6.1.3
     optionalDependencies:
@@ -2199,13 +2199,13 @@ snapshots:
   '@esbuild/win32-x64@0.27.2':
     optional: true
 
-  '@hono/node-server@1.19.7(hono@4.11.1)':
+  '@hono/node-server@1.19.7(hono@4.11.7)':
     dependencies:
-      hono: 4.11.1
+      hono: 4.11.7
 
-  '@hono/node-server@1.19.9(hono@4.11.1)':
+  '@hono/node-server@1.19.9(hono@4.11.7)':
     dependencies:
-      hono: 4.11.1
+      hono: 4.11.7
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -2218,9 +2218,9 @@ snapshots:
 
   '@mixmark-io/domino@2.2.0': {}
 
-  '@modelcontextprotocol/sdk@1.25.2(hono@4.11.1)(zod@4.3.6)':
+  '@modelcontextprotocol/sdk@1.25.2(hono@4.11.7)(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.7(hono@4.11.1)
+      '@hono/node-server': 1.19.7(hono@4.11.7)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -2240,9 +2240,9 @@ snapshots:
       - hono
       - supports-color
 
-  '@modelcontextprotocol/sdk@1.25.3(hono@4.11.1)(zod@4.3.6)':
+  '@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.11.1)
+      '@hono/node-server': 1.19.9(hono@4.11.7)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -2343,19 +2343,19 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@trpc/client@11.8.1(@trpc/server@11.8.1(typescript@5.9.3))(typescript@5.9.3)':
+  '@trpc/client@11.9.0(@trpc/server@11.9.0(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@trpc/server': 11.8.1(typescript@5.9.3)
+      '@trpc/server': 11.9.0(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@trpc/server@11.8.1(typescript@5.9.3)':
+  '@trpc/server@11.9.0(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
 
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
 
   '@types/chai@5.2.3':
     dependencies:
@@ -2364,13 +2364,13 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
 
   '@types/content-type@1.1.9': {}
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
 
   '@types/deep-eql@4.0.2': {}
 
@@ -2378,7 +2378,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.1.0':
     dependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -2391,13 +2391,13 @@ snapshots:
 
   '@types/http-errors@2.0.5': {}
 
-  '@types/node@25.0.10':
+  '@types/node@25.2.0':
     dependencies:
       undici-types: 7.16.0
 
   '@types/pg@8.16.0':
     dependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
@@ -2407,16 +2407,16 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
 
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
 
   '@types/turndown@5.0.6': {}
 
-  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0))':
+  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.18
@@ -2428,7 +2428,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.18(@types/node@25.0.10)(tsx@4.21.0)
+      vitest: 4.0.18(@types/node@25.2.0)(tsx@4.21.0)
 
   '@vitest/expect@4.0.18':
     dependencies:
@@ -2439,13 +2439,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@4.0.18(vite@7.3.0(@types/node@25.0.10)(tsx@4.21.0))':
+  '@vitest/mocker@4.0.18(vite@7.3.0(@types/node@25.2.0)(tsx@4.21.0))':
     dependencies:
       '@vitest/spy': 4.0.18
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.0(@types/node@25.0.10)(tsx@4.21.0)
+      vite: 7.3.0(@types/node@25.2.0)(tsx@4.21.0)
 
   '@vitest/pretty-format@4.0.18':
     dependencies:
@@ -2741,13 +2741,14 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
-  fastmcp@3.30.0(hono@4.11.1):
+  fastmcp@3.31.0:
     dependencies:
-      '@modelcontextprotocol/sdk': 1.25.2(hono@4.11.1)(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.2(hono@4.11.7)(zod@4.3.6)
       '@standard-schema/spec': 1.1.0
       execa: 9.6.1
       file-type: 21.1.1
       fuse.js: 7.1.0
+      hono: 4.11.7
       mcp-proxy: 6.4.0
       strict-event-emitter-types: 2.0.0
       undici: 7.16.0
@@ -2761,7 +2762,6 @@ snapshots:
       - '@valibot/to-json-schema'
       - arktype
       - effect
-      - hono
       - supports-color
       - sury
 
@@ -2863,7 +2863,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hono@4.11.1: {}
+  hono@4.11.7: {}
 
   html-escaper@2.0.2: {}
 
@@ -3055,13 +3055,13 @@ snapshots:
   pg-cloudflare@1.3.0:
     optional: true
 
-  pg-connection-string@2.10.1: {}
+  pg-connection-string@2.11.0: {}
 
   pg-int8@1.0.1: {}
 
-  pg-pool@3.11.0(pg@8.17.2):
+  pg-pool@3.11.0(pg@8.18.0):
     dependencies:
-      pg: 8.17.2
+      pg: 8.18.0
 
   pg-protocol@1.10.3: {}
 
@@ -3075,10 +3075,10 @@ snapshots:
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
 
-  pg@8.17.2:
+  pg@8.18.0:
     dependencies:
-      pg-connection-string: 2.10.1
-      pg-pool: 3.11.0(pg@8.17.2)
+      pg-connection-string: 2.11.0
+      pg-pool: 3.11.0(pg@8.18.0)
       pg-protocol: 1.11.0
       pg-types: 2.2.0
       pgpass: 1.0.5
@@ -3338,32 +3338,32 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  turbo-darwin-64@2.7.6:
+  turbo-darwin-64@2.8.1:
     optional: true
 
-  turbo-darwin-arm64@2.7.6:
+  turbo-darwin-arm64@2.8.1:
     optional: true
 
-  turbo-linux-64@2.7.6:
+  turbo-linux-64@2.8.1:
     optional: true
 
-  turbo-linux-arm64@2.7.6:
+  turbo-linux-arm64@2.8.1:
     optional: true
 
-  turbo-windows-64@2.7.6:
+  turbo-windows-64@2.8.1:
     optional: true
 
-  turbo-windows-arm64@2.7.6:
+  turbo-windows-arm64@2.8.1:
     optional: true
 
-  turbo@2.7.6:
+  turbo@2.8.1:
     optionalDependencies:
-      turbo-darwin-64: 2.7.6
-      turbo-darwin-arm64: 2.7.6
-      turbo-linux-64: 2.7.6
-      turbo-linux-arm64: 2.7.6
-      turbo-windows-64: 2.7.6
-      turbo-windows-arm64: 2.7.6
+      turbo-darwin-64: 2.8.1
+      turbo-darwin-arm64: 2.8.1
+      turbo-linux-64: 2.8.1
+      turbo-linux-arm64: 2.8.1
+      turbo-windows-64: 2.8.1
+      turbo-windows-arm64: 2.8.1
 
   turndown@7.2.2:
     dependencies:
@@ -3391,7 +3391,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@7.3.0(@types/node@25.0.10)(tsx@4.21.0):
+  vite@7.3.0(@types/node@25.2.0)(tsx@4.21.0):
     dependencies:
       esbuild: 0.27.2
       fdir: 6.5.0(picomatch@4.0.3)
@@ -3400,14 +3400,14 @@ snapshots:
       rollup: 4.53.5
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
       fsevents: 2.3.3
       tsx: 4.21.0
 
-  vitest@4.0.18(@types/node@25.0.10)(tsx@4.21.0):
+  vitest@4.0.18(@types/node@25.2.0)(tsx@4.21.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.0(@types/node@25.0.10)(tsx@4.21.0))
+      '@vitest/mocker': 4.0.18(vite@7.3.0(@types/node@25.2.0)(tsx@4.21.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18
@@ -3424,10 +3424,10 @@ snapshots:
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vite: 7.3.0(@types/node@25.0.10)(tsx@4.21.0)
+      vite: 7.3.0(@types/node@25.2.0)(tsx@4.21.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 25.0.10
+      '@types/node': 25.2.0
     transitivePeerDependencies:
       - jiti
       - less
