@@ -41,7 +41,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@trpc/client": "^11.8.0",
-    "@trpc/server": "^11.8.0",
+    "@trpc/server": "^11.9.0",
     "superjson": "^2.2.6",
     "zod": "^4.3.5"
   },
