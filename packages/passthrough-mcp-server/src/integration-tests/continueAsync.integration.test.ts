@@ -913,8 +913,10 @@ describe("ContinueAsync Integration Tests", () => {
       // Because the SDK returns a successful response (with isError: true), the callback
       // receives it as a response, not an error.
       expect(callbackSpy).toHaveBeenCalledOnce();
-      const [callbackResponse] = callbackSpy.mock.calls[0];
-      expect(callbackResponse.isError).toBe(true);
+      const [callbackResponse, callbackError] = callbackSpy.mock.calls[0];
+      expect(callbackResponse).not.toBeNull();
+      expect(callbackResponse?.isError).toBe(true);
+      expect(callbackError).toBeNull();
     });
 
     it("should handle errors thrown by callback and report via onerror", async () => {

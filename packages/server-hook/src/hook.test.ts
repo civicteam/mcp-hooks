@@ -241,6 +241,8 @@ describe("ServerHook", () => {
         name: "test-client",
         version: "1.0.0",
       });
+      expect(hook.getClientCapabilities()).toEqual({});
+
       // Reset and verify everything is cleared
       hook.reset();
       expect(hook.isInitialized).toBe(false);
