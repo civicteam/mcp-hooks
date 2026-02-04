@@ -43,11 +43,11 @@ export abstract class PassthroughBaseProtocol<
     // accept all
   }
 
-  protected assertTaskCapability(): void {
+  protected assertTaskCapability(_method: string): void {
     // accept all
   }
 
-  protected assertTaskHandlerCapability(): void {
+  protected assertTaskHandlerCapability(_method: string): void {
     // accept all
   }
 
@@ -171,11 +171,11 @@ export abstract class PassthroughBaseProtocol<
           return reject(response);
         }
 
-        const parseResult = safeParse(resultSchema, response.result);
-        if (parseResult.success) {
-          resolve(parseResult.data);
+        const parsed = safeParse(resultSchema, response.result);
+        if (parsed.success) {
+          resolve(parsed.data as SchemaOutput<T>);
         } else {
-          reject(parseResult.error);
+          reject(parsed.error);
         }
       });
 

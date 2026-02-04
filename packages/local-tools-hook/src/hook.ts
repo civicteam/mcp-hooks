@@ -5,17 +5,11 @@ import {
   type ListToolsResponseHookResult,
 } from "@civic/hook-common";
 import type {
-  AnySchema,
-  SchemaOutput,
-} from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
-import type {
   CallToolRequest,
   CallToolResult,
   ListToolsRequest,
   ListToolsResult,
   ServerNotification,
-  ServerRequest,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { type ZodRawShape, z } from "zod";
@@ -73,11 +67,8 @@ export class LocalToolsHook extends AbstractHook {
       sendNotification: (_notification: ServerNotification): Promise<void> => {
         throw new Error("Function not implemented.");
       },
-      sendRequest: <U extends AnySchema>(
-        _request: ServerRequest,
-        _resultSchema: U,
-        _options?: RequestOptions,
-      ): Promise<SchemaOutput<U>> => {
+      // biome-ignore lint/suspicious/noExplicitAny: stub function with complex SDK-internal types
+      sendRequest: (): Promise<any> => {
         throw new Error("Function not implemented.");
       },
     });

@@ -106,11 +106,12 @@ describe("LocalToolsHook", () => {
       // The tool will be executed but may fail due to missing argument
       expect(result.resultType).toBe("respond");
       if (result.resultType === "respond") {
-        const content = result.response.content[0] as Extract<
-          CallToolResult["content"][number],
-          { type: "text" }
-        >;
-        expect(content.text).toContain("Echo: undefined");
+        const response = result.response as CallToolResult;
+        const firstContent = response.content[0];
+        expect(firstContent.type).toBe("text");
+        if (firstContent.type === "text") {
+          expect(firstContent.text).toContain("Echo: undefined");
+        }
       }
     });
 
