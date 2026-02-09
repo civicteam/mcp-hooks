@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.2.2",
     "@vitest/coverage-v8": "^4.0.16",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
