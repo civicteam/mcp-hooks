@@ -784,7 +784,7 @@ describe("Hook Processor", () => {
       expect(requestResult.resultType).toBe("continue");
       expect(requestResult.lastProcessedHook).toBe(null);
       if (requestResult.resultType === "continue") {
-        expect(requestResult.request).toEqual(toolCall);
+        expect(requestResult.lastProcessedRequest).toEqual(toolCall);
       }
 
       // Process response using the null lastProcessedHook
