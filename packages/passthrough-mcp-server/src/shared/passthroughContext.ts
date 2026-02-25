@@ -322,7 +322,7 @@ export class PassthroughContext {
             TResponseMethodName,
             TErrorMethodName
           >(
-            requestResult.request,
+            requestResult.lastProcessedRequest,
             requestExtra,
             responseSchema,
             hookRequestMethodName,
@@ -368,7 +368,7 @@ export class PassthroughContext {
       }
       try {
         response = await this._passthroughServer.request(
-          requestResult.request,
+          requestResult.lastProcessedRequest,
           responseSchema,
         );
       } catch (e) {
@@ -447,7 +447,7 @@ export class PassthroughContext {
             TResponseMethodName,
             TErrorMethodName
           >(
-            requestResult.request,
+            requestResult.lastProcessedRequest,
             requestExtra,
             responseSchema,
             hookRequestMethodName,
@@ -494,7 +494,7 @@ export class PassthroughContext {
       }
       try {
         response = await this._passthroughClient.request(
-          requestResult.request,
+          requestResult.lastProcessedRequest,
           responseSchema,
         );
       } catch (e) {
@@ -511,7 +511,7 @@ export class PassthroughContext {
     const responseResult = await processResponseThroughHooks(
       annotatedResponse,
       error,
-      annotatedRequest,
+      requestResult.lastProcessedRequest,
       requestExtra,
       hookResponseMethodName,
       hookErrorMethodName,

@@ -104,6 +104,10 @@ export type ProcessorRequestHookResult<TRequest, TResponse> = (
   | { resultType: "abort"; error: HookChainError }
 ) & {
   lastProcessedHook: LinkedListHook | null;
+  /** The request as last modified by hooks in the chain. Always present
+   *  so that response hooks can see modifications made by earlier request hooks,
+   *  even when the chain terminated early (respond/abort). */
+  lastProcessedRequest: TRequest;
 };
 
 /**
@@ -200,7 +204,11 @@ export async function processRequestThroughHooks<
         // Why early return with response:
         // - Hook has provided a direct response, bypassing the actual server
         // - Useful for caching, mocking, or synthetic responses
-        return { ...hookResult, lastProcessedHook: currentHook };
+        return {
+          ...hookResult,
+          lastProcessedHook: currentHook,
+          lastProcessedRequest: currentRequest,
+        };
       }
     } catch (e) {
       // Convert thrown errors to abort result for backward compatibility
@@ -210,6 +218,7 @@ export async function processRequestThroughHooks<
         resultType: "abort",
         error,
         lastProcessedHook: currentHook,
+        lastProcessedRequest: currentRequest,
       };
     }
 
@@ -226,6 +235,7 @@ export async function processRequestThroughHooks<
   return {
     resultType: "continue",
     request: currentRequest,
+    lastProcessedRequest: currentRequest,
     lastProcessedHook: currentHook,
   };
 }

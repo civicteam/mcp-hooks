@@ -13,6 +13,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { PassthroughContext } from "../shared/passthroughContext.js";
+import { metaRoundtripHook } from "./helpers/MetaRoundtripHook.js";
 
 describe("Passthrough Hook-Only Integration Tests", () => {
   let passthroughContext: PassthroughContext;
@@ -598,6 +599,75 @@ describe("Passthrough Hook-Only Integration Tests", () => {
       await trackingClientTransport.close();
       await contextWithTracking.close();
       trackingServer.close();
+    }
+  });
+
+  it("should pass hook-modified request (including _meta) to response hooks", async () => {
+    // Arrange: set up a hook chain where:
+    // - metaRoundtripHook adds a _meta flag in processCallToolRequest,
+    //   then checks for it in processCallToolResult
+    // - toolsHook responds directly (resultType: "respond"), which means
+    //   the chain terminates early — the key scenario this test covers
+    const contextWithMeta = new PassthroughContext([
+      serverHook,
+      metaRoundtripHook,
+      toolsHook,
+    ]);
+
+    const metaServerTransport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+    });
+
+    await contextWithMeta.connect(metaServerTransport, undefined);
+
+    const metaServer = createServer();
+    metaServer.on("request", async (req, res) => {
+      await metaServerTransport.handleRequest(req, res);
+    });
+
+    const metaServerUrl = await new Promise<URL>((resolve) => {
+      metaServer.listen(0, "127.0.0.1", () => {
+        const addr = metaServer.address() as AddressInfo;
+        resolve(new URL(`http://127.0.0.1:${addr.port}`));
+      });
+    });
+
+    const metaClient = new Client({
+      name: "meta-test-client",
+      version: "1.0.0",
+    });
+
+    const metaClientTransport = new StreamableHTTPClientTransport(
+      metaServerUrl,
+    );
+
+    try {
+      await metaClient.connect(metaClientTransport);
+
+      // Act: call a tool — metaRoundtripHook's request hook adds a _meta
+      // flag, toolsHook responds, then metaRoundtripHook's response hook
+      // replaces the content based on whether it can see the flag
+      const result = await metaClient.request(
+        {
+          method: "tools/call",
+          params: {
+            name: "greet",
+            arguments: { name: "Meta Test" },
+          },
+        },
+        z.any(),
+      );
+
+      // Assert: "meta_flag_visible" means the response hook received the
+      // hook-modified request and saw the _meta flag. "meta_flag_missing"
+      // would mean it received the original unmodified request instead.
+      expect(result.content).toEqual([
+        { type: "text", text: "meta_flag_visible" },
+      ]);
+    } finally {
+      await metaClientTransport.close();
+      await contextWithMeta.close();
+      metaServer.close();
     }
   });
 });
