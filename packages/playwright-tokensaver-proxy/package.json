@@ -1,0 +1,58 @@
+{
+  "name": "@civic/playwright-tokensaver-proxy",
+  "version": "0.1.0",
+  "description": "Single stdio MCP proxy for Playwright with token-saving run_code_cheap output compression",
+  "keywords": [
+    "mcp",
+    "playwright",
+    "proxy",
+    "tokens"
+  ],
+  "homepage": "https://github.com/civicteam/mcp-hooks/tree/main/packages/playwright-tokensaver-proxy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/civicteam/mcp-hooks.git",
+    "directory": "packages/playwright-tokensaver-proxy"
+  },
+  "license": "MIT",
+  "author": "Civic Technologies, Inc.",
+  "main": "./dist/index.js",
+  "type": "module",
+  "bin": {
+    "playwright-tokensaver-proxy": "./dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "chmod +x dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@civic/hook-common": "workspace:^",
+    "@civic/passthrough-mcp-server": "workspace:^",
+    "@modelcontextprotocol/sdk": "^1.26.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

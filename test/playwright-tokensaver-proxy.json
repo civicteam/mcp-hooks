@@ -1,0 +1,11 @@
+{
+  "prompt": "Use run_code_cheap to navigate to localhost:3000 and report success/failure only",
+  "allowedTools": ["mcp__playwright-tokensaver-proxy__run_code_cheap"],
+  "mcpServers": {
+    "playwright-tokensaver-proxy": {
+      "type": "stdio",
+      "command": "../packages/playwright-tokensaver-proxy/run.sh",
+      "args": []
+    }
+  }
+}

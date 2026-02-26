@@ -148,6 +148,9 @@ The simplest possible hook - just logs to console. Great starting point for unde
 **@civic/explain-hook**
 Adds a "reason" parameter to all tools, encouraging the AI to explain why it's using each tool. Helpful for transparency and debugging.
 
+**@civic/playwright-tokensaver-proxy**
+Single stdio MCP proxy for Playwright that adds a `run_code_cheap` wrapper and compresses large `browser_run_code` outputs into compact `success`/`failure` results.
+
 **@civic/custom-description-hook**
 Replaces tool descriptions based on configuration. Useful for providing context-specific information about what tools do in your environment.
 
@@ -210,6 +213,7 @@ cd test
 ./test.sh simple-log-passthrough.json  # See basic logging in action
 ./test.sh audit-passthrough.json       # Test audit trail functionality
 ./test.sh guardrail-passthrough.json   # Test security filtering
+./test.sh playwright-tokensaver-proxy.json # Test token-efficient Playwright wrapper
 ```
 
 ## Creating Your Own Hook
@@ -313,6 +317,7 @@ mcp-hooks/
 │   ├── guardrail-hook/           # Example: Security hook
 │   ├── simple-log-hook/          # Example: Minimal hook
 │   ├── explain-hook/             # Example: Transparency hook
+│   ├── playwright-tokensaver-proxy/ # Example: Token-efficient Playwright wrapper
 │   ├── custom-description-hook/  # Example: Transform hook
 │   ├── rate-limit-hook/          # Example: Rate limiting hook
 │   ├── local-tools-hook/         # Example: Programmatic tools hook
