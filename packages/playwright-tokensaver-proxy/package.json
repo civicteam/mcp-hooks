@@ -1,6 +1,6 @@
 {
   "name": "@civic/playwright-tokensaver-proxy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Single stdio MCP proxy for Playwright with token-saving run_code_cheap output compression",
   "keywords": [
     "mcp",

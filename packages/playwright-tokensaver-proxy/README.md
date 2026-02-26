@@ -29,23 +29,22 @@ Anything else is treated as failure:
 
 ## Usage
 
-### Start directly
+### Claude Code
 
 ```bash
-cd packages/playwright-tokensaver-proxy
-pnpm build
-pnpm start
+claude mcp add playwrightsave -- npx -y @civic/playwright-tokensaver-proxy
 ```
 
-### Use from MCP client config
+### MCP client config (JSON)
 
 ```json
 {
   "mcpServers": {
-    "playwright-tokensaver-proxy": {
+    "playwrightsave": {
       "type": "stdio",
-      "command": "../packages/playwright-tokensaver-proxy/run.sh",
-      "args": []
+      "command": "npx",
+      "args": ["-y", "@civic/playwright-tokensaver-proxy"],
+      "env": {}
     }
   }
 }
