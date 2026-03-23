@@ -364,8 +364,8 @@ importers:
   packages/whoami-server:
     dependencies:
       '@civic/auth-mcp':
-        specifier: ^0.2.8
-        version: 0.2.9(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)
+        specifier: ^0.3.0
+        version: 0.3.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)
       '@modelcontextprotocol/sdk':
         specifier: ^1.26.0
         version: 1.27.1(zod@4.3.6)
@@ -395,8 +395,8 @@ importers:
   test/integration:
     dependencies:
       '@civic/auth-mcp':
-        specifier: ^0.2.8
-        version: 0.2.9(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)
+        specifier: ^0.3.0
+        version: 0.3.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)
       '@civic/local-tools-hook':
         specifier: workspace:^
         version: link:../../packages/local-tools-hook
@@ -625,8 +625,8 @@ packages:
   '@borewit/text-codec@0.1.1':
     resolution: {integrity: sha512-5L/uBxmjaCIX5h8Z+uu+kA9BQLkc/Wl06UGR5ajNRxu+/XjonB5i8JpgFMrPj3LXTCPA0pv8yxUvbUi+QthGGA==}
 
-  '@civic/auth-mcp@0.2.9':
-    resolution: {integrity: sha512-H/n/eVc6sQXWAdB5yRV/4f/HK5igWMrUjK0qhVNv/zUk6e43UBEBjhZIV3CwdySU1sFq2JY44tiLC0khrErHbw==}
+  '@civic/auth-mcp@0.3.0':
+    resolution: {integrity: sha512-TmCN6NPW+uJL73pOVK1EyBSSuXanpd4AHw0Cc664RofIIyNrci3jYGl8nAal9myGpaR7toImzPZt9G/cVcmV5w==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.26.0
@@ -1685,6 +1685,9 @@ packages:
   jose@6.1.3:
     resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
 
+  jose@6.2.2:
+    resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
+
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
 
@@ -2317,11 +2320,11 @@ snapshots:
 
   '@borewit/text-codec@0.1.1': {}
 
-  '@civic/auth-mcp@0.2.9(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)':
+  '@civic/auth-mcp@0.3.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))(express@5.2.1)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.27.1(zod@4.3.6)
       escape-html: 1.0.3
-      jose: 6.1.3
+      jose: 6.2.2
     optionalDependencies:
       express: 5.2.1
 
@@ -3266,6 +3269,8 @@ snapshots:
       istanbul-lib-report: 3.0.1
 
   jose@6.1.3: {}
+
+  jose@6.2.2: {}
 
   js-tokens@10.0.0: {}
 
