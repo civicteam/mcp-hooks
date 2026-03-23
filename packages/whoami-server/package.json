@@ -12,7 +12,7 @@
     "lint:fix": "biome check --fix ."
   },
   "dependencies": {
-    "@civic/auth-mcp": "^0.2.8",
+    "@civic/auth-mcp": "^0.3.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "cors": "^2.8.5",
     "express": "^5.2.1"
