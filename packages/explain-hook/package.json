@@ -36,7 +36,7 @@
   "dependencies": {
     "@civic/hook-common": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@trpc/server": "^11.12.0"
+    "@trpc/server": "^11.16.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.2",
