@@ -18,7 +18,7 @@
   "dependencies": {
     "@civic/hook-common": "workspace:^",
     "@trpc/server": "^11.16.0",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {
