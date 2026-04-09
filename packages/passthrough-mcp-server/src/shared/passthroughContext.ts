@@ -836,6 +836,38 @@ export class PassthroughContext {
   }
 
   /**
+   * Replaces the server-side transport without tearing down the client connection
+   * or triggering session-level cleanup.
+   *
+   * Use this for reconnection scenarios (e.g. serverless cold start) where the
+   * upstream client reconnects but the existing session and client connection
+   * must be preserved.
+   *
+   * The old transport is closed as part of the reconnection, but the close
+   * does not cascade to the client side or fire the context-level onclose.
+   *
+   * @param newTransport The new server transport to connect
+   */
+  async reconnectServer(newTransport: Transport): Promise<void> {
+    // Temporarily remove the cascade handler so closing the old server
+    // endpoint does not tear down the client side or fire session cleanup.
+    const savedOnclose = this._passthroughServer.onclose;
+    this._passthroughServer.onclose = undefined;
+
+    try {
+      // Closes the old transport and resets Protocol internal state
+      // (_transport becomes undefined), so the subsequent connect()
+      // will not throw "Already connected to a transport".
+      await this._passthroughServer.close();
+    } finally {
+      // Restore the cascade handler for normal operation going forward.
+      this._passthroughServer.onclose = savedOnclose;
+    }
+
+    await this._passthroughServer.connect(newTransport);
+  }
+
+  /**
    * Send a request through the source (server) transport
    * @private
    */

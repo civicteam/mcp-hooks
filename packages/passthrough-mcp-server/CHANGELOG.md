@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-04-09
+
+### Added
+
+- **reconnectServer()**: New method on `PassthroughContext` for replacing the server-side transport without tearing down the client connection or triggering session-level cleanup. Designed for reconnection scenarios (e.g. serverless cold starts) where the upstream client reconnects to an existing session.
+  - Closes the old server transport and resets Protocol state
+  - Preserves hook chain, hook state, client connection, and context callbacks
+  - Temporarily suppresses the cascade `onclose` handler during reconnect, restoring it afterward
+- **Integration tests**: 8 tests covering reconnect correctness, hook/state preservation, cascade prevention, multiple consecutive reconnects, and edge cases
+
 ## [0.10.0] - 2025-01-10
 
 ### Added
