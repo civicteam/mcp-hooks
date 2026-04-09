@@ -846,7 +846,12 @@ export class PassthroughContext {
    * The old transport is closed as part of the reconnection, but the close
    * does not cascade to the client side or fire the context-level onclose.
    *
+   * If connecting the new transport fails, the context is left without a
+   * server transport (the old one is already closed). Callers should treat
+   * a thrown error as unrecoverable and create a new PassthroughContext.
+   *
    * @param newTransport The new server transport to connect
+   * @throws If the new transport fails to connect (context is left in a broken state)
    */
   async reconnectServer(newTransport: Transport): Promise<void> {
     // Temporarily remove the cascade handler so closing the old server
