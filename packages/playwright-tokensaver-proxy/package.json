@@ -52,7 +52,7 @@
     "@types/node": "^25.2.2",
     "@vitest/coverage-v8": "^4.0.18",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^4.0.18"
   }
 }

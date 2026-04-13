@@ -20,7 +20,7 @@
     "release:hook-common": "pnpm run build && pnpm run test && cd packages/hook-common && npm publish --access public"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
+    "@biomejs/biome": "^2.4.11",
     "turbo": "^2.8.12"
   },
   "pnpm": {
