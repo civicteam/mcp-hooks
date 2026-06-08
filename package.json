@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
-    "turbo": "^2.9.14"
+    "turbo": "^2.9.16"
   },
   "pnpm": {
     "overrides": {
