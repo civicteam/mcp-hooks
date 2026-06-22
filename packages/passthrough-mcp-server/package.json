@@ -69,14 +69,14 @@
   "dependencies": {
     "@civic/hook-common": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "content-type": "^1.0.5",
+    "content-type": "^2.0.0",
     "eventsource-parser": "^3.0.6",
     "raw-body": "^3.0.2",
     "zod": "^4.3.5"
   },
   "devDependencies": {
     "@civic/server-hook": "workspace:^",
-    "@types/content-type": "^1.1.9",
+    "@types/content-type": "^2.0.0",
     "@types/node": "^25.2.2",
     "@vitest/coverage-v8": "^4.0.16",
     "tsx": "^4.21.0",
