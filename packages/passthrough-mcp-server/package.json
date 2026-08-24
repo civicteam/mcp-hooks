@@ -77,10 +77,10 @@
   "devDependencies": {
     "@civic/server-hook": "workspace:^",
     "@types/content-type": "^1.1.9",
-    "@types/node": "^25.2.2",
+    "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "^4.0.16",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.0.16"
   }
 }
