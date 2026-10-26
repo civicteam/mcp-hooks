@@ -10,7 +10,7 @@
     "@modelcontextprotocol/sdk": "^1.32.0"
   },
   "devDependencies": {
-    "@types/node": "^25.2.2",
+    "@types/node": "^26.6.5",
     "tsx": "^4.21.0"
   }
 }
